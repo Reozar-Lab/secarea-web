@@ -1,0 +1,9 @@
+{
+  "name": "secarea-web",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "hono": "^4.1.7",
+    "better-auth": "^0.3.5"
+  }
+}
