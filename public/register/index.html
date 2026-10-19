@@ -20,11 +20,11 @@
 
     <header id="main-header" class="fixed top-0 z-50 w-full h-14 bg-[#252525] flex items-center">
         <div class="px-5 w-full flex items-center justify-between h-full">
-            <a href="/index.html" class="flex items-center">
+            <a href="/" class="flex items-center">
                 <span class="logo-text text-xl font-black tracking-tighter pt-1">CEC</span>
             </a>
             <div class="flex items-center gap-2">
-                <a href="/index.html" class="text-[#f5d78d] p-2 hover:opacity-70 transition-opacity text-sm font-roman">返回首页</a>
+                <a href="/" class="text-[#f5d78d] p-2 hover:opacity-70 transition-opacity text-sm font-roman">返回首页</a>
             </div>
         </div>
     </header>
@@ -109,8 +109,7 @@
 
                 <div class="text-center mt-6">
                     <span class="text-sm text-gray-500">已有档案？</span>
-                    <!-- 改为绝对路径 -->
-                    <a href="/login/index.html" class="text-sm font-bold text-black border-b border-black hover:text-gray-600 hover:border-gray-600 transition-colors ml-1 pb-0.5">返回登录</a>
+                    <a href="/login/" class="text-sm font-bold text-black border-b border-black hover:text-gray-600 hover:border-gray-600 transition-colors ml-1 pb-0.5">返回登录</a>
                 </div>
 
             </div>
@@ -215,7 +214,7 @@
                 }
 
                 alert("档案建立成功！即将前往登录页面。");
-                window.location.href = '/login/index.html'; 
+                window.location.href = '/login/'; 
 
             } catch (error) {
                 console.error(error);
