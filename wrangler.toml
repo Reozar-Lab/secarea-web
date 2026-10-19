@@ -3,10 +3,20 @@ main = "worker.js"
 compatibility_date = "2024-03-01"
 compatibility_flags = ["nodejs_compat"]
 
+# 环境变量（与你在 Cloudflare 面板里的一致）
+[vars]
+BASE_URL = "https://secarea.de5.net"
+BETTER_AUTH_SECRET = "secarea_2026_secret_abc123456789"
+EMAILJS_PUBLIC_KEY = "CROGu4Te_xh06vmNN"
+EMAILJS_SERVICE_ID = "secarea-emailjs"
+EMAILJS_TEMPLATE_ID = "template_ip6suao"
+
+# 静态资源绑定
 [assets]
 directory = "./public"
 binding = "ASSETS"
 
+# D1 数据库绑定
 [[d1_databases]]
 binding = "DB"
 database_name = "secarea-db"
