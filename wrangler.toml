@@ -1,6 +1,7 @@
 name = "secarea-web"
 main = "worker.js"
 compatibility_date = "2024-03-01"
+compatibility_flags = ["nodejs_compat"]
 
 [assets]
 directory = "./public"
