@@ -1,7 +1,13 @@
 name = "secarea-web"
 main = "worker.js"
 compatibility_date = "2024-03-01"
+compatibility_flags = ["nodejs_compat"]
 
 [assets]
 directory = "./public"
 binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "secarea-db"
+database_id = "0b1bc912-eca0-4354-9a22-902a8a8441bc"
