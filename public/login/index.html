@@ -1,54 +1,130 @@
-import { Hono } from 'https://esm.sh/hono@4.1.7';
-import { betterAuth } from 'https://esm.sh/better-auth@0.3.5';
-import { emailOTP } from 'https://esm.sh/better-auth@0.3.5/plugins';
-
-const app = new Hono();
-
-// 挂载 Better Auth 认证路由
-app.on(['POST', 'GET'], '/api/auth/*', async (c) => {
-  const auth = betterAuth({
-    database: c.env.DB, // 绑定的 D1 数据库
-    secret: "secarea_2026_super_secret_key_change_me", // ⚠️ 请换成你自己的随机字符串
-    baseURL: "https://secarea.de5.net", // ⚠️ 换成你的线上域名或 workers.dev 域名
-    basePath: "/api/auth",
-    emailAndPassword: {
-      enabled: true,
-      requireEmailVerification: false, // 我们通过 OTP 验证，不使用传统的邮件链接
-    },
-    plugins: [
-            emailOTP({
-        async sendVerificationOTP({ email, otp }) {
-          // 1. 组装 EmailJS 需要的数据
-          const payload = {
-            service_id: c.env.EMAILJS_SERVICE_ID,
-            template_id: c.env.EMAILJS_TEMPLATE_ID,
-            user_id: c.env.EMAILJS_PUBLIC_KEY,
-            template_params: {
-              to_email: email,
-              otp: otp
-            }
-          };
-
-          // 2. 发送请求给 EmailJS
-          const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-
-          if (!res.ok) {
-            console.error('EmailJS 报错:', await res.text());
-            throw new Error('邮件发送失败，请检查 EmailJS 配置');
-          }
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 · 匿境 Secarea</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/style.css">
+    
+    <style>
+        html, body {
+            background-color: #141414;
+            margin: 0;
+            padding: 0;
         }
-      })
-        ]
-  });
+    </style>
+</head>
+<body class="text-gray-900 min-h-screen flex flex-col relative bg-[#141414] bg-grid">
 
-  return auth.handler(c.req.raw);
-});
+    <header id="main-header" class="fixed top-0 z-50 w-full h-14 bg-[#252525] flex items-center">
+        <div class="px-5 w-full flex items-center justify-between h-full">
+            <a href="/index.html" class="flex items-center">
+                <span class="logo-text text-xl font-black tracking-tighter pt-1">CEC</span>
+            </a>
+            <div class="flex items-center gap-2">
+                <a href="/index.html" class="text-[#f5d78d] p-2 hover:opacity-70 transition-opacity text-sm font-roman">返回首页</a>
+            </div>
+        </div>
+    </header>
 
-// 静态资源兜底
-app.get('*', (c) => c.env.ASSETS.fetch(c.req.raw));
+    <div class="fixed top-14 w-full h-[45vh] flex flex-col items-center justify-center z-0 pointer-events-none">
+        <h1 class="text-6xl font-serif font-bold text-gold-bright tracking-[0.3em] mb-4">登录</h1>
+        <p class="text-xl text-[#c89f5d] tracking-[0.5em] uppercase font-roman">Sign In</p>
+    </div>
 
-export default app;
+    <div class="relative w-full flex-grow z-10">
+        
+        <div class="w-full h-[45vh]"></div>
+
+        <div class="w-full bg-[#f4f4f5] rounded-t-[3rem] pt-12 pb-32 flex flex-col items-center shadow-[0_-15px_40px_rgba(0,0,0,0.6)]">
+            
+            <div class="w-[85%] max-w-md flex flex-col gap-6">
+                
+                <form class="w-full flex flex-col gap-5 mt-4" onsubmit="return false;">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2 font-serif tracking-widest">邮箱</label>
+                        <input type="email" id="login-email" placeholder="输入你的邮箱地址" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2 font-serif tracking-widest">密码</label>
+                        <input type="password" id="login-password" placeholder="输入密码" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors shadow-sm">
+                    </div>
+
+                    <button type="button" id="submit-login" class="w-full mt-2 py-3.5 bg-[#111111] text-[#f5d78d] font-bold rounded-xl hover:bg-black transition-colors interactive-btn shadow-md">
+                        进入内界
+                    </button>
+                </form>
+
+                <div class="flex items-center gap-4 my-2">
+                    <div class="h-px bg-gray-300 flex-1"></div>
+                    <span class="text-[10px] text-gray-400 font-roman tracking-widest">OR CONTINUE WITH</span>
+                    <div class="h-px bg-gray-300 flex-1"></div>
+                </div>
+
+                <div class="flex justify-center gap-4">
+                    <button class="w-12 h-12 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition-colors interactive-btn">
+                        <svg class="w-5 h-5 text-gray-800" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    </button>
+                    <button class="w-12 h-12 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition-colors interactive-btn">
+                        <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z"/></svg>
+                    </button>
+                    <button class="w-12 h-12 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition-colors interactive-btn">
+                        <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M11.5 11.5H2V2h9.5v9.5zm0 10.5H2v-9.5h9.5V22zm10.5-10.5H12.5V2H22v9.5zm0 10.5H12.5v-9.5H22V22z"/></svg>
+                    </button>
+                </div>
+
+                <div class="text-center mt-6">
+                    <span class="text-sm text-gray-500">还没有账号？</span>
+                    <!-- 改为绝对路径 -->
+                    <a href="/register/index.html" class="text-sm font-bold text-black border-b border-black hover:text-gray-600 hover:border-gray-600 transition-colors ml-1 pb-0.5">立即注册</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const header = document.getElementById('main-header');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) header.classList.add('header-scrolled');
+            else header.classList.remove('header-scrolled');
+        });
+
+        const loginBtn = document.getElementById('submit-login');
+        
+        loginBtn.addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) return alert("请输入邮箱和密码！");
+
+            loginBtn.textContent = '正在验证身份...';
+            loginBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/sign-in/email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include', 
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!response.ok) {
+                    throw new Error("邮箱或密码错误");
+                }
+
+                alert("身份验证通过。");
+                window.location.href = '/index.html'; 
+
+            } catch (error) {
+                console.error(error);
+                alert(error.message);
+                loginBtn.textContent = '进入内界';
+                loginBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
