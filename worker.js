@@ -1,14 +1,15 @@
-import { Hono } from 'https://esm.sh/hono@4.1.7';
-import { betterAuth } from 'https://esm.sh/better-auth@0.3.5';
-import { emailOTP } from 'https://esm.sh/better-auth@0.3.5/plugins';
+import { Hono } from 'hono';
+import { betterAuth } from 'better-auth';
+import { emailOTP } from 'better-auth/plugins';
 
 const app = new Hono();
 
+// 认证 API 路由
 app.on(['POST', 'GET'], '/api/auth/*', async (c) => {
     const auth = betterAuth({
-        database: c.env.DB, 
-        secret: c.env.BETTER_AUTH_SECRET || "secarea_fallback_secret_key_123456", 
-        baseURL: c.env.BASE_URL || "http://localhost:8787", 
+        database: c.env.DB,
+        secret: c.env.BETTER_AUTH_SECRET || "secarea_fallback_secret_key_123456",
+        baseURL: c.env.BASE_URL || "http://localhost:8787",
         basePath: "/api/auth",
         emailAndPassword: { enabled: true, requireEmailVerification: false },
         plugins: [
@@ -24,7 +25,10 @@ app.on(['POST', 'GET'], '/api/auth/*', async (c) => {
                             template_params: { to_email: email, otp: otp }
                         })
                     });
-                    if (!res.ok) throw new Error('邮件发送失败');
+                    if (!res.ok) {
+                        console.error('EmailJS error:', await res.text());
+                        throw new Error('邮件发送失败');
+                    }
                 }
             })
         ]
@@ -32,7 +36,12 @@ app.on(['POST', 'GET'], '/api/auth/*', async (c) => {
     return auth.handler(c.req.raw);
 });
 
-// 仅作为静态资源匹配失败时的最终兜底
-app.get('*', (c) => c.env.ASSETS.fetch(c.req.raw));
+// 静态资源兜底
+app.get('*', (c) => {
+    if (!c.env.ASSETS) {
+        return c.text("【部署警告】Cloudflare 未检测到静态资源目录，请检查 public 文件夹及 wrangler.toml 配置。", 500);
+    }
+    return c.env.ASSETS.fetch(c.req.raw);
+});
 
 export default app;
