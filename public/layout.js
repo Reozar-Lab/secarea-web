@@ -1,4 +1,7 @@
-// 1. 加载动画 HTML
+const currentPath = window.location.pathname;
+// 定义哪些页面不需要显示页脚
+const hideFooterPages = ['/login/', '/register/', '/profile/'];
+
 const loadingHTML = `
 <div id="loading-screen" class="fixed inset-0 z-[9999] bg-[#252525] flex items-center justify-center transition-opacity duration-500">
     <div class="dot-grid">
@@ -9,7 +12,6 @@ const loadingHTML = `
 </div>
 `;
 
-// 2. 导航栏 HTML
 const navHTML = `
 <header id="main-header" class="fixed top-0 z-50 w-full h-14 bg-[#252525] flex items-center transition-all duration-300">
     <div class="px-5 w-full flex items-center justify-between h-full">
@@ -17,6 +19,7 @@ const navHTML = `
             <span class="logo-text text-xl font-black tracking-tighter pt-1">CEC</span>
         </a>
         <div class="flex items-center gap-2">
+            <!-- 黑暗模式切换 -->
             <button id="theme-toggle" class="text-[#f5d78d] p-2 hover:opacity-70 transition-opacity flex items-center justify-center interactive-btn">
                 <svg id="icon-sun" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 <svg id="icon-moon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
@@ -42,7 +45,6 @@ const navHTML = `
 </header>
 `;
 
-// 3. 页脚 HTML
 const footerHTML = `
 <footer class="bg-[#181818] py-8 border-t border-white/5 z-10 relative mt-auto">
     <div class="px-5 flex flex-col items-center gap-5">
@@ -59,14 +61,15 @@ const footerHTML = `
 </footer>
 `;
 
-// 注入到页面中
 document.body.insertAdjacentHTML('afterbegin', loadingHTML);
 document.body.insertAdjacentHTML('afterbegin', navHTML);
-document.body.insertAdjacentHTML('beforeend', footerHTML);
 
-// ======== 逻辑初始化 ========
+// 判断是否注入页脚
+if (!hideFooterPages.some(path => currentPath.includes(path))) {
+    document.body.insertAdjacentHTML('beforeend', footerHTML);
+}
+
 function initLayout() {
-    // 1. 隐藏加载动画
     window.addEventListener('load', () => {
         const loader = document.getElementById('loading-screen');
         if (loader) {
@@ -82,11 +85,9 @@ function initLayout() {
     const iconSun = document.getElementById('icon-sun');
     const iconMoon = document.getElementById('icon-moon');
 
-    // 2. 滚动监听（导航栏缩小）
     window.addEventListener('scroll', () => {
         if (window.scrollY > 50) {
             header.classList.add('header-scrolled');
-            // 收起菜单
             dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
             dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
         } else {
@@ -94,7 +95,6 @@ function initLayout() {
         }
     });
 
-    // 3. 菜单展开/收起
     menuBtn.addEventListener('click', (e) => {
         e.stopPropagation(); 
         const isOpen = dropdownMenu.classList.contains('opacity-100');
@@ -114,7 +114,6 @@ function initLayout() {
         }
     });
 
-    // 4. 主题切换
     function updateThemeIcons() {
         if (document.documentElement.classList.contains('dark')) {
             iconSun.classList.remove('hidden');
@@ -137,14 +136,13 @@ function initLayout() {
         updateThemeIcons();
     });
 
-    // 5. 检查登录状态
     if (typeof API !== 'undefined') {
         API.getMe().then(data => {
             if (data && data.user) {
                 const loginBtn = document.getElementById('nav-login-btn');
                 if (loginBtn) {
                     loginBtn.textContent = `欢迎, ${data.user.name}`;
-                    loginBtn.href = "/profile/"; // 以后指向个人中心
+                    loginBtn.href = "/profile/"; 
                 }
             }
         }).catch(console.log);
