@@ -31,5 +31,13 @@ const API = {
   async getMe() {
     const res = await fetch(`${API_BASE}/me`);
     return await res.json();
+  },
+
+  // 新增：退出登录
+  async logout() {
+    const res = await fetch(`${API_BASE}/logout`, {
+      method: 'POST'
+    });
+    return await res.json();
   }
 };
