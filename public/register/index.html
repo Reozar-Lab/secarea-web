@@ -4,27 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>注册 · 匿境 Secarea</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/style.css">
-    
+    <link rel="stylesheet" href="../style.css">
     <style>
-        html, body {
-            background-color: #141414;
-            margin: 0;
-            padding: 0;
-        }
+        html, body { background-color: #141414; margin: 0; padding: 0; }
+        .input-error { border-color: #ef4444 !important; }
     </style>
 </head>
 <body class="text-gray-900 min-h-screen flex flex-col relative bg-[#141414] bg-grid">
 
     <header id="main-header" class="fixed top-0 z-50 w-full h-14 bg-[#252525] flex items-center">
         <div class="px-5 w-full flex items-center justify-between h-full">
-            <a href="/" class="flex items-center">
+            <a href="../index.html" class="flex items-center">
                 <span class="logo-text text-xl font-black tracking-tighter pt-1">CEC</span>
             </a>
             <div class="flex items-center gap-2">
-                <a href="/" class="text-[#f5d78d] p-2 hover:opacity-70 transition-opacity text-sm font-roman">返回首页</a>
+                <a href="../index.html" class="text-[#f5d78d] p-2 hover:opacity-70 transition-opacity text-sm font-roman">返回首页</a>
             </div>
         </div>
     </header>
@@ -35,29 +30,31 @@
     </div>
 
     <div class="relative w-full flex-grow z-10">
-        
         <div class="w-full h-[45vh]"></div>
-
         <div class="w-full bg-[#f4f4f5] rounded-t-[3rem] pt-12 pb-32 flex flex-col items-center shadow-[0_-15px_40px_rgba(0,0,0,0.6)]">
             
             <div class="w-[85%] max-w-md flex flex-col gap-5">
-                
                 <form class="w-full flex flex-col gap-4 mt-2" onsubmit="return false;">
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2 font-serif tracking-widest">用户名</label>
                         <input type="text" id="reg-name" placeholder="请输入用户名" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors shadow-sm">
+                        <p id="name-error" class="text-red-500 text-xs mt-1 hidden"></p>
                     </div>
 
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2 font-serif tracking-widest">邮箱</label>
                         <input type="email" id="reg-email" placeholder="输入你的邮箱地址" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors shadow-sm">
+                        <p id="email-error" class="text-red-500 text-xs mt-1 hidden"></p>
                     </div>
 
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2 font-serif tracking-widest">邮箱验证码</label>
                         <div class="flex gap-3">
-                            <input type="text" id="reg-otp" placeholder="6位数字验证码" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors shadow-sm">
-                            <button type="button" id="get-code-btn" class="whitespace-nowrap px-4 py-3 bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+                            <div class="w-full relative">
+                                <input type="text" id="reg-otp" placeholder="6位数字验证码" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors shadow-sm">
+                                <p id="otp-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                            </div>
+                            <button type="button" id="get-code-btn" class="whitespace-nowrap px-4 py-3 h-[46px] bg-white border border-gray-200 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
                                 获取验证码
                             </button>
                         </div>
@@ -66,10 +63,12 @@
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2 font-serif tracking-widest">安全验证</label>
                         <div class="flex gap-3">
-                            <input type="text" id="reg-captcha-input" placeholder="输入右侧字符" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors shadow-sm">
-                            <div id="captcha-box" class="w-32 bg-[#e5e7eb] rounded-xl flex items-center justify-center cursor-pointer select-none overflow-hidden relative">
+                            <div class="w-full relative">
+                                <input type="text" id="reg-captcha-input" placeholder="输入右侧字符" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors shadow-sm">
+                                <p id="captcha-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                            </div>
+                            <div id="captcha-box" class="w-32 h-[46px] bg-[#e5e7eb] rounded-xl flex items-center justify-center cursor-pointer select-none overflow-hidden relative shrink-0">
                                 <span id="captcha-text" class="text-xl font-roman font-black text-gray-800 tracking-widest italic line-through decoration-gray-400 decoration-2" style="transform: rotate(-5deg);">A1B2</span>
-                                <div class="absolute inset-0 pointer-events-none opacity-30" style="background: linear-gradient(45deg, transparent 40%, #000 41%, #000 42%, transparent 43%);"></div>
                             </div>
                         </div>
                     </div>
@@ -77,11 +76,13 @@
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2 font-serif tracking-widest">密码</label>
                         <input type="password" id="reg-password" placeholder="设置密码" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors shadow-sm">
+                        <p id="password-error" class="text-red-500 text-xs mt-1 hidden"></p>
                     </div>
                     
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2 font-serif tracking-widest">确认密码</label>
                         <input type="password" id="reg-confirm-password" placeholder="再次输入密码" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors shadow-sm">
+                        <p id="confirm-error" class="text-red-500 text-xs mt-1 hidden"></p>
                     </div>
 
                     <button type="button" id="submit-register" class="w-full mt-4 py-3.5 bg-[#111111] text-[#f5d78d] font-bold rounded-xl hover:bg-black transition-colors interactive-btn shadow-md">
@@ -89,33 +90,15 @@
                     </button>
                 </form>
 
-                <div class="flex items-center gap-4 my-2">
-                    <div class="h-px bg-gray-300 flex-1"></div>
-                    <span class="text-[10px] text-gray-400 font-roman tracking-widest">OR SIGN UP WITH</span>
-                    <div class="h-px bg-gray-300 flex-1"></div>
-                </div>
-
-                <div class="flex justify-center gap-4">
-                    <button class="w-12 h-12 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition-colors interactive-btn">
-                        <svg class="w-5 h-5 text-gray-800" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                    </button>
-                    <button class="w-12 h-12 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition-colors interactive-btn">
-                        <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z"/></svg>
-                    </button>
-                    <button class="w-12 h-12 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition-colors interactive-btn">
-                        <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M11.5 11.5H2V2h9.5v9.5zm0 10.5H2v-9.5h9.5V22zm10.5-10.5H12.5V2H22v9.5zm0 10.5H12.5v-9.5H22V22z"/></svg>
-                    </button>
-                </div>
-
                 <div class="text-center mt-6">
                     <span class="text-sm text-gray-500">已有档案？</span>
-                    <a href="/login/" class="text-sm font-bold text-black border-b border-black hover:text-gray-600 hover:border-gray-600 transition-colors ml-1 pb-0.5">返回登录</a>
+                    <a href="../login/index.html" class="text-sm font-bold text-black border-b border-black hover:text-gray-600 hover:border-gray-600 transition-colors ml-1 pb-0.5">返回登录</a>
                 </div>
-
             </div>
         </div>
     </div>
 
+    <script src="../common.js"></script>
     <script>
         const header = document.getElementById('main-header');
         window.addEventListener('scroll', () => {
@@ -123,102 +106,133 @@
             else header.classList.remove('header-scrolled');
         });
 
+        // 图形验证码
         const captchaText = document.getElementById('captcha-text');
         const captchaBox = document.getElementById('captcha-box');
         function generateCaptcha() {
             const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             let captcha = '';
-            for (let i = 0; i < 4; i++) {
-                captcha += chars[Math.floor(Math.random() * chars.length)];
-            }
+            for (let i = 0; i < 4; i++) captcha += chars[Math.floor(Math.random() * chars.length)];
             captchaText.textContent = captcha;
         }
         generateCaptcha();
         captchaBox.addEventListener('click', generateCaptcha);
 
-        const getCodeBtn = document.getElementById('get-code-btn');
+        // 获取 DOM
+        const nameInput = document.getElementById('reg-name');
         const emailInput = document.getElementById('reg-email');
-        let countdown = 60;
-        let timer = null;
+        const otpInput = document.getElementById('reg-otp');
+        const captchaInput = document.getElementById('reg-captcha-input');
+        const passwordInput = document.getElementById('reg-password');
+        const confirmInput = document.getElementById('reg-confirm-password');
+        
+        const getCodeBtn = document.getElementById('get-code-btn');
+        let countdown = 60; let timer = null;
 
+        // 封装一个显示错误的函数
+        function showError(input, errorEl, msg) {
+            input.classList.add('input-error');
+            errorEl.textContent = msg;
+            errorEl.classList.remove('hidden');
+        }
+
+        // 封装一个清除错误的函数
+        function clearError(input, errorEl) {
+            input.classList.remove('input-error');
+            errorEl.classList.add('hidden');
+        }
+
+        // 绑定输入事件，清空对应报错
+        [nameInput, emailInput, otpInput, captchaInput, passwordInput, confirmInput].forEach((input, index) => {
+            input.addEventListener('input', () => {
+                const ids = ['name-error', 'email-error', 'otp-error', 'captcha-error', 'password-error', 'confirm-error'];
+                clearError(input, document.getElementById(ids[index]));
+            });
+        });
+
+        // 发送验证码
         getCodeBtn.addEventListener('click', async () => {
             if (timer) return;
             const email = emailInput.value.trim();
-            if (!email) return alert("请先输入邮箱地址！");
+            if (!email) return showError(emailInput, document.getElementById('email-error'), "请输入邮箱地址");
 
             getCodeBtn.textContent = '发送中...';
 
             try {
-                const response = await fetch('/api/auth/email-otp/send-verification-otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, type: 'sign-up' })
-                });
-
-                if (!response.ok) throw new Error(await response.text());
+                const data = await API.sendCode(email);
+                if (data.error) throw new Error(data.error);
 
                 getCodeBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 timer = setInterval(() => {
                     countdown--;
                     if (countdown <= 0) {
-                        clearInterval(timer);
-                        timer = null;
-                        countdown = 60;
+                        clearInterval(timer); timer = null; countdown = 60;
                         getCodeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                         getCodeBtn.textContent = `获取验证码`;
                     } else {
                         getCodeBtn.textContent = `${countdown}s 后重发`;
                     }
                 }, 1000);
-                alert("验证码已发送至您的邮箱，请查收！");
 
             } catch (error) {
-                console.error(error);
-                alert("发送失败，请稍后重试或检查网络。");
+                showError(emailInput, document.getElementById('email-error'), error.message || "发送失败");
                 getCodeBtn.textContent = '获取验证码';
             }
         });
 
+        // 提交注册
         const submitBtn = document.getElementById('submit-register');
-        
         submitBtn.addEventListener('click', async () => {
-            const name = document.getElementById('reg-name').value.trim();
+            const name = nameInput.value.trim();
             const email = emailInput.value.trim();
-            const otp = document.getElementById('reg-otp').value.trim();
-            const password = document.getElementById('reg-password').value;
-            const confirmPassword = document.getElementById('reg-confirm-password').value;
-            const captchaInput = document.getElementById('reg-captcha-input').value.trim();
+            const otp = otpInput.value.trim();
+            const password = passwordInput.value;
+            const confirmPassword = confirmInput.value;
+            const captchaInputValue = captchaInput.value.trim();
 
-            if (!name || !email || !otp || !password) return alert("请填写所有必填项！");
-            if (password !== confirmPassword) return alert("两次输入的密码不一致！");
-            if (captchaInput.toUpperCase() !== captchaText.textContent.toUpperCase()) return alert("图形验证码错误！");
+            let hasError = false;
+            if (!name) { showError(nameInput, document.getElementById('name-error'), "请输入用户名"); hasError = true; }
+            if (!email) { showError(emailInput, document.getElementById('email-error'), "请输入邮箱"); hasError = true; }
+            if (!otp) { showError(otpInput, document.getElementById('otp-error'), "请输入验证码"); hasError = true; }
+            if (!password) { showError(passwordInput, document.getElementById('password-error'), "请输入密码"); hasError = true; }
+            if (!captchaInputValue) { showError(captchaInput, document.getElementById('captcha-error'), "请输入安全验证码"); hasError = true; }
+            
+            // 图形验证码前端校验
+            if (captchaInputValue && captchaInputValue.toUpperCase() !== captchaText.textContent.toUpperCase()) {
+                showError(captchaInput, document.getElementById('captcha-error'), "图形验证码错误"); hasError = true;
+            }
+            
+            // 密码一致性前端校验
+            if (password && confirmPassword && password !== confirmPassword) {
+                showError(confirmInput, document.getElementById('confirm-error'), "两次输入的密码不一致"); hasError = true;
+            }
+
+            if (hasError) return;
 
             submitBtn.textContent = '正在建立档案...';
             submitBtn.disabled = true;
 
             try {
-                const response = await fetch('/api/auth/sign-up/email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        email: email, 
-                        password: password, 
-                        name: name,
-                        otp: otp 
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.message || "注册失败，邮箱可能已存在或验证码错误");
+                const data = await API.register(name, email, password, otp);
+                
+                if (data.error) {
+                    // 根据后端返回的错误信息分配到不同输入框
+                    if (data.error.includes("邮箱") || data.error.includes("账号")) {
+                        showError(emailInput, document.getElementById('email-error'), data.error);
+                    } else if (data.error.includes("验证码")) {
+                        showError(otpInput, document.getElementById('otp-error'), data.error);
+                    } else {
+                        // 兜底提示
+                        showError(emailInput, document.getElementById('email-error'), data.error);
+                    }
+                    throw new Error(data.error);
                 }
 
-                alert("档案建立成功！即将前往登录页面。");
+                // 成功跳转
                 window.location.href = '/login/'; 
 
             } catch (error) {
                 console.error(error);
-                alert(error.message);
                 submitBtn.textContent = '建立档案';
                 submitBtn.disabled = false;
             }
