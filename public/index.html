@@ -30,19 +30,22 @@
                 </button>
             </div>
         </div>
+        <!-- 侧边菜单 -->
         <div id="dropdown-menu" class="absolute top-[60px] right-4 w-44 rounded-2xl overflow-hidden shadow-2xl border border-white/10 z-50">
             <div class="absolute inset-0 bg-[#1f1f1f]/95 backdrop-blur-xl z-[-1]"></div>
             <div class="flex flex-col py-3 px-2 gap-1 font-sans">
-                <!-- 注意这里的 id，用于 JS 动态替换文字 -->
                 <a href="./login/index.html" id="nav-login-btn" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">登录</a>
                 <a href="#" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">WIKI</a>
                 <a href="#" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">创作</a>
                 <a href="#" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">贴吧</a>
+                <a href="#" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">关于</a>
+                <a href="#" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">加入我们</a>
             </div>
         </div>
     </header>
 
     <main class="flex-grow flex flex-col items-center w-full pb-20 overflow-hidden">
+        
         <section id="hero-section" class="w-full flex flex-col bg-neutral-400 -mt-[1px]">
             
             <div id="logo-card" class="bleed-card bg-[#252525] bg-grid rounded-b-[4rem] h-[25vh] flex flex-col items-center justify-center shadow-heavy relative z-10">
@@ -60,27 +63,169 @@
             </div>
 
             <div class="bleed-card bg-[#f4f4f5] rounded-t-[4rem] pt-12 pb-12 mt-6 flex flex-col items-center relative z-0">
+                
                 <div class="w-[85%] max-w-lg flex flex-col gap-6 relative z-10">
+                    
                     <section class="w-full rounded-[2rem] bg-[#111111] p-8 shadow-md text-center relative overflow-hidden reveal">
                         <div class="absolute -right-4 -top-4 text-6xl font-roman text-white/5 pointer-events-none select-none">CEC</div>
                         <p class="text-xs text-gray-400 tracking-widest mb-6">镜像网站正在施工，可与 Reozor 联系</p>
                         <h2 class="text-base text-white font-serif tracking-widest mb-6">欢迎来到，另一个世界的终点。</h2>
+                        <div class="flex items-center justify-center gap-4 relative z-10">
+                            <button class="px-4 py-2 bg-white text-black text-xs font-bold rounded-md hover:bg-gray-200 transition-colors interactive-btn">WIKI</button>
+                            <button class="px-4 py-2 bg-white text-black text-xs font-medium rounded-md hover:bg-gray-200 transition-colors interactive-btn">获取便民支持</button>
+                        </div>
                     </section>
 
                     <section class="w-full bg-white rounded-[2rem] p-8 shadow-sm reveal">
                         <h3 class="text-xl font-serif font-bold text-black mb-4 tracking-widest border-l-4 border-gray-800 pl-3">世界档案</h3>
                         <p class="text-sm text-gray-600 leading-loose text-justify">
                             在这颗星球隐秘的背面，存在着被称为「内界」的亚空间。自 1531 年《保密公约》签订以来，觉醒者与普通人类（沉睡者）被彻底隔绝。
+                            <br><br>
+                            然而，随着 CEC（密保会）旧秩序的动摇，以及 BSA（超自然事务局）的步步紧逼，维系了数百年的「帷幕」正在碎裂。
                         </p>
+                    </section>
+
+                    <section class="w-full bg-white rounded-[2rem] p-8 shadow-sm flex flex-col gap-6 reveal">
+                        <h3 class="text-xl font-serif font-bold text-black tracking-widest border-l-4 border-gray-800 pl-3">核心档案</h3>
+                        
+                        <div class="flex flex-col gap-2">
+                            <div class="w-full h-32 rounded-xl bg-gray-200 border border-gray-300 relative flex items-center justify-center overflow-hidden group cursor-pointer">
+                                <span class="text-gray-400 font-roman tracking-widest text-xs group-hover:scale-110 transition-transform duration-500">[ 法登 · 立绘区 ]</span>
+                                <div class="absolute top-2 right-2 px-2 py-1 bg-black/50 text-white text-[10px] rounded font-roman tracking-widest">LEADER</div>
+                            </div>
+                            <h4 class="text-base font-bold text-black tracking-wider mt-1">法登 · 瑞文杰 <span class="text-xs font-normal text-gray-400 font-roman ml-2">FORDEN</span></h4>
+                            <p class="text-xs text-gray-500 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">“我从不信仰神明，我只相信手里的筹码，和我身后的家人。”</p>
+                        </div>
+
+                        <div class="flex flex-col gap-2 mt-4">
+                            <div class="w-full h-32 rounded-xl bg-gray-200 border border-gray-300 relative flex items-center justify-center overflow-hidden group cursor-pointer">
+                                <span class="text-gray-400 font-roman tracking-widest text-xs group-hover:scale-110 transition-transform duration-500">[ 渡 · 立绘区 ]</span>
+                                <div class="absolute top-2 right-2 px-2 py-1 bg-black/50 text-white text-[10px] rounded font-roman tracking-widest">KEY</div>
+                            </div>
+                            <h4 class="text-base font-bold text-black tracking-wider mt-1">渡 / 张悦 <span class="text-xs font-normal text-gray-400 font-roman ml-2">REO</span></h4>
+                            <p class="text-xs text-gray-500 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">“如果规则注定要将人分为三六九等，那我就去打破规则。”</p>
+                        </div>
+                    </section>
+
+                    <section class="w-full py-10 flex flex-col items-center justify-center text-center reveal">
+                        <span class="text-4xl text-gray-300 font-serif leading-none mb-4">“</span>
+                        <p class="text-lg text-black font-serif tracking-[0.2em] leading-loose px-4">
+                            保密，<br>究竟是保护，还是枷锁？
+                        </p>
+                        <span class="text-xs text-gray-400 font-roman tracking-widest mt-4">— 1531 保密公约</span>
+                    </section>
+
+                    <section class="w-full bg-white rounded-[2rem] p-8 shadow-sm reveal">
+                        <h3 class="text-xl font-serif font-bold text-black mb-6 tracking-widest border-l-4 border-gray-800 pl-3">最新记录</h3>
+                        <ul class="text-sm text-gray-600 space-y-4 font-sans">
+                            <li class="flex justify-between items-center border-b border-gray-50 pb-2 cursor-pointer hover:text-black transition-colors">
+                                <span>世界观：BSA 机构档案更新</span>
+                                <span class="font-roman text-gray-400 text-xs">10.19</span>
+                            </li>
+                            <li class="flex justify-between items-center border-b border-gray-50 pb-2 cursor-pointer hover:text-black transition-colors">
+                                <span>创作：法登核心立绘释出</span>
+                                <span class="font-roman text-gray-400 text-xs">10.15</span>
+                            </li>
+                            <li class="flex justify-between items-center pb-2 cursor-pointer hover:text-black transition-colors">
+                                <span>小说：保密纪元往事 - 第三窟</span>
+                                <span class="font-roman text-gray-400 text-xs">10.10</span>
+                            </li>
+                        </ul>
+                    </section>
+
+                    <section class="w-full bg-white rounded-[2rem] p-6 shadow-sm reveal">
+                        <div class="text-center mb-6">
+                            <h3 class="text-3xl font-serif font-black tracking-widest text-black">IP<span class="text-sm font-sans font-normal text-gray-400 ml-1">世界</span></h3>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-center">
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                <div class="text-2xl font-roman text-black mb-1">1.5</div>
+                                <div class="text-xs text-gray-500">项目年数</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                <div class="text-2xl font-roman text-black mb-1">1</div>
+                                <div class="text-xs text-gray-500">参与成员</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                <div class="text-2xl font-roman text-black mb-1">12</div>
+                                <div class="text-xs text-gray-500">百科词条</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                <div class="text-2xl font-roman text-black mb-1">3</div>
+                                <div class="text-xs text-gray-500">创作篇幅</div>
+                            </div>
+                        </div>
                     </section>
                 </div>
 
+                <!-- 横向滚动卡片区 -->
+                <div class="w-full mt-8 relative z-10 overflow-hidden reveal">
+                    <div id="scroll-container" class="flex gap-5 px-6 py-2 overflow-x-auto scrollbar-hide" style="scroll-behavior: auto;">
+                        
+                        <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
+                            <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">想要与我们联系？</h4>
+                            <p class="text-black/80 text-sm leading-relaxed mb-4">无论你是流落街头的独立觉醒者，还是对 CEC 密保会抱有疑问的沉睡者，通讯网永远为你敞开。</p>
+                            <p class="text-black/80 text-sm leading-relaxed">· 管理员 QQ：2157053849<br>· 业务联系邮箱：<br>reaozar-secarea@outlook.com</p>
+                            <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">发起通讯</a></div>
+                        </div>
+
+                        <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
+                            <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">关于作品的授权</h4>
+                            <p class="text-black/80 text-sm leading-relaxed mb-4">本站所有原创世界观文本、角色视觉设定均严格遵循 <strong class="text-black">CC-BY-SA 4.0</strong> 协议。</p>
+                            <p class="text-black/80 text-sm leading-relaxed">你可以自由复制、分发、演绎。前提是：必须保留原作者署名（Reozor Lab），且必须使用相同协议共享。</p>
+                            <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">查看完整协议</a></div>
+                        </div>
+
+                        <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
+                            <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">关于这个世界观</h4>
+                            <p class="text-black/80 text-sm leading-relaxed mb-4">「匿境」并非普通的奇幻世界。在这里，魔法、元力与超自然异能，都在现代科技与秘密机构的监控下暗流涌动。</p>
+                            <p class="text-black/80 text-sm leading-relaxed">从弑魔潮，到保密公约的彻底崩塌。CEC 与 BSA 长达百年的明暗博弈，将决定物种的未来。</p>
+                            <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">进入维基百科</a></div>
+                        </div>
+
+                        <!-- 循环组 -->
+                        <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
+                            <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">想要与我们联系？</h4>
+                            <p class="text-black/80 text-sm leading-relaxed mb-4">无论你是流落街头的独立觉醒者，还是对 CEC 密保会抱有疑问的沉睡者，通讯网永远为你敞开。</p>
+                            <p class="text-black/80 text-sm leading-relaxed">· 管理员 QQ：2157053849<br>· 业务联系邮箱：<br>reaozar-secarea@outlook.com</p>
+                            <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">发起通讯</a></div>
+                        </div>
+                        <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
+                            <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">关于作品的授权</h4>
+                            <p class="text-black/80 text-sm leading-relaxed mb-4">本站所有原创世界观文本、角色视觉设定均严格遵循 <strong class="text-black">CC-BY-SA 4.0</strong> 协议。</p>
+                            <p class="text-black/80 text-sm leading-relaxed">你可以自由复制、分发、演绎。前提是：必须保留原作者署名（Reozor Lab），且必须使用相同协议共享。</p>
+                            <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">查看完整协议</a></div>
+                        </div>
+                        <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
+                            <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">关于这个世界观</h4>
+                            <p class="text-black/80 text-sm leading-relaxed mb-4">「匿境」并非普通的奇幻世界。在这里，魔法、元力与超自然异能，都在现代科技与秘密机构的监控下暗流涌动。</p>
+                            <p class="text-black/80 text-sm leading-relaxed">从弑魔潮，到保密公约的彻底崩塌。CEC 与 BSA 长达百年的明暗博弈，将决定物种的未来。</p>
+                            <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">进入维基百科</a></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 四宫格导航 -->
                 <div class="w-[85%] max-w-lg mt-8 grid grid-cols-2 gap-4 relative z-30 mb-8">
                     <a href="#" class="bg-white p-6 rounded-2xl shadow-sm text-center flex flex-col items-center interactive-card">
+                        <div class="text-gray-400 mb-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg></div>
                         <div class="font-serif font-bold text-black tracking-widest">探索百科</div>
+                        <div class="text-[10px] text-gray-400 font-roman tracking-widest mt-1">WIKI</div>
                     </a>
                     <a href="#" class="bg-white p-6 rounded-2xl shadow-sm text-center flex flex-col items-center interactive-card">
+                        <div class="text-gray-400 mb-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></div>
                         <div class="font-serif font-bold text-black tracking-widest">阅览创作</div>
+                        <div class="text-[10px] text-gray-400 font-roman tracking-widest mt-1">CREATION</div>
+                    </a>
+                    <a href="#" class="bg-white p-6 rounded-2xl shadow-sm text-center flex flex-col items-center interactive-card">
+                        <div class="text-gray-400 mb-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg></div>
+                        <div class="font-serif font-bold text-black tracking-widest">前往龙港</div>
+                        <div class="text-[10px] text-gray-400 font-roman tracking-widest mt-1">TALK</div>
+                    </a>
+                    <a href="#" class="bg-white p-6 rounded-2xl shadow-sm text-center flex flex-col items-center interactive-card">
+                        <div class="text-gray-400 mb-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                        <div class="font-serif font-bold text-black tracking-widest">关于密保</div>
+                        <div class="text-[10px] text-gray-400 font-roman tracking-widest mt-1">ABOUT</div>
                     </a>
                 </div>
             </div>
@@ -89,13 +234,19 @@
 
     <footer class="bg-[#181818] py-8 border-t border-white/5 z-10 relative">
         <div class="px-5 flex flex-col items-center gap-5">
+            <div class="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-medium tracking-widest font-roman">
+                <a href="#" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Join us</a>
+                <a href="#" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Privacy</a>
+                <a href="#" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Wiki</a>
+                <a href="#" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">About</a>
+            </div>
             <div class="text-[11px] text-[#c89f5d] tracking-wide mt-2 font-roman text-center">
                 © 2026 Reozor Lab. CC-BY-SA 4.0
             </div>
         </div>
     </footer>
 
-    <!-- 引入 API 公共文件 -->
+    <!-- 引入公共 API -->
     <script src="./common.js"></script>
     <script>
         window.addEventListener('load', () => {
@@ -110,12 +261,14 @@
 
         window.addEventListener('scroll', () => {
             const scrollY = window.scrollY;
+            
             if (scrollY > 100) {
                 header.classList.add('header-scrolled');
                 dropdownMenu.classList.remove('active');
             } else {
                 header.classList.remove('header-scrolled');
             }
+
             if (scrollY > 0) {
                 const scale = Math.max(0.7, 1 - (scrollY / 300));
                 logoContent.style.transform = `scale(${scale})`;
@@ -134,7 +287,44 @@
             }
         });
 
-        // 检查登录状态
+        const reveals = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+
+        reveals.forEach(reveal => {
+            revealObserver.observe(reveal);
+        });
+
+        const scroller = document.getElementById('scroll-container');
+        let isInteracting = false;
+        let scrollTimer;
+
+        function startAutoScroll() {
+            clearInterval(scrollTimer);
+            scrollTimer = setInterval(() => {
+                if (isInteracting) return; 
+                scroller.scrollLeft += 1;
+                const halfWidth = scroller.scrollWidth / 2;
+                if (scroller.scrollLeft >= halfWidth) {
+                    scroller.scrollLeft -= halfWidth;
+                }
+            }, 30); 
+        }
+
+        startAutoScroll();
+
+        scroller.addEventListener('touchstart', () => { isInteracting = true; }, {passive: true});
+        scroller.addEventListener('mouseenter', () => { isInteracting = true; });
+        scroller.addEventListener('touchend', () => { isInteracting = false; }, {passive: true});
+        scroller.addEventListener('mouseleave', () => { isInteracting = false; });
+
+        // 检查登录状态 (调用 common.js)
         async function checkAuth() {
             try {
                 const data = await API.getMe();
