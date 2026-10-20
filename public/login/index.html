@@ -6,30 +6,31 @@
     <title>登录 · 匿境 Secarea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../style.css">
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
     <style>
         html, body { background-color: #141414; margin: 0; padding: 0; }
         .input-error { border-color: #ef4444 !important; }
+        html:not(.dark) .bg-\[\#f4f4f5\] { background-color: #f4f4f5 !important; }
+        html:not(.dark) .bg-white { background-color: #ffffff !important; }
+        html:not(.dark) input { background-color: #ffffff !important; color: #000000 !important; }
+        html:not(.dark) .text-black { color: #000000 !important; }
+        html:not(.dark) .text-gray-700 { color: #374151 !important; }
+        html:not(.dark) .text-gray-500 { color: #6b7280 !important; }
+        html:not(.dark) .border-gray-200 { border-color: #e5e7eb !important; }
     </style>
 </head>
 <body class="text-gray-900 min-h-screen flex flex-col relative bg-[#141414] bg-grid">
-
-    <header id="main-header" class="fixed top-0 z-50 w-full h-14 bg-[#252525] flex items-center">
-        <div class="px-5 w-full flex items-center justify-between h-full">
-            <a href="../index.html" class="flex items-center">
-                <span class="logo-text text-xl font-black tracking-tighter pt-1">CEC</span>
-            </a>
-            <div class="flex items-center gap-2">
-                <a href="../index.html" class="text-[#f5d78d] p-2 hover:opacity-70 transition-opacity text-sm font-roman">返回首页</a>
-            </div>
-        </div>
-    </header>
 
     <div class="fixed top-14 w-full h-[45vh] flex flex-col items-center justify-center z-0 pointer-events-none">
         <h1 class="text-6xl font-serif font-bold text-gold-bright tracking-[0.3em] mb-4">登录</h1>
         <p class="text-xl text-[#c89f5d] tracking-[0.5em] uppercase font-roman">Sign In</p>
     </div>
 
-    <div class="relative w-full flex-grow z-10">
+    <div class="relative w-full flex-grow z-10 pt-14">
         <div class="w-full h-[45vh]"></div>
         <div class="w-full bg-[#f4f4f5] rounded-t-[3rem] pt-12 pb-32 flex flex-col items-center shadow-[0_-15px_40px_rgba(0,0,0,0.6)]">
             <div class="w-[85%] max-w-md flex flex-col gap-5">
@@ -60,20 +61,14 @@
     </div>
 
     <script src="../common.js"></script>
+    <script src="../layout.js"></script>
     <script>
-        const header = document.getElementById('main-header');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) header.classList.add('header-scrolled');
-            else header.classList.remove('header-scrolled');
-        });
-
         const emailInput = document.getElementById('login-email');
         const passwordInput = document.getElementById('login-password');
         const emailError = document.getElementById('email-error');
         const passwordError = document.getElementById('password-error');
         const loginBtn = document.getElementById('submit-login');
 
-        // 输入时清除错误
         emailInput.addEventListener('input', () => { emailInput.classList.remove('input-error'); emailError.classList.add('hidden'); });
         passwordInput.addEventListener('input', () => { passwordInput.classList.remove('input-error'); passwordError.classList.add('hidden'); });
 
@@ -81,7 +76,6 @@
             const email = emailInput.value.trim();
             const password = passwordInput.value;
 
-            // 前端基础校验
             let hasError = false;
             if (!email) { emailInput.classList.add('input-error'); emailError.textContent = "请输入邮箱"; emailError.classList.remove('hidden'); hasError = true; }
             if (!password) { passwordInput.classList.add('input-error'); passwordError.textContent = "请输入密码"; passwordError.classList.remove('hidden'); hasError = true; }
@@ -93,7 +87,6 @@
             try {
                 const data = await API.login(email, password);
                 if (data.error) {
-                    // 根据后端返回的错误显示在对应框下
                     if (data.error.includes("密码") || data.error.includes("邮箱")) {
                         passwordInput.classList.add('input-error');
                         passwordError.textContent = "邮箱或密码错误";
@@ -101,9 +94,7 @@
                     }
                     throw new Error(data.error);
                 }
-
                 window.location.href = '/'; 
-
             } catch (error) {
                 console.error(error);
                 loginBtn.textContent = '进入内界';
