@@ -1,4 +1,3 @@
-/* 全局基础设置 */
 html { scroll-behavior: smooth; }
 
 @font-face {
@@ -12,11 +11,19 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
     -webkit-font-smoothing: antialiased; 
     overflow-x: hidden; 
+    transition: background-color 0.4s ease, color 0.4s ease;
 }
+
+/* 全局平滑过渡 */
+* {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 0.4s;
+    transition-timing-function: ease;
+}
+svg, .shadow-heavy, .shadow-sm, .shadow-md, .shadow-xl, .shadow-2xl { transition: none; }
 
 .font-roman { font-family: 'Gegor', serif; }
 
-/* 烫金文字 */
 .text-gold-bright {
     color: #f5d78d; 
     text-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -30,10 +37,9 @@ body {
 
 .header-scrolled .logo-text { color: #ffffff; }
 
-/* 导航栏交互 */
 #main-header {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: none; 
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); 
 }
 
 .header-scrolled {
@@ -45,19 +51,6 @@ body {
 #main-header .logo-text { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 .header-scrolled .logo-text { transform: scale(0.9); }
 
-#dropdown-menu {
-    opacity: 0;
-    transform: scale(0.95) translateY(-10px);
-    pointer-events: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-#dropdown-menu.active {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-    pointer-events: auto;
-}
-
-/* 加载动画 */
 #loading-screen { transition: opacity 0.6s ease, visibility 0.6s ease; }
 #loading-screen.hidden-loader { opacity: 0; visibility: hidden; }
 
@@ -78,7 +71,6 @@ body {
     100% { opacity: 1; transform: scale(1.1); background-color: #f2d7a4; box-shadow: 0 0 10px rgba(242, 215, 164, 0.5); }
 }
 
-/* 布局与阴影工具类 */
 .bleed-card { width: 110%; margin-left: -5%; }
 .shadow-heavy { box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -4px rgba(0, 0, 0, 0.05); }
 
@@ -91,7 +83,6 @@ body {
                       linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
-/* 滚动浮现动效 */
 .reveal {
     opacity: 0;
     transform: translateY(30px);
@@ -102,21 +93,24 @@ body {
     opacity: 1;
     transform: translateY(0);
 }
-.delay-100 { transition-delay: 100ms; }
-.delay-200 { transition-delay: 200ms; }
-.delay-300 { transition-delay: 300ms; }
 
-/* 按钮和卡片的悬停交互 */
-.interactive-btn {
-    transition: all 0.2s ease;
-}
-.interactive-btn:active {
-    transform: scale(0.96);
-}
-.interactive-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.interactive-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.1);
-}
+.interactive-btn { transition: all 0.2s ease; }
+.interactive-btn:active { transform: scale(0.96); }
+.interactive-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.interactive-card:hover { transform: translateY(-4px); box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.1); }
+
+/* ======== 暗黑模式专属样式 ======== */
+html.dark body { background-color: #0f0f0f !important; }
+html.dark .bg-neutral-400 { background-color: #1a1a1a !important; }
+html.dark .bg-\[\#f4f4f5\] { background-color: #151515 !important; }
+html.dark .bg-white { background-color: #1f1f1f !important; }
+html.dark .text-black, html.dark .text-gray-900, html.dark .text-gray-700 { color: #f3f4f6 !important; }
+html.dark .text-gray-600, html.dark .text-gray-500 { color: #9ca3af !important; }
+html.dark .border-gray-200, html.dark .border-gray-100, html.dark .border-gray-300 { border-color: #333333 !important; }
+html.dark .border-gray-50 { border-color: #2a2a2a !important; }
+html.dark input { background-color: #111111 !important; color: #ffffff !important; border-color: #333333 !important; }
+html.dark .hover\:bg-gray-100:hover { background-color: #2a2a2a !important; }
+html.dark .bg-\[\#111111\], html.dark .bg-\[\#252525\], html.dark .bg-\[\#141414\] { background-color: #111111 !important; }
+html.dark .text-white { color: #ffffff !important; }
+html.dark .bg-gradient-to-br.from-\[\#e8c88c\].to-\[\#c89f5d\] .text-black { color: #000 !important; }
+html.dark .bg-gradient-to-br.from-\[\#e8c88c\].to-\[\#c89f5d\] .text-black\/80 { color: rgba(0, 0, 0, 0.8) !important; }
