@@ -6,30 +6,31 @@
     <title>注册 · 匿境 Secarea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../style.css">
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
     <style>
         html, body { background-color: #141414; margin: 0; padding: 0; }
         .input-error { border-color: #ef4444 !important; }
+        html:not(.dark) .bg-\[\#f4f4f5\] { background-color: #f4f4f5 !important; }
+        html:not(.dark) .bg-white { background-color: #ffffff !important; }
+        html:not(.dark) input { background-color: #ffffff !important; color: #000000 !important; }
+        html:not(.dark) .text-black { color: #000000 !important; }
+        html:not(.dark) .text-gray-700 { color: #374151 !important; }
+        html:not(.dark) .text-gray-500 { color: #6b7280 !important; }
+        html:not(.dark) .border-gray-200 { border-color: #e5e7eb !important; }
     </style>
 </head>
 <body class="text-gray-900 min-h-screen flex flex-col relative bg-[#141414] bg-grid">
-
-    <header id="main-header" class="fixed top-0 z-50 w-full h-14 bg-[#252525] flex items-center">
-        <div class="px-5 w-full flex items-center justify-between h-full">
-            <a href="../index.html" class="flex items-center">
-                <span class="logo-text text-xl font-black tracking-tighter pt-1">CEC</span>
-            </a>
-            <div class="flex items-center gap-2">
-                <a href="../index.html" class="text-[#f5d78d] p-2 hover:opacity-70 transition-opacity text-sm font-roman">返回首页</a>
-            </div>
-        </div>
-    </header>
 
     <div class="fixed top-14 w-full h-[45vh] flex flex-col items-center justify-center z-0 pointer-events-none">
         <h1 class="text-6xl font-serif font-bold text-gold-bright tracking-[0.3em] mb-4">注册</h1>
         <p class="text-xl text-[#c89f5d] tracking-[0.5em] uppercase font-roman">Register</p>
     </div>
 
-    <div class="relative w-full flex-grow z-10">
+    <div class="relative w-full flex-grow z-10 pt-14">
         <div class="w-full h-[45vh]"></div>
         <div class="w-full bg-[#f4f4f5] rounded-t-[3rem] pt-12 pb-32 flex flex-col items-center shadow-[0_-15px_40px_rgba(0,0,0,0.6)]">
             
@@ -99,14 +100,8 @@
     </div>
 
     <script src="../common.js"></script>
+    <script src="../layout.js"></script>
     <script>
-        const header = document.getElementById('main-header');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) header.classList.add('header-scrolled');
-            else header.classList.remove('header-scrolled');
-        });
-
-        // 图形验证码
         const captchaText = document.getElementById('captcha-text');
         const captchaBox = document.getElementById('captcha-box');
         function generateCaptcha() {
@@ -118,7 +113,6 @@
         generateCaptcha();
         captchaBox.addEventListener('click', generateCaptcha);
 
-        // 获取 DOM
         const nameInput = document.getElementById('reg-name');
         const emailInput = document.getElementById('reg-email');
         const otpInput = document.getElementById('reg-otp');
@@ -129,20 +123,16 @@
         const getCodeBtn = document.getElementById('get-code-btn');
         let countdown = 60; let timer = null;
 
-        // 封装一个显示错误的函数
         function showError(input, errorEl, msg) {
             input.classList.add('input-error');
             errorEl.textContent = msg;
             errorEl.classList.remove('hidden');
         }
-
-        // 封装一个清除错误的函数
         function clearError(input, errorEl) {
             input.classList.remove('input-error');
             errorEl.classList.add('hidden');
         }
 
-        // 绑定输入事件，清空对应报错
         [nameInput, emailInput, otpInput, captchaInput, passwordInput, confirmInput].forEach((input, index) => {
             input.addEventListener('input', () => {
                 const ids = ['name-error', 'email-error', 'otp-error', 'captcha-error', 'password-error', 'confirm-error'];
@@ -150,7 +140,6 @@
             });
         });
 
-        // 发送验证码
         getCodeBtn.addEventListener('click', async () => {
             if (timer) return;
             const email = emailInput.value.trim();
@@ -180,7 +169,6 @@
             }
         });
 
-        // 提交注册
         const submitBtn = document.getElementById('submit-register');
         submitBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
@@ -196,17 +184,12 @@
             if (!otp) { showError(otpInput, document.getElementById('otp-error'), "请输入验证码"); hasError = true; }
             if (!password) { showError(passwordInput, document.getElementById('password-error'), "请输入密码"); hasError = true; }
             if (!captchaInputValue) { showError(captchaInput, document.getElementById('captcha-error'), "请输入安全验证码"); hasError = true; }
-            
-            // 图形验证码前端校验
             if (captchaInputValue && captchaInputValue.toUpperCase() !== captchaText.textContent.toUpperCase()) {
                 showError(captchaInput, document.getElementById('captcha-error'), "图形验证码错误"); hasError = true;
             }
-            
-            // 密码一致性前端校验
             if (password && confirmPassword && password !== confirmPassword) {
                 showError(confirmInput, document.getElementById('confirm-error'), "两次输入的密码不一致"); hasError = true;
             }
-
             if (hasError) return;
 
             submitBtn.textContent = '正在建立档案...';
@@ -214,23 +197,17 @@
 
             try {
                 const data = await API.register(name, email, password, otp);
-                
                 if (data.error) {
-                    // 根据后端返回的错误信息分配到不同输入框
                     if (data.error.includes("邮箱") || data.error.includes("账号")) {
                         showError(emailInput, document.getElementById('email-error'), data.error);
                     } else if (data.error.includes("验证码")) {
                         showError(otpInput, document.getElementById('otp-error'), data.error);
                     } else {
-                        // 兜底提示
                         showError(emailInput, document.getElementById('email-error'), data.error);
                     }
                     throw new Error(data.error);
                 }
-
-                // 成功跳转
                 window.location.href = '/login/'; 
-
             } catch (error) {
                 console.error(error);
                 submitBtn.textContent = '建立档案';
