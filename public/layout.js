@@ -34,9 +34,7 @@ const navHTML = `
         <div class="absolute inset-0 bg-[#1f1f1f]/95 backdrop-blur-xl z-[-1]"></div>
         <div class="flex flex-col py-3 px-2 gap-1 font-sans">
             <a href="/login/index.html" id="nav-login-btn" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">登录</a>
-            <!-- 默认隐藏的退出登录按钮 -->
             <a href="#" id="nav-logout-btn" class="hidden px-4 py-2 text-sm font-medium rounded-lg text-red-400 hover:bg-red-500/10 transition-colors">退出登录</a>
-            
             <div class="h-px bg-white/10 my-1 mx-2"></div>
             <a href="/wiki/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">WIKI</a>
             <a href="/creation/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">创作</a>
@@ -64,22 +62,30 @@ const footerHTML = `
 </footer>
 `;
 
-// 注入加载动画和导航
 document.body.insertAdjacentHTML('afterbegin', loadingHTML);
 document.body.insertAdjacentHTML('afterbegin', navHTML);
 
-// 仅在非隐藏页面注入页脚
 if (!hideFooterPages.some(path => currentPath.includes(path))) {
     document.body.insertAdjacentHTML('beforeend', footerHTML);
 }
 
 function initLayout() {
+    // 1. 页面加载完毕后读取闪存消息 (Flash Message)
     window.addEventListener('load', () => {
         const loader = document.getElementById('loading-screen');
         if (loader) {
             loader.classList.add('opacity-0', 'pointer-events-none');
             setTimeout(() => loader.remove(), 500);
         }
+        
+        // 延迟半秒弹出提示，避免和加载动画冲突
+        setTimeout(() => {
+            const msg = sessionStorage.getItem('flash_message');
+            if (msg && typeof showToast !== 'undefined') {
+                showToast(msg, 'success');
+                sessionStorage.removeItem('flash_message');
+            }
+        }, 600);
     });
 
     const header = document.getElementById('main-header');
@@ -92,7 +98,6 @@ function initLayout() {
     const loginBtn = document.getElementById('nav-login-btn');
     const logoutBtn = document.getElementById('nav-logout-btn');
 
-    // 滚动收缩导航栏
     window.addEventListener('scroll', () => {
         if (window.scrollY > 50) {
             header.classList.add('header-scrolled');
@@ -102,7 +107,6 @@ function initLayout() {
         }
     });
 
-    // 侧边栏展开/折叠
     function closeMenu() {
         dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
         dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
@@ -125,7 +129,6 @@ function initLayout() {
         }
     });
 
-    // 主题切换
     function updateThemeIcons() {
         if (document.documentElement.classList.contains('dark')) {
             iconSun.classList.remove('hidden');
@@ -148,7 +151,7 @@ function initLayout() {
         updateThemeIcons();
     });
 
-    // 登录状态检测与按钮切换
+    // 2. 登录状态检测与侧边栏按钮切换
     if (typeof API !== 'undefined') {
         API.getMe().then(data => {
             if (data && data.user) {
@@ -157,27 +160,26 @@ function initLayout() {
                     loginBtn.href = "/profile/"; 
                 }
                 if (logoutBtn) {
-                    logoutBtn.classList.remove('hidden'); // 显示退出按钮
+                    logoutBtn.classList.remove('hidden');
                 }
             }
         }).catch(console.log);
     }
 
-    // 退出登录绑定
+    // 3. 退出登录绑定
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             try {
                 await API.logout();
-                window.location.href = '/login/'; // 退出后跳转
+                window.location.href = '/login/'; // 退出后直接跳转
             } catch (error) {
-                alert("退出失败，请重试");
+                if (typeof showToast !== 'undefined') showToast("退出失败，请重试", "error");
             }
         });
     }
 }
 
-// 确保 DOM 加载完毕
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initLayout);
 } else {
