@@ -6,45 +6,15 @@
     <title>匿境 · Secarea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="./style.css">
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
 </head>
-<body class="text-gray-900 min-h-screen flex flex-col relative">
+<body class="text-gray-900 min-h-screen flex flex-col relative bg-[#e5e7eb]">
 
-    <div id="loading-screen" class="fixed inset-0 z-[9999] bg-[#252525] flex items-center justify-center">
-        <div class="dot-grid">
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-        </div>
-    </div>
-
-    <header id="main-header" class="sticky top-0 z-50 w-full h-14 bg-[#252525] flex items-center">
-        <div class="px-5 w-full flex items-center justify-between h-full">
-            <a href="./index.html" class="flex items-center">
-                <span class="logo-text text-xl font-black tracking-tighter pt-1">CEC</span>
-            </a>
-            <div class="flex items-center gap-2">
-                <button id="menu-btn" class="text-[#f5d78d] p-2 hover:opacity-70 transition-opacity flex items-center justify-center interactive-btn">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-        <!-- 侧边菜单 -->
-        <div id="dropdown-menu" class="absolute top-[60px] right-4 w-44 rounded-2xl overflow-hidden shadow-2xl border border-white/10 z-50">
-            <div class="absolute inset-0 bg-[#1f1f1f]/95 backdrop-blur-xl z-[-1]"></div>
-            <div class="flex flex-col py-3 px-2 gap-1 font-sans">
-                <a href="./login/index.html" id="nav-login-btn" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">登录</a>
-                <a href="#" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">WIKI</a>
-                <a href="#" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">创作</a>
-                <a href="#" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">贴吧</a>
-                <a href="#" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">关于</a>
-                <a href="#" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">加入我们</a>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-grow flex flex-col items-center w-full pb-20 overflow-hidden">
+    <main class="flex-grow flex flex-col items-center w-full pb-20 overflow-hidden pt-14">
         
         <section id="hero-section" class="w-full flex flex-col bg-neutral-400 -mt-[1px]">
             
@@ -158,31 +128,26 @@
                     </section>
                 </div>
 
-                <!-- 横向滚动卡片区 -->
                 <div class="w-full mt-8 relative z-10 overflow-hidden reveal">
                     <div id="scroll-container" class="flex gap-5 px-6 py-2 overflow-x-auto scrollbar-hide" style="scroll-behavior: auto;">
-                        
                         <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
                             <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">想要与我们联系？</h4>
                             <p class="text-black/80 text-sm leading-relaxed mb-4">无论你是流落街头的独立觉醒者，还是对 CEC 密保会抱有疑问的沉睡者，通讯网永远为你敞开。</p>
                             <p class="text-black/80 text-sm leading-relaxed">· 管理员 QQ：2157053849<br>· 业务联系邮箱：<br>reaozar-secarea@outlook.com</p>
                             <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">发起通讯</a></div>
                         </div>
-
                         <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
                             <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">关于作品的授权</h4>
                             <p class="text-black/80 text-sm leading-relaxed mb-4">本站所有原创世界观文本、角色视觉设定均严格遵循 <strong class="text-black">CC-BY-SA 4.0</strong> 协议。</p>
                             <p class="text-black/80 text-sm leading-relaxed">你可以自由复制、分发、演绎。前提是：必须保留原作者署名（Reozor Lab），且必须使用相同协议共享。</p>
                             <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">查看完整协议</a></div>
                         </div>
-
                         <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
                             <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">关于这个世界观</h4>
                             <p class="text-black/80 text-sm leading-relaxed mb-4">「匿境」并非普通的奇幻世界。在这里，魔法、元力与超自然异能，都在现代科技与秘密机构的监控下暗流涌动。</p>
                             <p class="text-black/80 text-sm leading-relaxed">从弑魔潮，到保密公约的彻底崩塌。CEC 与 BSA 长达百年的明暗博弈，将决定物种的未来。</p>
                             <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">进入维基百科</a></div>
                         </div>
-
                         <!-- 循环组 -->
                         <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
                             <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">想要与我们联系？</h4>
@@ -205,7 +170,6 @@
                     </div>
                 </div>
 
-                <!-- 四宫格导航 -->
                 <div class="w-[85%] max-w-lg mt-8 grid grid-cols-2 gap-4 relative z-30 mb-8">
                     <a href="#" class="bg-white p-6 rounded-2xl shadow-sm text-center flex flex-col items-center interactive-card">
                         <div class="text-gray-400 mb-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg></div>
@@ -232,58 +196,19 @@
         </section>
     </main>
 
-    <footer class="bg-[#181818] py-8 border-t border-white/5 z-10 relative">
-        <div class="px-5 flex flex-col items-center gap-5">
-            <div class="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-medium tracking-widest font-roman">
-                <a href="#" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Join us</a>
-                <a href="#" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Privacy</a>
-                <a href="#" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Wiki</a>
-                <a href="#" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">About</a>
-            </div>
-            <div class="text-[11px] text-[#c89f5d] tracking-wide mt-2 font-roman text-center">
-                © 2026 Reozor Lab. CC-BY-SA 4.0
-            </div>
-        </div>
-    </footer>
-
-    <!-- 引入公共 API -->
+    <!-- 核心依赖脚本 -->
     <script src="./common.js"></script>
+    <script src="./layout.js"></script>
     <script>
-        window.addEventListener('load', () => {
-            const loader = document.getElementById('loading-screen');
-            setTimeout(() => { loader.classList.add('hidden-loader'); }, 800); 
-        });
-
-        const header = document.getElementById('main-header');
-        const menuBtn = document.getElementById('menu-btn');
-        const dropdownMenu = document.getElementById('dropdown-menu');
+        // 仅保留首页专属动效
         const logoContent = document.getElementById('logo-content');
-
         window.addEventListener('scroll', () => {
             const scrollY = window.scrollY;
-            
-            if (scrollY > 100) {
-                header.classList.add('header-scrolled');
-                dropdownMenu.classList.remove('active');
-            } else {
-                header.classList.remove('header-scrolled');
-            }
-
             if (scrollY > 0) {
                 const scale = Math.max(0.7, 1 - (scrollY / 300));
                 logoContent.style.transform = `scale(${scale})`;
             } else {
                 logoContent.style.transform = `scale(1)`;
-            }
-        });
-
-        menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); 
-            dropdownMenu.classList.toggle('active');
-        });
-        document.addEventListener('click', (e) => {
-            if (!dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-                dropdownMenu.classList.remove('active');
             }
         });
 
@@ -296,10 +221,7 @@
                 }
             });
         }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
-
-        reveals.forEach(reveal => {
-            revealObserver.observe(reveal);
-        });
+        reveals.forEach(reveal => { revealObserver.observe(reveal); });
 
         const scroller = document.getElementById('scroll-container');
         let isInteracting = false;
@@ -316,30 +238,12 @@
                 }
             }, 30); 
         }
-
         startAutoScroll();
 
         scroller.addEventListener('touchstart', () => { isInteracting = true; }, {passive: true});
         scroller.addEventListener('mouseenter', () => { isInteracting = true; });
         scroller.addEventListener('touchend', () => { isInteracting = false; }, {passive: true});
         scroller.addEventListener('mouseleave', () => { isInteracting = false; });
-
-        // 检查登录状态 (调用 common.js)
-        async function checkAuth() {
-            try {
-                const data = await API.getMe();
-                if (data && data.user) {
-                    const loginBtn = document.getElementById('nav-login-btn');
-                    if (loginBtn) {
-                        loginBtn.textContent = `欢迎, ${data.user.name}`;
-                        loginBtn.href = "#"; // 预留个人中心
-                    }
-                }
-            } catch (error) {
-                console.log("未登录");
-            }
-        }
-        checkAuth();
     </script>
 </body>
 </html>
