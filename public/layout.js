@@ -1,5 +1,5 @@
 const currentPath = window.location.pathname;
-// 定义哪些页面不需要显示页脚
+// 配置哪些页面不显示页脚
 const hideFooterPages = ['/login/', '/register/', '/profile/'];
 
 const loadingHTML = `
@@ -19,7 +19,6 @@ const navHTML = `
             <span class="logo-text text-xl font-black tracking-tighter pt-1">CEC</span>
         </a>
         <div class="flex items-center gap-2">
-            <!-- 黑暗模式切换 -->
             <button id="theme-toggle" class="text-[#f5d78d] p-2 hover:opacity-70 transition-opacity flex items-center justify-center interactive-btn">
                 <svg id="icon-sun" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 <svg id="icon-moon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
@@ -35,6 +34,10 @@ const navHTML = `
         <div class="absolute inset-0 bg-[#1f1f1f]/95 backdrop-blur-xl z-[-1]"></div>
         <div class="flex flex-col py-3 px-2 gap-1 font-sans">
             <a href="/login/index.html" id="nav-login-btn" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">登录</a>
+            <!-- 默认隐藏的退出登录按钮 -->
+            <a href="#" id="nav-logout-btn" class="hidden px-4 py-2 text-sm font-medium rounded-lg text-red-400 hover:bg-red-500/10 transition-colors">退出登录</a>
+            
+            <div class="h-px bg-white/10 my-1 mx-2"></div>
             <a href="/wiki/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">WIKI</a>
             <a href="/creation/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">创作</a>
             <a href="/forum/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">贴吧</a>
@@ -61,10 +64,11 @@ const footerHTML = `
 </footer>
 `;
 
+// 注入加载动画和导航
 document.body.insertAdjacentHTML('afterbegin', loadingHTML);
 document.body.insertAdjacentHTML('afterbegin', navHTML);
 
-// 判断是否注入页脚
+// 仅在非隐藏页面注入页脚
 if (!hideFooterPages.some(path => currentPath.includes(path))) {
     document.body.insertAdjacentHTML('beforeend', footerHTML);
 }
@@ -84,23 +88,31 @@ function initLayout() {
     const themeToggleBtn = document.getElementById('theme-toggle');
     const iconSun = document.getElementById('icon-sun');
     const iconMoon = document.getElementById('icon-moon');
+    
+    const loginBtn = document.getElementById('nav-login-btn');
+    const logoutBtn = document.getElementById('nav-logout-btn');
 
+    // 滚动收缩导航栏
     window.addEventListener('scroll', () => {
         if (window.scrollY > 50) {
             header.classList.add('header-scrolled');
-            dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
-            dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
+            closeMenu();
         } else {
             header.classList.remove('header-scrolled');
         }
     });
 
+    // 侧边栏展开/折叠
+    function closeMenu() {
+        dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
+        dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
+    }
+
     menuBtn.addEventListener('click', (e) => {
         e.stopPropagation(); 
         const isOpen = dropdownMenu.classList.contains('opacity-100');
         if (isOpen) {
-            dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
-            dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
+            closeMenu();
         } else {
             dropdownMenu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
             dropdownMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
@@ -109,11 +121,11 @@ function initLayout() {
     
     document.addEventListener('click', (e) => {
         if (!dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-            dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
-            dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
+            closeMenu();
         }
     });
 
+    // 主题切换
     function updateThemeIcons() {
         if (document.documentElement.classList.contains('dark')) {
             iconSun.classList.remove('hidden');
@@ -136,19 +148,36 @@ function initLayout() {
         updateThemeIcons();
     });
 
+    // 登录状态检测与按钮切换
     if (typeof API !== 'undefined') {
         API.getMe().then(data => {
             if (data && data.user) {
-                const loginBtn = document.getElementById('nav-login-btn');
                 if (loginBtn) {
                     loginBtn.textContent = `欢迎, ${data.user.name}`;
                     loginBtn.href = "/profile/"; 
                 }
+                if (logoutBtn) {
+                    logoutBtn.classList.remove('hidden'); // 显示退出按钮
+                }
             }
         }).catch(console.log);
     }
+
+    // 退出登录绑定
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await API.logout();
+                window.location.href = '/login/'; // 退出后跳转
+            } catch (error) {
+                alert("退出失败，请重试");
+            }
+        });
+    }
 }
 
+// 确保 DOM 加载完毕
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initLayout);
 } else {
