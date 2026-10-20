@@ -9,17 +9,13 @@ export default {
         const { email } = await request.json();
         if (!email) return new Response("邮箱不能为空", { status: 400 });
 
-        // 生成 6 位随机验证码
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        // 设置 10 分钟后过期
         const expiresAt = Date.now() + 10 * 60 * 1000;
 
-        // 存入数据库 (先删除旧的，再插入新的)
         await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
         await env.DB.prepare("INSERT INTO otp_codes (email, code, expires_at) VALUES (?, ?, ?)")
           .bind(email, otp, expiresAt).run();
 
-        // 调用 EmailJS 发信
         const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -46,31 +42,26 @@ export default {
       try {
         const { name, email, password, otp } = await request.json();
 
-        // 1. 校验验证码
         const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(email, otp).first();
         if (!record || record.expires_at < Date.now()) {
           return new Response(JSON.stringify({ error: "验证码错误或已过期" }), { status: 400, headers: { "Content-Type": "application/json" } });
         }
 
-        // 2. 检查邮箱是否已注册
         const existingUser = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
         if (existingUser) {
           return new Response(JSON.stringify({ error: "该邮箱已被注册" }), { status: 400, headers: { "Content-Type": "application/json" } });
         }
 
-        // 3. 密码加密 (原生 Web Crypto API 加盐哈希)
-        const salt = env.BETTER_AUTH_SECRET; // 借用你之前设置的 secret 作为盐
+        const salt = env.BETTER_AUTH_SECRET;
         const msgBuffer = new TextEncoder().encode(password + salt);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const hashedPassword = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-        // 4. 存入用户表
         const userId = crypto.randomUUID();
         await env.DB.prepare("INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)")
           .bind(userId, name, email, hashedPassword).run();
 
-        // 5. 删除已使用的验证码
         await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
 
         return new Response(JSON.stringify({ success: true, message: "注册成功" }), {
@@ -86,13 +77,11 @@ export default {
       try {
         const { email, password } = await request.json();
 
-        // 1. 找用户
         const user = await env.DB.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
         if (!user) {
           return new Response(JSON.stringify({ error: "邮箱或密码错误" }), { status: 401, headers: { "Content-Type": "application/json" } });
         }
 
-        // 2. 验证密码
         const salt = env.BETTER_AUTH_SECRET;
         const msgBuffer = new TextEncoder().encode(password + salt);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -103,13 +92,11 @@ export default {
           return new Response(JSON.stringify({ error: "邮箱或密码错误" }), { status: 401, headers: { "Content-Type": "application/json" } });
         }
 
-        // 3. 生成 Session Token (存为 Cookie)
         const sessionToken = crypto.randomUUID();
-        const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30天有效
+        const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
         await env.DB.prepare("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)")
           .bind(sessionToken, user.id, expiresAt).run();
 
-        // 4. 返回 Cookie 给浏览器
         return new Response(JSON.stringify({ success: true, message: "登录成功" }), {
           headers: { 
             "Content-Type": "application/json",
@@ -121,7 +108,30 @@ export default {
       }
     }
 
-    // ================= 4. 检查当前登录状态 =================
+    // ================= 4. 退出登录 (新增) =================
+    if (url.pathname === '/api/auth/logout' && method === 'POST') {
+      try {
+        const cookieHeader = request.headers.get('Cookie');
+        if (cookieHeader) {
+          const match = cookieHeader.match(/session=([^;]+)/);
+          if (match) {
+            const sessionToken = match[1];
+            await env.DB.prepare("DELETE FROM sessions WHERE token = ?").bind(sessionToken).run();
+          }
+        }
+        
+        return new Response(JSON.stringify({ success: true, message: "退出成功" }), {
+          headers: { 
+            "Content-Type": "application/json",
+            "Set-Cookie": "session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0"
+          }
+        });
+      } catch (error) {
+        return new Response(JSON.stringify({ error: "退出失败" }), { status: 500, headers: { "Content-Type": "application/json" } });
+      }
+    }
+
+    // ================= 5. 检查当前登录状态 =================
     if (url.pathname === '/api/auth/me' && method === 'GET') {
       const cookieHeader = request.headers.get('Cookie');
       if (!cookieHeader) return new Response(JSON.stringify({ user: null }), { headers: { "Content-Type": "application/json" } });
