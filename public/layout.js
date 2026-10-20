@@ -1,0 +1,158 @@
+// 1. 加载动画 HTML
+const loadingHTML = `
+<div id="loading-screen" class="fixed inset-0 z-[9999] bg-[#252525] flex items-center justify-center transition-opacity duration-500">
+    <div class="dot-grid">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+</div>
+`;
+
+// 2. 导航栏 HTML
+const navHTML = `
+<header id="main-header" class="fixed top-0 z-50 w-full h-14 bg-[#252525] flex items-center transition-all duration-300">
+    <div class="px-5 w-full flex items-center justify-between h-full">
+        <a href="/" class="flex items-center">
+            <span class="logo-text text-xl font-black tracking-tighter pt-1">CEC</span>
+        </a>
+        <div class="flex items-center gap-2">
+            <button id="theme-toggle" class="text-[#f5d78d] p-2 hover:opacity-70 transition-opacity flex items-center justify-center interactive-btn">
+                <svg id="icon-sun" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="icon-moon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+            <button id="menu-btn" class="text-[#f5d78d] p-2 hover:opacity-70 transition-opacity flex items-center justify-center interactive-btn">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+    <div id="dropdown-menu" class="absolute top-[60px] right-4 w-44 rounded-2xl overflow-hidden shadow-2xl border border-white/10 z-50 opacity-0 pointer-events-none transition-all duration-300 scale-95 translate-y-[-10px]">
+        <div class="absolute inset-0 bg-[#1f1f1f]/95 backdrop-blur-xl z-[-1]"></div>
+        <div class="flex flex-col py-3 px-2 gap-1 font-sans">
+            <a href="/login/index.html" id="nav-login-btn" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">登录</a>
+            <a href="/wiki/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">WIKI</a>
+            <a href="/creation/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">创作</a>
+            <a href="/forum/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">贴吧</a>
+            <a href="/about/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">关于</a>
+            <a href="/join/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">加入我们</a>
+        </div>
+    </div>
+</header>
+`;
+
+// 3. 页脚 HTML
+const footerHTML = `
+<footer class="bg-[#181818] py-8 border-t border-white/5 z-10 relative mt-auto">
+    <div class="px-5 flex flex-col items-center gap-5">
+        <div class="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-medium tracking-widest font-roman">
+            <a href="/join/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Join us</a>
+            <a href="/privacy/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Privacy</a>
+            <a href="/wiki/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Wiki</a>
+            <a href="/about/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">About</a>
+        </div>
+        <div class="text-[11px] text-[#c89f5d] tracking-wide mt-2 font-roman text-center">
+            © 2026 Reozar Lab. CC-BY-SA 4.0
+        </div>
+    </div>
+</footer>
+`;
+
+// 注入到页面中
+document.body.insertAdjacentHTML('afterbegin', loadingHTML);
+document.body.insertAdjacentHTML('afterbegin', navHTML);
+document.body.insertAdjacentHTML('beforeend', footerHTML);
+
+// ======== 逻辑初始化 ========
+function initLayout() {
+    // 1. 隐藏加载动画
+    window.addEventListener('load', () => {
+        const loader = document.getElementById('loading-screen');
+        if (loader) {
+            loader.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => loader.remove(), 500);
+        }
+    });
+
+    const header = document.getElementById('main-header');
+    const menuBtn = document.getElementById('menu-btn');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const iconSun = document.getElementById('icon-sun');
+    const iconMoon = document.getElementById('icon-moon');
+
+    // 2. 滚动监听（导航栏缩小）
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            header.classList.add('header-scrolled');
+            // 收起菜单
+            dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
+            dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
+        } else {
+            header.classList.remove('header-scrolled');
+        }
+    });
+
+    // 3. 菜单展开/收起
+    menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); 
+        const isOpen = dropdownMenu.classList.contains('opacity-100');
+        if (isOpen) {
+            dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
+            dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
+        } else {
+            dropdownMenu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
+            dropdownMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
+        }
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) {
+            dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
+            dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
+        }
+    });
+
+    // 4. 主题切换
+    function updateThemeIcons() {
+        if (document.documentElement.classList.contains('dark')) {
+            iconSun.classList.remove('hidden');
+            iconMoon.classList.add('hidden');
+        } else {
+            iconSun.classList.add('hidden');
+            iconMoon.classList.remove('hidden');
+        }
+    }
+    updateThemeIcons();
+
+    themeToggleBtn.addEventListener('click', () => {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+        updateThemeIcons();
+    });
+
+    // 5. 检查登录状态
+    if (typeof API !== 'undefined') {
+        API.getMe().then(data => {
+            if (data && data.user) {
+                const loginBtn = document.getElementById('nav-login-btn');
+                if (loginBtn) {
+                    loginBtn.textContent = `欢迎, ${data.user.name}`;
+                    loginBtn.href = "/profile/"; // 以后指向个人中心
+                }
+            }
+        }).catch(console.log);
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLayout);
+} else {
+    initLayout();
+}
