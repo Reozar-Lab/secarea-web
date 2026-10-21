@@ -6,17 +6,12 @@ html { scroll-behavior: smooth; }
     font-display: swap;
 }
 
-/* 基础页面底色与过渡 */
 body { 
     background: #e5e7eb; 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
     -webkit-font-smoothing: antialiased; 
     overflow-x: hidden; 
     transition: background-color 0.4s ease, color 0.4s ease;
-}
-
-html.dark body { 
-    background-color: #0f0f0f !important; 
 }
 
 /* 全局平滑过渡 */
@@ -109,3 +104,41 @@ svg, .shadow-heavy, .shadow-sm, .shadow-md, .shadow-xl, .shadow-2xl { transition
 .interactive-btn:active { transform: scale(0.96); }
 .interactive-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
 .interactive-card:hover { transform: translateY(-4px); box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.1); }
+
+
+/* ================= 暗黑模式专属样式 (全局暴力覆盖) ================= */
+
+html.dark body { background-color: #0f0f0f !important; }
+html.dark .bg-neutral-400 { background-color: #1a1a1a !important; }
+html.dark .bg-\[\#f4f4f5\] { background-color: #151515 !important; }
+html.dark .bg-white { background-color: #1f1f1f !important; }
+
+/* 文字颜色反转 */
+html.dark .text-black, 
+html.dark .text-gray-900, 
+html.dark .text-gray-700 { color: #f3f4f6 !important; }
+html.dark .text-gray-600, 
+html.dark .text-gray-500 { color: #9ca3af !important; }
+
+/* 边框反转 */
+html.dark .border-gray-200, 
+html.dark .border-gray-100, 
+html.dark .border-gray-300 { border-color: #333333 !important; }
+html.dark .border-gray-50 { border-color: #2a2a2a !important; }
+
+/* 输入框反转 */
+html.dark input, 
+html.dark textarea { background-color: #111111 !important; color: #ffffff !important; border-color: #333333 !important; }
+
+/* 悬停翻转 */
+html.dark .hover\:bg-gray-100:hover { background-color: #2a2a2a !important; }
+
+/* 保护原生黑卡不被反转 */
+html.dark .bg-\[\#111111\], 
+html.dark .bg-\[\#252525\], 
+html.dark .bg-\[\#141414\] { background-color: #111111 !important; }
+html.dark .text-white { color: #ffffff !important; }
+
+/* 保护金卡的文字依然是黑色 */
+html.dark .bg-gradient-to-br.from-\[\#e8c88c\].to-\[\#c89f5d\] .text-black { color: #000 !important; }
+html.dark .bg-gradient-to-br.from-\[\#e8c88c\].to-\[\#c89f5d\] .text-black\/80 { color: rgba(0, 0, 0, 0.8) !important; }
