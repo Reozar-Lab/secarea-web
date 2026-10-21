@@ -1,3 +1,4 @@
+/* ================= 1. 全局基础设定 ================= */
 html { scroll-behavior: smooth; }
 
 @font-face {
@@ -14,131 +15,99 @@ body {
     transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-/* 全局平滑过渡 */
-* {
-    transition-property: background-color, border-color, color, fill, stroke;
-    transition-duration: 0.4s;
-    transition-timing-function: ease;
-}
-svg, .shadow-heavy, .shadow-sm, .shadow-md, .shadow-xl, .shadow-2xl { transition: none; }
-
-/* 字体类 */
 .font-roman { font-family: 'Gegor', serif; }
 
-.text-gold-bright {
-    color: #f5d78d; 
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
+/* 基础过渡 */
+* { transition-property: background-color, border-color, color, fill, stroke; transition-duration: 0.4s; transition-timing-function: ease; }
+svg, .shadow-heavy, .shadow-sm, .shadow-md, .shadow-xl, .shadow-2xl { transition: none; }
 
-.logo-text {
-    font-family: 'Gegor', serif;
-    color: #f5d78d;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
+/* ================= 2. 全局导航与动效 ================= */
+.text-gold-bright { color: #f5d78d; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.logo-text { font-family: 'Gegor', serif; color: #f5d78d; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 .header-scrolled .logo-text { color: #ffffff; }
 
-/* 导航栏交互 */
-#main-header {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); 
-}
-
-.header-scrolled {
-    height: 35px !important; 
-    background-color: rgba(85, 85, 85, 0.6) !important; 
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-}
+#main-header { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); }
+.header-scrolled { height: 35px !important; background-color: rgba(85, 85, 85, 0.6) !important; backdrop-filter: blur(10px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25); }
 #main-header .logo-text { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 .header-scrolled .logo-text { transform: scale(0.9); }
 
-/* 加载动画 */
 #loading-screen { transition: opacity 0.6s ease, visibility 0.6s ease; }
 #loading-screen.hidden-loader { opacity: 0; visibility: hidden; }
-
 .dot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.dot {
-    width: 12px; height: 12px; border-radius: 50%;
-    background-color: #c89f5d; opacity: 0.3;
-    animation: dot-pulse 1.2s infinite ease-in-out alternate;
-}
-.dot:nth-child(1) { animation-delay: 0.0s; } .dot:nth-child(2) { animation-delay: 0.1s; }
-.dot:nth-child(3) { animation-delay: 0.2s; } .dot:nth-child(4) { animation-delay: 0.1s; }
-.dot:nth-child(5) { animation-delay: 0.2s; } .dot:nth-child(6) { animation-delay: 0.3s; }
-.dot:nth-child(7) { animation-delay: 0.2s; } .dot:nth-child(8) { animation-delay: 0.3s; }
-.dot:nth-child(9) { animation-delay: 0.4s; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background-color: #c89f5d; opacity: 0.3; animation: dot-pulse 1.2s infinite ease-in-out alternate; }
+.dot:nth-child(1) { animation-delay: 0.0s; } .dot:nth-child(2) { animation-delay: 0.1s; } .dot:nth-child(3) { animation-delay: 0.2s; } .dot:nth-child(4) { animation-delay: 0.1s; } .dot:nth-child(5) { animation-delay: 0.2s; } .dot:nth-child(6) { animation-delay: 0.3s; } .dot:nth-child(7) { animation-delay: 0.2s; } .dot:nth-child(8) { animation-delay: 0.3s; } .dot:nth-child(9) { animation-delay: 0.4s; }
+@keyframes dot-pulse { 0% { opacity: 0.2; transform: scale(0.8); background-color: #c89f5d; } 100% { opacity: 1; transform: scale(1.1); background-color: #f2d7a4; box-shadow: 0 0 10px rgba(242, 215, 164, 0.5); } }
 
-@keyframes dot-pulse {
-    0% { opacity: 0.2; transform: scale(0.8); background-color: #c89f5d; }
-    100% { opacity: 1; transform: scale(1.1); background-color: #f2d7a4; box-shadow: 0 0 10px rgba(242, 215, 164, 0.5); }
-}
-
-/* 工具类 */
 .bleed-card { width: 110%; margin-left: -5%; }
 .shadow-heavy { box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -4px rgba(0, 0, 0, 0.05); }
-
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.bg-grid { background-size: 30px 30px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
 
-.bg-grid {
-    background-size: 30px 30px;
-    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-}
-
-/* 滚动浮现动效 */
-.reveal {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: opacity, transform;
-}
-.reveal.active {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* 按钮与卡片交互 */
+.reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); will-change: opacity, transform; }
+.reveal.active { opacity: 1; transform: translateY(0); }
 .interactive-btn { transition: all 0.2s ease; }
 .interactive-btn:active { transform: scale(0.96); }
 .interactive-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
 .interactive-card:hover { transform: translateY(-4px); box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.1); }
 
 
-/* ================= 暗黑模式专属样式 (全局暴力覆盖) ================= */
-
+/* ================= 3. 全局暗黑模式 (首页等通用) ================= */
 html.dark body { background-color: #0f0f0f !important; }
 html.dark .bg-neutral-400 { background-color: #1a1a1a !important; }
 html.dark .bg-\[\#f4f4f5\] { background-color: #151515 !important; }
 html.dark .bg-white { background-color: #1f1f1f !important; }
-
-/* 文字颜色反转 */
-html.dark .text-black, 
-html.dark .text-gray-900, 
-html.dark .text-gray-700 { color: #f3f4f6 !important; }
-html.dark .text-gray-600, 
-html.dark .text-gray-500 { color: #9ca3af !important; }
-
-/* 边框反转 */
-html.dark .border-gray-200, 
-html.dark .border-gray-100, 
-html.dark .border-gray-300 { border-color: #333333 !important; }
+html.dark .text-black, html.dark .text-gray-900, html.dark .text-gray-700 { color: #f3f4f6 !important; }
+html.dark .text-gray-600, html.dark .text-gray-500 { color: #9ca3af !important; }
+html.dark .border-gray-200, html.dark .border-gray-100, html.dark .border-gray-300 { border-color: #333333 !important; }
 html.dark .border-gray-50 { border-color: #2a2a2a !important; }
-
-/* 输入框反转 */
-html.dark input, 
-html.dark textarea { background-color: #111111 !important; color: #ffffff !important; border-color: #333333 !important; }
-
-/* 悬停翻转 */
+html.dark input, html.dark textarea { background-color: #111111 !important; color: #ffffff !important; border-color: #333333 !important; }
 html.dark .hover\:bg-gray-100:hover { background-color: #2a2a2a !important; }
-
-/* 保护原生黑卡不被反转 */
-html.dark .bg-\[\#111111\], 
-html.dark .bg-\[\#252525\], 
-html.dark .bg-\[\#141414\] { background-color: #111111 !important; }
+html.dark .bg-\[\#111111\], html.dark .bg-\[\#252525\], html.dark .bg-\[\#141414\] { background-color: #111111 !important; }
 html.dark .text-white { color: #ffffff !important; }
-
-/* 保护金卡的文字依然是黑色 */
 html.dark .bg-gradient-to-br.from-\[\#e8c88c\].to-\[\#c89f5d\] .text-black { color: #000 !important; }
 html.dark .bg-gradient-to-br.from-\[\#e8c88c\].to-\[\#c89f5d\] .text-black\/80 { color: rgba(0, 0, 0, 0.8) !important; }
+
+
+/* ================= 4. 组件专属样式 (iOS卡片 / 弹窗 / 后台) ================= */
+/* iOS 列表卡片 */
+.ios-card { background-color: #ffffff !important; border-color: #e5e5ea !important; }
+html.dark .ios-card { background-color: #1c1c1e !important; border-color: #2c2c2e !important; }
+.ios-text { color: #111111 !important; }
+html.dark .ios-text { color: #ffffff !important; }
+.ios-border { border-color: #e5e5ea !important; }
+html.dark .ios-border { border-color: #2c2c2e !important; }
+.ios-list-item:active { background-color: rgba(0, 0, 0, 0.05); }
+html.dark .ios-list-item:active { background-color: rgba(255, 255, 255, 0.05); }
+
+/* 系统弹窗底层遮罩 */
+.sys-modal-overlay { background-color: rgba(0, 0, 0, 0.5) !important; backdrop-filter: blur(4px); }
+
+/* 系统弹窗面板 */
+.sys-modal-panel { background-color: #ffffff !important; color: #111111 !important; border: 1px solid #e5e5ea !important; }
+html.dark .sys-modal-panel { background-color: #1c1c1e !important; color: #ffffff !important; border: 1px solid #2c2c2e !important; }
+
+/* 系统弹窗头部 */
+.sys-modal-header { background-color: rgba(255, 255, 255, 0.95) !important; border-bottom: 1px solid #e5e5ea !important; }
+html.dark .sys-modal-header { background-color: rgba(28, 28, 30, 0.95) !important; border-bottom: 1px solid #2c2c2e !important; }
+
+/* 系统弹窗列表组 */
+.sys-modal-group { background-color: #f2f2f7 !important; border-radius: 12px; overflow: hidden; }
+html.dark .sys-modal-group { background-color: #2c2c2e !important; }
+
+/* 系统弹窗按钮 */
+.sys-modal-btn { background-color: transparent !important; color: #111111 !important; border-bottom: 1px solid #e5e5ea !important; transition: background-color 0.2s; }
+html.dark .sys-modal-btn { color: #ffffff !important; border-bottom: 1px solid #3a3a3c !important; }
+.sys-modal-btn:last-child { border-bottom: none !important; }
+.sys-modal-btn:active { background-color: rgba(0, 0, 0, 0.05) !important; }
+html.dark .sys-modal-btn:active { background-color: rgba(255, 255, 255, 0.05) !important; }
+
+/* 系统弹窗输入框 & 管理后台输入框/下拉框 */
+.sys-modal-input, .admin-input { background-color: #f2f2f7 !important; color: #111111 !important; border: 1px solid #d1d5db !important; border-radius: 12px; }
+html.dark .sys-modal-input, html.dark .admin-input { background-color: #000000 !important; color: #ffffff !important; border: 1px solid #333333 !important; }
+.sys-modal-input::placeholder, .admin-input::placeholder { color: #9ca3af !important; }
+
+/* 管理后台折叠面板 */
+.accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, opacity 0.3s ease-out; opacity: 0; background-color: #f9fafb !important; }
+html.dark .accordion-content { background-color: #111111 !important; }
+.accordion-content.open { max-height: 300px; opacity: 1; }
