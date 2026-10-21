@@ -21,8 +21,8 @@
             <div class="flex flex-col items-center justify-center px-2 py-8 cursor-pointer group" onclick="openEditProfile()">
                 <div class="relative w-24 h-24 mb-4">
                     <div class="w-full h-full rounded-full bg-[#e5e5ea] dark:bg-[#1c1c1e] flex items-center justify-center shadow-sm border ios-border transition-colors group-hover:opacity-80">
-                        <!-- 头像字母使用专属文字颜色 -->
-                        <span class="text-4xl font-serif ios-title" id="user-avatar-letter">?</span>
+                        <!-- 使用 ios-avatar-letter 专属类 -->
+                        <span class="text-4xl font-serif ios-avatar-letter" id="user-avatar-letter">?</span>
                     </div>
                     <div class="absolute bottom-0 right-0 w-7 h-7 bg-[#111] dark:bg-white rounded-full border-2 border-white dark:border-[#1c1c1e] flex items-center justify-center">
                         <svg class="w-3.5 h-3.5 text-white dark:text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
@@ -30,7 +30,6 @@
                 </div>
                 
                 <div class="flex items-center gap-2 mb-1">
-                    <!-- 名字强制使用 ios-title 锁定黑白 -->
                     <h1 class="text-2xl font-bold tracking-wide ios-title" id="user-name">加载中...</h1>
                     <span class="hidden px-2 py-0.5 rounded text-[10px] font-sans font-medium bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300" id="user-role">member</span>
                 </div>
@@ -204,7 +203,7 @@
                 </div>
                 <div class="p-4 space-y-4">
                     <div class="flex flex-col items-center mb-4">
-                        <div class="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-3xl font-serif text-black dark:text-[#f5d78d] mb-2 border border-gray-300 dark:border-gray-700">
+                        <div class="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-3xl font-serif ios-avatar-letter mb-2 border border-gray-300 dark:border-gray-700">
                             ${currentUser.name.charAt(0).toUpperCase()}
                         </div>
                         <button class="text-xs text-[#c89f5d] font-medium border border-[#c89f5d]/30 px-3 py-1 rounded-full bg-[#f5d78d]/10 hover:bg-[#f5d78d]/20 transition">上传新头像 (待开发)</button>
