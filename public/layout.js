@@ -1,4 +1,5 @@
 const currentPath = window.location.pathname;
+// 配置哪些页面不显示页脚
 const hideFooterPages = ['/login/', '/register/', '/profile/', '/admin/'];
 
 const loadingHTML = `
@@ -40,6 +41,7 @@ const navHTML = `
             <a href="/creation/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">创作</a>
             <a href="/forum/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">贴吧</a>
             <a href="/about/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">关于</a>
+            <a href="/join/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">加入我们</a>
         </div>
     </div>
 </header>
@@ -54,7 +56,9 @@ const footerHTML = `
             <a href="/wiki/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Wiki</a>
             <a href="/about/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">About</a>
         </div>
-        <div class="text-[11px] text-[#c89f5d] tracking-wide mt-2 font-roman text-center">© 2026 Reozar Lab. CC-BY-SA 4.0</div>
+        <div class="text-[11px] text-[#c89f5d] tracking-wide mt-2 font-roman text-center">
+            © 2026 Reozar Lab. CC-BY-SA 4.0
+        </div>
     </div>
 </footer>
 `;
@@ -66,9 +70,11 @@ if (!hideFooterPages.some(path => currentPath.includes(path))) {
 }
 
 function initLayout() {
+    // 1. 页面加载完毕 & Flash 提示
     window.addEventListener('load', () => {
         const loader = document.getElementById('loading-screen');
         if (loader) { loader.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => loader.remove(), 500); }
+        
         setTimeout(() => {
             const msg = sessionStorage.getItem('flash_message');
             if (msg && typeof showToast !== 'undefined') { showToast(msg, 'success'); sessionStorage.removeItem('flash_message'); }
@@ -84,6 +90,7 @@ function initLayout() {
     const loginBtn = document.getElementById('nav-login-btn');
     const logoutBtn = document.getElementById('nav-logout-btn');
 
+    // 2. 导航栏滚动收缩
     window.addEventListener('scroll', () => {
         if (window.scrollY > 50) { header.classList.add('header-scrolled'); closeMenu(); }
         else header.classList.remove('header-scrolled');
@@ -94,6 +101,7 @@ function initLayout() {
         dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
     }
 
+    // 3. 菜单展开/收起
     menuBtn.addEventListener('click', (e) => {
         e.stopPropagation(); 
         if (dropdownMenu.classList.contains('opacity-100')) closeMenu();
@@ -102,9 +110,9 @@ function initLayout() {
             dropdownMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
         }
     });
-    
     document.addEventListener('click', (e) => { if (!dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) closeMenu(); });
 
+    // 4. 主题切换
     function updateThemeIcons() {
         if (document.documentElement.classList.contains('dark')) { iconSun.classList.remove('hidden'); iconMoon.classList.add('hidden'); }
         else { iconSun.classList.add('hidden'); iconMoon.classList.remove('hidden'); }
@@ -117,14 +125,17 @@ function initLayout() {
         updateThemeIcons();
     });
 
+    // 5. 登录状态检测与管理员按钮显示
     if (typeof API !== 'undefined') {
         API.getMe().then(data => {
             if (data && data.user) {
                 const user = data.user;
+                
+                // 替换登录按钮为欢迎语
                 if (loginBtn) { loginBtn.textContent = `欢迎, ${user.name}`; loginBtn.href = "/profile/"; }
                 if (logoutBtn) logoutBtn.classList.remove('hidden');
                 
-                // 如果有权限，显示管理中枢按钮
+                // 核心逻辑：如果角色是 creator 或 editor，亮起管理员按钮
                 if (user.role === 'creator' || user.role === 'editor') {
                     const adminBtn = document.getElementById('nav-admin-btn');
                     if (adminBtn) adminBtn.classList.remove('hidden');
@@ -133,10 +144,16 @@ function initLayout() {
         }).catch(console.log);
     }
 
+    // 6. 退出登录
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            try { await API.logout(); window.location.href = '/login/'; } catch (error) { if (typeof showToast !== 'undefined') showToast("退出失败", "error"); }
+            try {
+                await API.logout();
+                window.location.href = '/login/';
+            } catch (error) {
+                if (typeof showToast !== 'undefined') showToast("退出失败", "error");
+            }
         });
     }
 }
