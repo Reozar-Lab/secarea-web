@@ -79,6 +79,8 @@ html.dark body.page-ios { background-color: #000000 !important; }
 html.dark .ios-title { color: #ffffff !important; }
 .ios-text { color: #111111 !important; }
 html.dark .ios-text { color: #ffffff !important; }
+.ios-avatar-letter { color: #000000 !important; }
+html.dark .ios-avatar-letter { color: #f5d78d !important; }
 
 /* 卡片锁定 */
 .ios-card { background-color: #ffffff !important; border-color: #e5e5ea !important; }
