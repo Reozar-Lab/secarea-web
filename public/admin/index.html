@@ -20,14 +20,14 @@
             <div class="mb-6 flex justify-between items-end">
                 <div>
                     <h1 class="text-3xl font-serif font-bold ios-title tracking-widest">管理中枢</h1>
-                    <p class="text-sm text-gray-500 mt-1">CEC 内部最高权限控制台</p>
+                    <p class="text-sm ios-text opacity-60 mt-1">CEC 内部最高权限控制台</p>
                 </div>
                 <span id="current-admin-role" class="px-3 py-1 rounded bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30 text-xs font-roman uppercase"></span>
             </div>
 
             <div class="w-full mb-6 relative">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <svg class="w-5 h-5 ios-text opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
                 <input type="text" id="search-input" placeholder="搜索用户名或邮箱..." class="admin-input w-full pl-11 pr-4 py-3 shadow-sm focus:outline-none focus:border-[#c89f5d]">
             </div>
@@ -72,7 +72,7 @@
             const container = document.getElementById('user-list-container');
             
             if (users.length === 0) {
-                container.innerHTML = `<div class="text-center text-gray-500 py-10">没有找到匹配的用户</div>`;
+                container.innerHTML = `<div class="text-center ios-text opacity-50 py-10">没有找到匹配的用户</div>`;
                 return;
             }
 
@@ -85,32 +85,31 @@
                 <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm border transition-all">
                     <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" onclick="toggleAccordion('${user.id}')">
                         <div class="flex items-center gap-3">
-                            <!-- 使用 ios-avatar-letter 专属类 -->
                             <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-lg font-serif ios-avatar-letter">
                                 ${user.name.charAt(0).toUpperCase()}
                             </div>
                             <div class="flex flex-col">
                                 <span class="font-bold text-base ios-text">${user.name}</span>
-                                <span class="text-xs text-gray-500">${user.email}</span>
+                                <span class="text-xs ios-text opacity-50">${user.email}</span>
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ${roleColor}">${user.role}</span>
                             <div class="w-2 h-2 rounded-full ${statusColor}"></div>
-                            <svg id="icon-${user.id}" class="w-5 h-5 text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            <svg id="icon-${user.id}" class="w-5 h-5 ios-text opacity-30 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </div>
                     </div>
 
                     <div id="content-${user.id}" class="accordion-content border-t ios-border">
                         <div class="p-4 flex flex-col gap-4">
-                            <div class="text-xs text-gray-500 font-sans">
+                            <div class="text-xs ios-text opacity-50 font-sans">
                                 <p>用户 ID: ${user.id}</p>
                             </div>
                             
                             ${isCreator ? `
                             <div class="flex flex-col sm:flex-row gap-3">
                                 <div class="flex-1">
-                                    <label class="block text-xs text-gray-500 mb-1">修改角色</label>
+                                    <label class="block text-xs ios-text opacity-50 mb-1">修改角色</label>
                                     <select onchange="changeRole('${user.id}', this.value)" class="admin-input w-full px-3 py-2 text-sm focus:outline-none">
                                         <option value="user" ${user.role === 'user' ? 'selected' : ''}>普通用户 (user)</option>
                                         <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>
@@ -125,7 +124,7 @@
                                 </div>
                             </div>
                             ` : `
-                            <div class="text-xs text-gray-400 py-2">只有 Creator 可以修改用户权限或封禁。</div>
+                            <div class="text-xs ios-text opacity-40 py-2">只有 Creator 可以修改用户权限或封禁。</div>
                             `}
                         </div>
                     </div>
