@@ -3,231 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理中枢 · 匿境 Secarea</title>
+    <title>匿境 · Secarea</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="./style.css">
     <script>
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         }
     </script>
-    <style>
-        /* === 核心页面底色 === */
-        html:not(.dark) body { background-color: #f2f2f7 !important; color: #000000 !important; }
-        html.dark body { background-color: #000000 !important; color: #ffffff !important; }
-        
-        /* === 导航栏图标 === */
-        #theme-toggle, #menu-btn { color: #f5d78d !important; }
-
-        /* === 卡片与边框 === */
-        .ios-card { background-color: #ffffff !important; border-color: #e5e5ea !important; }
-        html.dark .ios-card { background-color: #1c1c1e !important; border-color: #2c2c2e !important; }
-        
-        /* === 搜索框 (修复明亮模式黑字白底) === */
-        .search-input { background-color: #ffffff !important; color: #000000 !important; border-color: #d1d5db !important; }
-        .search-input::placeholder { color: #9ca3af !important; }
-        html.dark .search-input { background-color: #1c1c1e !important; color: #ffffff !important; border-color: #333333 !important; }
-        html.dark .search-input::placeholder { color: #6b7280 !important; }
-
-        /* === 下拉框 === */
-        .role-select { background-color: #ffffff !important; color: #000000 !important; border-color: #d1d5db !important; }
-        html.dark .role-select { background-color: #1c1c1e !important; color: #ffffff !important; border-color: #333333 !important; }
-
-        /* === 文本颜色 === */
-        .main-title { color: #000000 !important; }
-        html.dark .main-title { color: #ffffff !important; }
-        
-        .user-name { color: #000000 !important; }
-        html.dark .user-name { color: #ffffff !important; }
-        
-        .user-email { color: #6b7280 !important; }
-        html.dark .user-email { color: #9ca3af !important; }
-        
-        /* === 展开面板底色 === */
-        .accordion-content { background-color: #f9fafb !important; }
-        html.dark .accordion-content { background-color: #111111 !important; }
-
-        /* === 折叠动画 === */
-        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, opacity 0.3s ease-out; opacity: 0; }
-        .accordion-content.open { max-height: 300px; opacity: 1; }
-    </style>
 </head>
-<body class="min-h-screen flex flex-col relative">
+<body class="text-gray-900 min-h-screen flex flex-col relative bg-[#e5e7eb]">
 
-    <main class="flex-grow flex flex-col items-center w-full pt-20 pb-20 px-4">
-        <!-- 这里用 mx-auto 和 max-w-3xl 确保绝对居中 -->
-        <div class="w-full max-w-3xl mx-auto flex flex-col">
+    <main class="flex-grow flex flex-col items-center w-full pb-20 overflow-hidden pt-14">
+        
+        <section id="hero-section" class="w-full flex flex-col bg-neutral-400 -mt-[1px]">
             
-            <!-- 头部与权限展示 -->
-            <div class="mb-6 flex justify-between items-end">
-                <div>
-                    <h1 class="text-3xl font-serif font-bold main-title tracking-widest">管理中枢</h1>
-                    <p class="text-sm text-gray-500 mt-1">CEC 内部最高权限控制台</p>
+            <div id="logo-card" class="bleed-card bg-[#252525] bg-grid rounded-b-[4rem] h-[25vh] flex flex-col items-center justify-center shadow-heavy relative z-10">
+                <div class="absolute inset-x-2 bottom-2 top-0 border-x border-b border-[#f5d78d] rounded-b-[3.6rem] pointer-events-none opacity-90"></div>
+                <div class="-translate-y-3 relative z-10 w-full flex justify-center">
+                    <div id="logo-content" class="flex items-center justify-center gap-6 will-change-transform">
+                        <img src="./image/cec.png" alt="CEC Logo" class="h-20 w-auto object-contain">
+                        <div class="w-[2px] h-14 bg-white/20"></div>
+                        <div class="flex flex-col justify-center items-center">
+                            <h1 class="text-4xl font-serif font-bold text-gold-bright tracking-[0.2em] leading-none mb-2">匿境</h1>
+                            <p class="text-lg text-gold-bright font-roman tracking-[0.3em] uppercase opacity-90">SECAREA</p>
+                        </div>
+                    </div>
                 </div>
-                <span id="current-admin-role" class="px-3 py-1 rounded bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30 text-xs font-roman uppercase"></span>
             </div>
 
-            <!-- 查询框 -->
-            <div class="w-full mb-6 relative">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <div class="bleed-card bg-[#f4f4f5] rounded-t-[4rem] pt-12 pb-12 mt-6 flex flex-col items-center relative z-0">
+                
+                <div class="w-[85%] max-w-lg flex flex-col gap-6 relative z-10">
+                    
+                    <section class="w-full rounded-[2rem] bg-[#111111] p-8 shadow-md text-center relative overflow-hidden reveal">
+                        <div class="absolute -right-4 -top-4 text-6xl font-roman text-white/5 pointer-events-none select-none">CEC</div>
+                        <p class="text-xs text-gray-400 tracking-widest mb-6">镜像网站正在施工，可与 Reozor 联系</p>
+                        <h2 class="text-base text-white font-serif tracking-widest mb-6">欢迎来到，另一个世界的终点。</h2>
+                        <div class="flex items-center justify-center gap-4 relative z-10">
+                            <button class="px-4 py-2 bg-white text-black text-xs font-bold rounded-md hover:bg-gray-200 transition-colors interactive-btn">WIKI</button>
+                            <button class="px-4 py-2 bg-white text-black text-xs font-medium rounded-md hover:bg-gray-200 transition-colors interactive-btn">获取便民支持</button>
+                        </div>
+                    </section>
+
+                    <section class="w-full bg-white rounded-[2rem] p-8 shadow-sm reveal">
+                        <h3 class="text-xl font-serif font-bold text-black mb-4 tracking-widest border-l-4 border-gray-800 pl-3">世界档案</h3>
+                        <p class="text-sm text-gray-600 leading-loose text-justify">
+                            在这颗星球隐秘的背面，存在着被称为「内界」的亚空间。自 1531 年《保密公约》签订以来，觉醒者与普通人类（沉睡者）被彻底隔绝。
+                            <br><br>
+                            然而，随着 CEC（密保会）旧秩序的动摇，以及 BSA（超自然事务局）的步步紧逼，维系了数百年的「帷幕」正在碎裂。
+                        </p>
+                    </section>
+
+                    <section class="w-full bg-white rounded-[2rem] p-8 shadow-sm flex flex-col gap-6 reveal">
+                        <h3 class="text-xl font-serif font-bold text-black tracking-widest border-l-4 border-gray-800 pl-3">核心档案</h3>
+                        
+                        <div class="flex flex-col gap-2">
+                            <div class="w-full h-32 rounded-xl bg-gray-200 border border-gray-300 relative flex items-center justify-center overflow-hidden group cursor-pointer">
+                                <span class="text-gray-400 font-roman tracking-widest text-xs group-hover:scale-110 transition-transform duration-500">[ 法登 · 立绘区 ]</span>
+                                <div class="absolute top-2 right-2 px-2 py-1 bg-black/50 text-white text-[10px] rounded font-roman tracking-widest">LEADER</div>
+                            </div>
+                            <h4 class="text-base font-bold text-black tracking-wider mt-1">法登 · 瑞文杰 <span class="text-xs font-normal text-gray-400 font-roman ml-2">FORDEN</span></h4>
+                            <p class="text-xs text-gray-500 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">“我从不信仰神明，我只相信手里的筹码，和我身后的家人。”</p>
+                        </div>
+
+                        <div class="flex flex-col gap-2 mt-4">
+                            <div class="w-full h-32 rounded-xl bg-gray-200 border border-gray-300 relative flex items-center justify-center overflow-hidden group cursor-pointer">
+                                <span class="text-gray-400 font-roman tracking-widest text-xs group-hover:scale-110 transition-transform duration-500">[ 渡 · 立绘区 ]</span>
+                                <div class="absolute top-2 right-2 px-2 py-1 bg-black/50 text-white text-[10px] rounded font-roman tracking-widest">KEY</div>
+                            </div>
+                            <h4 class="text-base font-bold text-black tracking-wider mt-1">渡 / 张悦 <span class="text-xs font-normal text-gray-400 font-roman ml-2">REO</span></h4>
+                            <p class="text-xs text-gray-500 leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">“如果规则注定要将人分为三六九等，那我就去打破规则。”</p>
+                        </div>
+                    </section>
+
+                    <section class="w-full py-10 flex flex-col items-center justify-center text-center reveal">
+                        <span class="text-4xl text-gray-300 font-serif leading-none mb-4">“</span>
+                        <p class="text-lg text-black font-serif tracking-[0.2em] leading-loose px-4">
+                            保密，<br>究竟是保护，还是枷锁？
+                        </p>
+                        <span class="text-xs text-gray-400 font-roman tracking-widest mt-4">— 1531 保密公约</span>
+                    </section>
+
+                    <section class="w-full bg-white rounded-[2rem] p-8 shadow-sm reveal">
+                        <h3 class="text-xl font-serif font-bold text-black mb-6 tracking-widest border-l-4 border-gray-800 pl-3">最新记录</h3>
+                        <ul class="text-sm text-gray-600 space-y-4 font-sans">
+                            <li class="flex justify-between items-center border-b border-gray-50 pb-2 cursor-pointer hover:text-black transition-colors">
+                                <span>世界观：BSA 机构档案更新</span>
+                                <span class="font-roman text-gray-400 text-xs">10.19</span>
+                            </li>
+                            <li class="flex justify-between items-center border-b border-gray-50 pb-2 cursor-pointer hover:text-black transition-colors">
+                                <span>创作：法登核心立绘释出</span>
+                                <span class="font-roman text-gray-400 text-xs">10.15</span>
+                            </li>
+                            <li class="flex justify-between items-center pb-2 cursor-pointer hover:text-black transition-colors">
+                                <span>小说：保密纪元往事 - 第三窟</span>
+                                <span class="font-roman text-gray-400 text-xs">10.10</span>
+                            </li>
+                        </ul>
+                    </section>
+
+                    <section class="w-full bg-white rounded-[2rem] p-6 shadow-sm reveal">
+                        <div class="text-center mb-6">
+                            <h3 class="text-3xl font-serif font-black tracking-widest text-black">IP<span class="text-sm font-sans font-normal text-gray-400 ml-1">世界</span></h3>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 text-center">
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                <div class="text-2xl font-roman text-black mb-1">1.5</div>
+                                <div class="text-xs text-gray-500">项目年数</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                <div class="text-2xl font-roman text-black mb-1">1</div>
+                                <div class="text-xs text-gray-500">参与成员</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                <div class="text-2xl font-roman text-black mb-1">12</div>
+                                <div class="text-xs text-gray-500">百科词条</div>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                <div class="text-2xl font-roman text-black mb-1">3</div>
+                                <div class="text-xs text-gray-500">创作篇幅</div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
-                <!-- 输入框加上 search-input 类 -->
-                <input type="text" id="search-input" placeholder="搜索用户名或邮箱..." class="search-input w-full pl-11 pr-4 py-3 rounded-xl shadow-sm border focus:outline-none focus:border-[#c89f5d] transition-colors">
-            </div>
 
-            <!-- 用户列表容器 -->
-            <div id="user-list-container" class="w-full flex flex-col gap-3">
-                <!-- JS 动态注入卡片 -->
-            </div>
+                <div class="w-full mt-8 relative z-10 overflow-hidden reveal">
+                    <div id="scroll-container" class="flex gap-5 px-6 py-2 overflow-x-auto scrollbar-hide" style="scroll-behavior: auto;">
+                        <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
+                            <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">想要与我们联系？</h4>
+                            <p class="text-black/80 text-sm leading-relaxed mb-4">无论你是流落街头的独立觉醒者，还是对 CEC 密保会抱有疑问的沉睡者，通讯网永远为你敞开。</p>
+                            <p class="text-black/80 text-sm leading-relaxed">· 管理员 QQ：2157053849<br>· 业务联系邮箱：<br>reaozar-secarea@outlook.com</p>
+                            <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">发起通讯</a></div>
+                        </div>
+                        <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
+                            <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">关于作品的授权</h4>
+                            <p class="text-black/80 text-sm leading-relaxed mb-4">本站所有原创世界观文本、角色视觉设定均严格遵循 <strong class="text-black">CC-BY-SA 4.0</strong> 协议。</p>
+                            <p class="text-black/80 text-sm leading-relaxed">你可以自由复制、分发、演绎。前提是：必须保留原作者署名（Reozor Lab），且必须使用相同协议共享。</p>
+                            <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">查看完整协议</a></div>
+                        </div>
+                        <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
+                            <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">关于这个世界观</h4>
+                            <p class="text-black/80 text-sm leading-relaxed mb-4">「匿境」并非普通的奇幻世界。在这里，魔法、元力与超自然异能，都在现代科技与秘密机构的监控下暗流涌动。</p>
+                            <p class="text-black/80 text-sm leading-relaxed">从弑魔潮，到保密公约的彻底崩塌。CEC 与 BSA 长达百年的明暗博弈，将决定物种的未来。</p>
+                            <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">进入维基百科</a></div>
+                        </div>
+                        <!-- 循环组 -->
+                        <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
+                            <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">想要与我们联系？</h4>
+                            <p class="text-black/80 text-sm leading-relaxed mb-4">无论你是流落街头的独立觉醒者，还是对 CEC 密保会抱有疑问的沉睡者，通讯网永远为你敞开。</p>
+                            <p class="text-black/80 text-sm leading-relaxed">· 管理员 QQ：2157053849<br>· 业务联系邮箱：<br>reaozar-secarea@outlook.com</p>
+                            <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">发起通讯</a></div>
+                        </div>
+                        <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
+                            <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">关于作品的授权</h4>
+                            <p class="text-black/80 text-sm leading-relaxed mb-4">本站所有原创世界观文本、角色视觉设定均严格遵循 <strong class="text-black">CC-BY-SA 4.0</strong> 协议。</p>
+                            <p class="text-black/80 text-sm leading-relaxed">你可以自由复制、分发、演绎。前提是：必须保留原作者署名（Reozor Lab），且必须使用相同协议共享。</p>
+                            <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">查看完整协议</a></div>
+                        </div>
+                        <div class="w-[70vw] max-w-[300px] h-[480px] rounded-3xl bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] p-8 shadow-xl flex flex-col shrink-0">
+                            <h4 class="text-black font-serif font-bold tracking-widest text-2xl mb-6 pb-4 border-b border-black/10">关于这个世界观</h4>
+                            <p class="text-black/80 text-sm leading-relaxed mb-4">「匿境」并非普通的奇幻世界。在这里，魔法、元力与超自然异能，都在现代科技与秘密机构的监控下暗流涌动。</p>
+                            <p class="text-black/80 text-sm leading-relaxed">从弑魔潮，到保密公约的彻底崩塌。CEC 与 BSA 长达百年的明暗博弈，将决定物种的未来。</p>
+                            <div class="mt-auto pt-6 w-full"><a href="#" class="block w-full text-center py-3 border border-black/20 rounded-xl text-black text-sm font-bold hover:bg-black/5 transition-colors">进入维基百科</a></div>
+                        </div>
+                    </div>
+                </div>
 
-        </div>
+                <div class="w-[85%] max-w-lg mt-8 grid grid-cols-2 gap-4 relative z-30 mb-8">
+                    <a href="#" class="bg-white p-6 rounded-2xl shadow-sm text-center flex flex-col items-center interactive-card">
+                        <div class="text-gray-400 mb-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg></div>
+                        <div class="font-serif font-bold text-black tracking-widest">探索百科</div>
+                        <div class="text-[10px] text-gray-400 font-roman tracking-widest mt-1">WIKI</div>
+                    </a>
+                    <a href="#" class="bg-white p-6 rounded-2xl shadow-sm text-center flex flex-col items-center interactive-card">
+                        <div class="text-gray-400 mb-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></div>
+                        <div class="font-serif font-bold text-black tracking-widest">阅览创作</div>
+                        <div class="text-[10px] text-gray-400 font-roman tracking-widest mt-1">CREATION</div>
+                    </a>
+                    <a href="#" class="bg-white p-6 rounded-2xl shadow-sm text-center flex flex-col items-center interactive-card">
+                        <div class="text-gray-400 mb-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg></div>
+                        <div class="font-serif font-bold text-black tracking-widest">前往龙港</div>
+                        <div class="text-[10px] text-gray-400 font-roman tracking-widest mt-1">TALK</div>
+                    </a>
+                    <a href="#" class="bg-white p-6 rounded-2xl shadow-sm text-center flex flex-col items-center interactive-card">
+                        <div class="text-gray-400 mb-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                        <div class="font-serif font-bold text-black tracking-widest">关于密保</div>
+                        <div class="text-[10px] text-gray-400 font-roman tracking-widest mt-1">ABOUT</div>
+                    </a>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <script src="../common.js"></script>
-    <script src="../layout.js"></script>
+    <!-- 核心依赖脚本 -->
+    <script src="./common.js"></script>
+    <script src="./layout.js"></script>
     <script>
-        let allUsers = []; 
-        let isCreator = false;
-
-        async function initAdmin() {
-            try {
-                const me = await API.getMe();
-                if (!me || !me.user) { window.location.href = '/login/'; return; }
-                if (me.user.role !== 'creator' && me.user.role !== 'editor') {
-                    alert("您没有权限访问此页面"); window.location.href = '/'; return;
-                }
-                
-                isCreator = me.user.role === 'creator';
-                document.getElementById('current-admin-role').textContent = `权限: ${me.user.role}`;
-
-                const data = await API.getUsers();
-                if (data.error) throw new Error(data.error);
-                
-                allUsers = data.users;
-                renderUsers(allUsers);
-
-            } catch (e) {
-                console.error(e);
-                alert("加载失败: " + e.message);
-            }
-        }
-
-        function renderUsers(users) {
-            const container = document.getElementById('user-list-container');
-            
-            if (users.length === 0) {
-                container.innerHTML = `<div class="text-center text-gray-500 py-10">没有找到匹配的用户</div>`;
-                return;
-            }
-
-            container.innerHTML = users.map(user => {
-                const isBanned = user.is_banned === 1;
-                const roleColor = user.role === 'creator' ? 'text-[#c89f5d] bg-[#f5d78d]/10' : (user.role === 'editor' ? 'text-blue-500 bg-blue-500/10' : 'text-gray-500 bg-gray-500/10');
-                const statusColor = isBanned ? 'bg-red-500' : 'bg-green-500';
-
-                return `
-                <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm border transition-all">
-                    <!-- 头部：点击展开 -->
-                    <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" onclick="toggleAccordion('${user.id}')">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-lg font-serif text-black dark:text-white">
-                                ${user.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div class="flex flex-col">
-                                <span class="font-bold text-base user-name">${user.name}</span>
-                                <span class="text-xs user-email">${user.email}</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ${roleColor}">${user.role}</span>
-                            <div class="w-2 h-2 rounded-full ${statusColor}"></div>
-                            <svg id="icon-${user.id}" class="w-5 h-5 text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                    </div>
-
-                    <!-- 展开的操作面板 -->
-                    <div id="content-${user.id}" class="accordion-content border-t border-gray-200 dark:border-gray-800">
-                        <div class="p-4 flex flex-col gap-4">
-                            <div class="text-xs text-gray-500 font-sans">
-                                <p>用户 ID: ${user.id}</p>
-                            </div>
-                            
-                            ${isCreator ? `
-                            <div class="flex flex-col sm:flex-row gap-3">
-                                <!-- 角色修改下拉框 -->
-                                <div class="flex-1">
-                                    <label class="block text-xs text-gray-500 mb-1">修改角色</label>
-                                    <select onchange="changeRole('${user.id}', this.value)" class="role-select w-full rounded-lg px-3 py-2 text-sm border focus:outline-none">
-                                        <option value="user" ${user.role === 'user' ? 'selected' : ''}>普通用户 (user)</option>
-                                        <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>
-                                        <option value="creator" ${user.role === 'creator' ? 'selected' : ''}>创作者 (creator)</option>
-                                    </select>
-                                </div>
-                                
-                                <!-- 封禁按钮 -->
-                                <div class="flex-1 flex items-end">
-                                    <button onclick="toggleBan('${user.id}', ${user.is_banned})" class="w-full py-2 rounded-lg text-sm font-bold transition-colors ${isBanned ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-red-500 text-white hover:bg-red-600'}">
-                                        ${isBanned ? '解除封禁' : '封禁该用户'}
-                                    </button>
-                                </div>
-                            </div>
-                            ` : `
-                            <div class="text-xs text-gray-400 py-2">只有 Creator 可以修改用户权限或封禁。</div>
-                            `}
-                        </div>
-                    </div>
-                </div>
-                `;
-            }).join('');
-        }
-
-        function toggleAccordion(userId) {
-            const content = document.getElementById(`content-${userId}`);
-            const icon = document.getElementById(`icon-${userId}`);
-            
-            if (content.classList.contains('open')) {
-                content.classList.remove('open');
-                icon.style.transform = 'rotate(0deg)';
+        // 仅保留首页专属动效
+        const logoContent = document.getElementById('logo-content');
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            if (scrollY > 0) {
+                const scale = Math.max(0.7, 1 - (scrollY / 300));
+                logoContent.style.transform = `scale(${scale})`;
             } else {
-                content.classList.add('open');
-                icon.style.transform = 'rotate(180deg)';
+                logoContent.style.transform = `scale(1)`;
             }
-        }
-
-        document.getElementById('search-input').addEventListener('input', (e) => {
-            const keyword = e.target.value.toLowerCase().trim();
-            const filtered = allUsers.filter(user => 
-                user.name.toLowerCase().includes(keyword) || 
-                user.email.toLowerCase().includes(keyword)
-            );
-            renderUsers(filtered);
         });
 
-        async function changeRole(userId, newRole) {
-            if (!confirm(`确定要将该用户的角色修改为 ${newRole} 吗？`)) {
-                renderUsers(allUsers);
-                return;
-            }
-            await API.updateUser(userId, newRole, undefined);
-            const user = allUsers.find(u => u.id === userId);
-            if (user) user.role = newRole;
-            renderUsers(allUsers);
-            if (typeof showToast !== 'undefined') showToast("角色修改成功", "success");
-        }
+        const reveals = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+        reveals.forEach(reveal => { revealObserver.observe(reveal); });
 
-        async function toggleBan(userId, currentBanStatus) {
-            const newStatus = currentBanStatus === 1 ? 0 : 1;
-            if (!confirm(`确定要${newStatus === 1 ? '封禁' : '解封'}该用户吗？`)) return;
-            
-            await API.updateUser(userId, undefined, newStatus);
-            const user = allUsers.find(u => u.id === userId);
-            if (user) user.is_banned = newStatus;
-            renderUsers(allUsers);
-            if (typeof showToast !== 'undefined') showToast(newStatus === 1 ? "用户已封禁" : "用户已解封", "success");
-        }
+        const scroller = document.getElementById('scroll-container');
+        let isInteracting = false;
+        let scrollTimer;
 
-        window.addEventListener('load', initAdmin);
+        function startAutoScroll() {
+            clearInterval(scrollTimer);
+            scrollTimer = setInterval(() => {
+                if (isInteracting) return; 
+                scroller.scrollLeft += 1;
+                const halfWidth = scroller.scrollWidth / 2;
+                if (scroller.scrollLeft >= halfWidth) {
+                    scroller.scrollLeft -= halfWidth;
+                }
+            }, 30); 
+        }
+        startAutoScroll();
+
+        scroller.addEventListener('touchstart', () => { isInteracting = true; }, {passive: true});
+        scroller.addEventListener('mouseenter', () => { isInteracting = true; });
+        scroller.addEventListener('touchend', () => { isInteracting = false; }, {passive: true});
+        scroller.addEventListener('mouseleave', () => { isInteracting = false; });
     </script>
 </body>
 </html>
