@@ -69,7 +69,12 @@ html.dark .bg-gradient-to-br.from-\[\#e8c88c\].to-\[\#c89f5d\] .text-black { col
 html.dark .bg-gradient-to-br.from-\[\#e8c88c\].to-\[\#c89f5d\] .text-black\/80 { color: rgba(0, 0, 0, 0.8) !important; }
 
 
-/* ================= 4. 组件专属样式 (iOS卡片 / 弹窗 / 后台) ================= */
+/* ================= 4. 特殊页面与组件专属样式 ================= */
+
+/* 特殊页面底色 (个人中心、管理中枢) */
+body.page-ios { background-color: #f2f2f7 !important; }
+html.dark body.page-ios { background-color: #000000 !important; }
+
 /* iOS 列表卡片 */
 .ios-card { background-color: #ffffff !important; border-color: #e5e5ea !important; }
 html.dark .ios-card { background-color: #1c1c1e !important; border-color: #2c2c2e !important; }
