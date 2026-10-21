@@ -116,3 +116,7 @@ html.dark .sys-modal-input, html.dark .admin-input { background-color: #000000 !
 .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, opacity 0.3s ease-out; opacity: 0; background-color: #f9fafb !important; }
 html.dark .accordion-content { background-color: #111111 !important; }
 .accordion-content.open { max-height: 300px; opacity: 1; }
+
+/* 强行锁定标题颜色的类，防止被全局暗黑模式误伤 */
+.force-text-title { color: #000000 !important; }
+html.dark .force-text-title { color: #ffffff !important; }
