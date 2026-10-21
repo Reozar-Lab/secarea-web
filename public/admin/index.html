@@ -14,38 +14,45 @@
         html.dark .ios-card { background-color: #1c1c1e !important; }
         .ios-border { border-color: #e5e5ea !important; }
         html.dark .ios-border { border-color: #2c2c2e !important; }
+        
+        /* 折叠动画 */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 0;
+        }
+        .accordion-content.open {
+            max-height: 300px;
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col relative">
 
     <main class="flex-grow flex flex-col items-center w-full pt-20 pb-20 px-4">
-        <div class="w-full max-w-4xl flex flex-col">
+        <div class="w-full max-w-3xl flex flex-col">
             
+            <!-- 头部与权限展示 -->
             <div class="mb-6 flex justify-between items-end">
                 <div>
                     <h1 class="text-3xl font-serif font-bold text-black dark:text-white tracking-widest">管理中枢</h1>
                     <p class="text-sm text-gray-500 mt-1">CEC 内部最高权限控制台</p>
                 </div>
-                <span id="current-admin-role" class="px-3 py-1 rounded bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30 text-xs font-roman"></span>
+                <span id="current-admin-role" class="px-3 py-1 rounded bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30 text-xs font-roman uppercase"></span>
             </div>
 
-            <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm ios-border border">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="ios-border border-b text-xs text-gray-400 uppercase tracking-wider">
-                                <th class="p-4 font-medium">用户</th>
-                                <th class="p-4 font-medium">邮箱</th>
-                                <th class="p-4 font-medium">角色</th>
-                                <th class="p-4 font-medium">状态</th>
-                                <th class="p-4 font-medium text-right">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="user-table-body" class="text-sm">
-                            <!-- JS 动态注入 -->
-                        </tbody>
-                    </table>
+            <!-- 查询框 -->
+            <div class="w-full mb-6 relative">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
+                <input type="text" id="search-input" placeholder="搜索用户名或邮箱..." class="w-full pl-11 pr-4 py-3 bg-white dark:bg-[#1c1c1e] border ios-border rounded-xl shadow-sm text-black dark:text-white focus:outline-none focus:border-[#c89f5d] transition-colors">
+            </div>
+
+            <!-- 用户列表容器 -->
+            <div id="user-list-container" class="w-full flex flex-col gap-3">
+                <!-- JS 动态注入卡片 -->
             </div>
 
         </div>
@@ -54,50 +61,27 @@
     <script src="../common.js"></script>
     <script src="../layout.js"></script>
     <script>
-        async function loadUsers() {
+        let allUsers = []; // 存储所有用户数据
+        let isCreator = false;
+
+        // 获取权限并加载数据
+        async function initAdmin() {
             try {
                 const me = await API.getMe();
-                if (!me || !me.user) {
-                    window.location.href = '/login/';
-                    return;
-                }
+                if (!me || !me.user) { window.location.href = '/login/'; return; }
                 if (me.user.role !== 'creator' && me.user.role !== 'editor') {
-                    alert("您没有权限访问此页面");
-                    window.location.href = '/';
-                    return;
+                    alert("您没有权限访问此页面"); window.location.href = '/'; return;
                 }
                 
-                document.getElementById('current-admin-role').textContent = `当前权限: ${me.user.role}`;
-                const isCreator = me.user.role === 'creator';
+                isCreator = me.user.role === 'creator';
+                document.getElementById('current-admin-role').textContent = `权限: ${me.user.role}`;
 
                 const data = await API.getUsers();
                 if (data.error) throw new Error(data.error);
-
-                const tbody = document.getElementById('user-table-body');
-                tbody.innerHTML = data.users.map(user => `
-                    <tr class="ios-border border-b">
-                        <td class="p-4 font-bold text-black dark:text-white">${user.name}</td>
-                        <td class="p-4 text-gray-500 font-sans">${user.email}</td>
-                        <td class="p-4">
-                            <span class="px-2 py-1 rounded text-[10px] font-roman uppercase ${user.role === 'creator' ? 'bg-[#f5d78d]/20 text-[#c89f5d]' : (user.role === 'editor' ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400')}">
-                                ${user.role}
-                            </span>
-                        </td>
-                        <td class="p-4">
-                            <span class="${user.is_banned === 1 ? 'text-red-500' : 'text-green-500'}">${user.is_banned === 1 ? '已封禁' : '正常'}</span>
-                        </td>
-                        <td class="p-4 text-right space-x-2">
-                            ${isCreator ? `
-                                <button onclick="changeRole('${user.id}', '${user.role === 'user' ? 'editor' : 'user'}')" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-black dark:text-white rounded-md text-xs hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-                                    ${user.role === 'user' ? '升为编者' : '降为普通'}
-                                </button>
-                                <button onclick="toggleBan('${user.id}', ${user.is_banned})" class="px-3 py-1 ${user.is_banned === 1 ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'} rounded-md text-xs hover:opacity-80 transition">
-                                    ${user.is_banned === 1 ? '解封' : '封禁'}
-                                </button>
-                            ` : '<span class="text-gray-400 text-xs">无操作权限</span>'}
-                        </td>
-                    </tr>
-                `).join('');
+                
+                // 存储全局数据
+                allUsers = data.users;
+                renderUsers(allUsers);
 
             } catch (e) {
                 console.error(e);
@@ -105,20 +89,133 @@
             }
         }
 
-        async function changeRole(userId, newRole) {
-            if (!confirm(`确定要将该用户的角色修改为 ${newRole} 吗？`)) return;
-            await API.updateUser(userId, newRole, undefined);
-            loadUsers();
+        // 渲染卡片列表
+        function renderUsers(users) {
+            const container = document.getElementById('user-list-container');
+            
+            if (users.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 py-10">没有找到匹配的用户</div>`;
+                return;
+            }
+
+            container.innerHTML = users.map(user => {
+                const isBanned = user.is_banned === 1;
+                const roleColor = user.role === 'creator' ? 'text-[#c89f5d] bg-[#f5d78d]/10' : (user.role === 'editor' ? 'text-blue-500 bg-blue-500/10' : 'text-gray-500 bg-gray-500/10');
+                const statusColor = isBanned ? 'bg-red-500' : 'bg-green-500';
+
+                return `
+                <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm ios-border border transition-all">
+                    <!-- 头部：点击展开 -->
+                    <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" onclick="toggleAccordion('${user.id}')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-lg font-serif text-black dark:text-white">
+                                ${user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-black dark:text-white text-base">${user.name}</span>
+                                <span class="text-xs text-gray-500">${user.email}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ${roleColor}">${user.role}</span>
+                            <div class="w-2 h-2 rounded-full ${statusColor}"></div>
+                            <svg id="icon-${user.id}" class="w-5 h-5 text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+
+                    <!-- 展开的操作面板 -->
+                    <div id="content-${user.id}" class="accordion-content bg-gray-50 dark:bg-black/20 border-t ios-border">
+                        <div class="p-4 flex flex-col gap-4">
+                            <div class="text-xs text-gray-500 font-sans">
+                                <p>用户 ID: ${user.id}</p>
+                            </div>
+                            
+                            ${isCreator ? `
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <!-- 角色修改下拉框 -->
+                                <div class="flex-1">
+                                    <label class="block text-xs text-gray-500 mb-1">修改角色</label>
+                                    <select onchange="changeRole('${user.id}', this.value)" class="w-full bg-white dark:bg-[#1c1c1e] border ios-border rounded-lg px-3 py-2 text-sm text-black dark:text-white focus:outline-none">
+                                        <option value="user" ${user.role === 'user' ? 'selected' : ''}>普通用户 (user)</option>
+                                        <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>
+                                        <option value="creator" ${user.role === 'creator' ? 'selected' : ''}>创作者 (creator)</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- 封禁按钮 -->
+                                <div class="flex-1 flex items-end">
+                                    <button onclick="toggleBan('${user.id}', ${user.is_banned})" class="w-full py-2 rounded-lg text-sm font-bold transition-colors ${isBanned ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-red-500 text-white hover:bg-red-600'}">
+                                        ${isBanned ? '解除封禁' : '封禁该用户'}
+                                    </button>
+                                </div>
+                            </div>
+                            ` : `
+                            <div class="text-xs text-gray-400 py-2">只有 Creator 可以修改用户权限或封禁。</div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
         }
 
+        // 展开/折叠动画
+        function toggleAccordion(userId) {
+            const content = document.getElementById(`content-${userId}`);
+            const icon = document.getElementById(`icon-${userId}`);
+            
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                // 关闭其他已展开的（如果你想要互斥，取消注释下面两行）
+                // document.querySelectorAll('.accordion-content').forEach(el => el.classList.remove('open'));
+                // document.querySelectorAll('[id^="icon-"]').forEach(el => el.style.transform = 'rotate(0deg)');
+                
+                content.classList.add('open');
+                icon.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        // 搜索过滤逻辑
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const keyword = e.target.value.toLowerCase().trim();
+            const filtered = allUsers.filter(user => 
+                user.name.toLowerCase().includes(keyword) || 
+                user.email.toLowerCase().includes(keyword)
+            );
+            renderUsers(filtered);
+        });
+
+        // 修改角色
+        async function changeRole(userId, newRole) {
+            if (!confirm(`确定要将该用户的角色修改为 ${newRole} 吗？`)) {
+                // 刷新页面恢复下拉框状态
+                renderUsers(allUsers);
+                return;
+            }
+            await API.updateUser(userId, newRole, undefined);
+            // 局部更新数据
+            const user = allUsers.find(u => u.id === userId);
+            if (user) user.role = newRole;
+            renderUsers(allUsers);
+            showToast("角色修改成功", "success");
+        }
+
+        // 封禁/解封
         async function toggleBan(userId, currentBanStatus) {
             const newStatus = currentBanStatus === 1 ? 0 : 1;
             if (!confirm(`确定要${newStatus === 1 ? '封禁' : '解封'}该用户吗？`)) return;
+            
             await API.updateUser(userId, undefined, newStatus);
-            loadUsers();
+            // 局部更新数据
+            const user = allUsers.find(u => u.id === userId);
+            if (user) user.is_banned = newStatus;
+            renderUsers(allUsers);
+            showToast(newStatus === 1 ? "用户已封禁" : "用户已解封", "success");
         }
 
-        window.addEventListener('load', loadUsers);
+        window.addEventListener('load', initAdmin);
     </script>
 </body>
 </html>
