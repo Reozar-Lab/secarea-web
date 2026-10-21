@@ -6,37 +6,62 @@
     <title>管理中枢 · 匿境 Secarea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../style.css">
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
     <style>
-        body { background-color: #f2f2f7 !important; }
-        html.dark body { background-color: #000000 !important; }
-        #theme-toggle, #menu-btn { color: #f5d78d !important; }
-        .ios-card { background-color: #ffffff !important; }
-        html.dark .ios-card { background-color: #1c1c1e !important; }
-        .ios-border { border-color: #e5e5ea !important; }
-        html.dark .ios-border { border-color: #2c2c2e !important; }
+        /* === 核心页面底色 === */
+        html:not(.dark) body { background-color: #f2f2f7 !important; color: #000000 !important; }
+        html.dark body { background-color: #000000 !important; color: #ffffff !important; }
         
-        /* 折叠动画 */
-        .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
-            opacity: 0;
-        }
-        .accordion-content.open {
-            max-height: 300px;
-            opacity: 1;
-        }
+        /* === 导航栏图标 === */
+        #theme-toggle, #menu-btn { color: #f5d78d !important; }
+
+        /* === 卡片与边框 === */
+        .ios-card { background-color: #ffffff !important; border-color: #e5e5ea !important; }
+        html.dark .ios-card { background-color: #1c1c1e !important; border-color: #2c2c2e !important; }
+        
+        /* === 搜索框 (修复明亮模式黑字白底) === */
+        .search-input { background-color: #ffffff !important; color: #000000 !important; border-color: #d1d5db !important; }
+        .search-input::placeholder { color: #9ca3af !important; }
+        html.dark .search-input { background-color: #1c1c1e !important; color: #ffffff !important; border-color: #333333 !important; }
+        html.dark .search-input::placeholder { color: #6b7280 !important; }
+
+        /* === 下拉框 === */
+        .role-select { background-color: #ffffff !important; color: #000000 !important; border-color: #d1d5db !important; }
+        html.dark .role-select { background-color: #1c1c1e !important; color: #ffffff !important; border-color: #333333 !important; }
+
+        /* === 文本颜色 === */
+        .main-title { color: #000000 !important; }
+        html.dark .main-title { color: #ffffff !important; }
+        
+        .user-name { color: #000000 !important; }
+        html.dark .user-name { color: #ffffff !important; }
+        
+        .user-email { color: #6b7280 !important; }
+        html.dark .user-email { color: #9ca3af !important; }
+        
+        /* === 展开面板底色 === */
+        .accordion-content { background-color: #f9fafb !important; }
+        html.dark .accordion-content { background-color: #111111 !important; }
+
+        /* === 折叠动画 === */
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, opacity 0.3s ease-out; opacity: 0; }
+        .accordion-content.open { max-height: 300px; opacity: 1; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col relative">
 
     <main class="flex-grow flex flex-col items-center w-full pt-20 pb-20 px-4">
-        <div class="w-full max-w-3xl flex flex-col">
+        <!-- 这里用 mx-auto 和 max-w-3xl 确保绝对居中 -->
+        <div class="w-full max-w-3xl mx-auto flex flex-col">
             
             <!-- 头部与权限展示 -->
             <div class="mb-6 flex justify-between items-end">
                 <div>
-                    <h1 class="text-3xl font-serif font-bold text-black dark:text-white tracking-widest">管理中枢</h1>
+                    <h1 class="text-3xl font-serif font-bold main-title tracking-widest">管理中枢</h1>
                     <p class="text-sm text-gray-500 mt-1">CEC 内部最高权限控制台</p>
                 </div>
                 <span id="current-admin-role" class="px-3 py-1 rounded bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30 text-xs font-roman uppercase"></span>
@@ -47,7 +72,8 @@
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
-                <input type="text" id="search-input" placeholder="搜索用户名或邮箱..." class="w-full pl-11 pr-4 py-3 bg-white dark:bg-[#1c1c1e] border ios-border rounded-xl shadow-sm text-black dark:text-white focus:outline-none focus:border-[#c89f5d] transition-colors">
+                <!-- 输入框加上 search-input 类 -->
+                <input type="text" id="search-input" placeholder="搜索用户名或邮箱..." class="search-input w-full pl-11 pr-4 py-3 rounded-xl shadow-sm border focus:outline-none focus:border-[#c89f5d] transition-colors">
             </div>
 
             <!-- 用户列表容器 -->
@@ -61,10 +87,9 @@
     <script src="../common.js"></script>
     <script src="../layout.js"></script>
     <script>
-        let allUsers = []; // 存储所有用户数据
+        let allUsers = []; 
         let isCreator = false;
 
-        // 获取权限并加载数据
         async function initAdmin() {
             try {
                 const me = await API.getMe();
@@ -79,7 +104,6 @@
                 const data = await API.getUsers();
                 if (data.error) throw new Error(data.error);
                 
-                // 存储全局数据
                 allUsers = data.users;
                 renderUsers(allUsers);
 
@@ -89,7 +113,6 @@
             }
         }
 
-        // 渲染卡片列表
         function renderUsers(users) {
             const container = document.getElementById('user-list-container');
             
@@ -104,7 +127,7 @@
                 const statusColor = isBanned ? 'bg-red-500' : 'bg-green-500';
 
                 return `
-                <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm ios-border border transition-all">
+                <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm border transition-all">
                     <!-- 头部：点击展开 -->
                     <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" onclick="toggleAccordion('${user.id}')">
                         <div class="flex items-center gap-3">
@@ -112,8 +135,8 @@
                                 ${user.name.charAt(0).toUpperCase()}
                             </div>
                             <div class="flex flex-col">
-                                <span class="font-bold text-black dark:text-white text-base">${user.name}</span>
-                                <span class="text-xs text-gray-500">${user.email}</span>
+                                <span class="font-bold text-base user-name">${user.name}</span>
+                                <span class="text-xs user-email">${user.email}</span>
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
@@ -124,7 +147,7 @@
                     </div>
 
                     <!-- 展开的操作面板 -->
-                    <div id="content-${user.id}" class="accordion-content bg-gray-50 dark:bg-black/20 border-t ios-border">
+                    <div id="content-${user.id}" class="accordion-content border-t border-gray-200 dark:border-gray-800">
                         <div class="p-4 flex flex-col gap-4">
                             <div class="text-xs text-gray-500 font-sans">
                                 <p>用户 ID: ${user.id}</p>
@@ -135,7 +158,7 @@
                                 <!-- 角色修改下拉框 -->
                                 <div class="flex-1">
                                     <label class="block text-xs text-gray-500 mb-1">修改角色</label>
-                                    <select onchange="changeRole('${user.id}', this.value)" class="w-full bg-white dark:bg-[#1c1c1e] border ios-border rounded-lg px-3 py-2 text-sm text-black dark:text-white focus:outline-none">
+                                    <select onchange="changeRole('${user.id}', this.value)" class="role-select w-full rounded-lg px-3 py-2 text-sm border focus:outline-none">
                                         <option value="user" ${user.role === 'user' ? 'selected' : ''}>普通用户 (user)</option>
                                         <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>
                                         <option value="creator" ${user.role === 'creator' ? 'selected' : ''}>创作者 (creator)</option>
@@ -159,7 +182,6 @@
             }).join('');
         }
 
-        // 展开/折叠动画
         function toggleAccordion(userId) {
             const content = document.getElementById(`content-${userId}`);
             const icon = document.getElementById(`icon-${userId}`);
@@ -168,16 +190,11 @@
                 content.classList.remove('open');
                 icon.style.transform = 'rotate(0deg)';
             } else {
-                // 关闭其他已展开的（如果你想要互斥，取消注释下面两行）
-                // document.querySelectorAll('.accordion-content').forEach(el => el.classList.remove('open'));
-                // document.querySelectorAll('[id^="icon-"]').forEach(el => el.style.transform = 'rotate(0deg)');
-                
                 content.classList.add('open');
                 icon.style.transform = 'rotate(180deg)';
             }
         }
 
-        // 搜索过滤逻辑
         document.getElementById('search-input').addEventListener('input', (e) => {
             const keyword = e.target.value.toLowerCase().trim();
             const filtered = allUsers.filter(user => 
@@ -187,32 +204,27 @@
             renderUsers(filtered);
         });
 
-        // 修改角色
         async function changeRole(userId, newRole) {
             if (!confirm(`确定要将该用户的角色修改为 ${newRole} 吗？`)) {
-                // 刷新页面恢复下拉框状态
                 renderUsers(allUsers);
                 return;
             }
             await API.updateUser(userId, newRole, undefined);
-            // 局部更新数据
             const user = allUsers.find(u => u.id === userId);
             if (user) user.role = newRole;
             renderUsers(allUsers);
-            showToast("角色修改成功", "success");
+            if (typeof showToast !== 'undefined') showToast("角色修改成功", "success");
         }
 
-        // 封禁/解封
         async function toggleBan(userId, currentBanStatus) {
             const newStatus = currentBanStatus === 1 ? 0 : 1;
             if (!confirm(`确定要${newStatus === 1 ? '封禁' : '解封'}该用户吗？`)) return;
             
             await API.updateUser(userId, undefined, newStatus);
-            // 局部更新数据
             const user = allUsers.find(u => u.id === userId);
             if (user) user.is_banned = newStatus;
             renderUsers(allUsers);
-            showToast(newStatus === 1 ? "用户已封禁" : "用户已解封", "success");
+            if (typeof showToast !== 'undefined') showToast(newStatus === 1 ? "用户已封禁" : "用户已解封", "success");
         }
 
         window.addEventListener('load', initAdmin);
