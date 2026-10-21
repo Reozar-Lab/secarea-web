@@ -12,9 +12,12 @@
         }
     </script>
     <style>
+        /* 页面底色 */
         body { background-color: #f2f2f7 !important; }
         html.dark body { background-color: #000000 !important; }
         #theme-toggle, #menu-btn { color: #f5d78d !important; }
+        
+        /* 基础卡片与文字颜色 */
         .ios-list-item:active { background-color: rgba(0, 0, 0, 0.05); }
         html.dark .ios-list-item:active { background-color: rgba(255, 255, 255, 0.05); }
         .user-name-color { color: #000000 !important; }
@@ -25,6 +28,34 @@
         html.dark .ios-text { color: #ffffff !important; }
         .ios-border { border-color: #e5e5ea !important; }
         html.dark .ios-border { border-color: #2c2c2e !important; }
+
+        /* === 弹窗专属 CSS (修复明亮模式发黑) === */
+        .modal-panel {
+            background-color: #ffffff !important; /* 亮色纯白 */
+            color: #000000 !important;
+        }
+        html.dark .modal-panel {
+            background-color: #1c1c1e !important; /* 暗色深灰 */
+            color: #ffffff !important;
+        }
+        .modal-header {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            border-bottom: 1px solid #e5e5ea !important;
+        }
+        html.dark .modal-header {
+            background-color: rgba(28, 28, 30, 0.9) !important;
+            border-bottom: 1px solid #2c2c2e !important;
+        }
+        .modal-input {
+            background-color: #f2f2f7 !important;
+            color: #000000 !important;
+            border: 1px solid #e5e5ea !important;
+        }
+        html.dark .modal-input {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border: 1px solid #333333 !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col relative">
@@ -32,6 +63,7 @@
     <main class="flex-grow flex flex-col items-center w-full pt-20 pb-20 px-4">
         <div class="w-full max-w-lg flex flex-col" id="profile-container" style="opacity: 0; transition: opacity 0.5s;">
             
+            <!-- 顶部用户信息 -->
             <div class="flex flex-col items-center justify-center px-2 py-8">
                 <div class="w-24 h-24 rounded-full bg-[#e5e5ea] dark:bg-[#1c1c1e] flex items-center justify-center shrink-0 shadow-sm mb-4 ios-border border transition-colors">
                     <span class="text-4xl font-serif text-black dark:text-[#f5d78d]" id="user-avatar-letter">?</span>
@@ -46,6 +78,7 @@
                 <p class="text-xs font-sans text-gray-400 dark:text-gray-500 mt-1">ID: <span id="user-id">---</span></p>
             </div>
 
+            <!-- 功能列表 -->
             <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm mb-6 ios-border border">
                 <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 ios-border border-b transition-colors">
                     <div class="flex items-center gap-3">
@@ -76,6 +109,7 @@
                 </a>
             </div>
 
+            <!-- 管理员专属面板 -->
             <div id="admin-panel" class="hidden w-full ios-card rounded-xl overflow-hidden shadow-sm mb-6 ios-border border">
                 <a href="/admin/" class="ios-list-item flex items-center justify-between px-4 py-3.5 transition-colors">
                     <div class="flex items-center gap-3">
@@ -88,8 +122,10 @@
                 </a>
             </div>
 
+            <!-- 设置与安全 -->
             <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm mb-6 ios-border border">
-                <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 ios-border border-b transition-colors">
+                <!-- 账号安全入口 -->
+                <a href="#" id="entry-security" class="ios-list-item flex items-center justify-between px-4 py-3.5 ios-border border-b transition-colors">
                     <div class="flex items-center gap-3">
                         <div class="w-7 h-7 rounded-lg bg-gray-400 flex items-center justify-center text-white shrink-0">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
@@ -109,6 +145,7 @@
                 </a>
             </div>
 
+            <!-- 退出 -->
             <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm ios-border border">
                 <button id="profile-logout-btn" class="w-full flex items-center justify-center px-4 py-3.5 text-red-500 font-medium text-[15px] active:bg-gray-50 dark:active:bg-gray-800 transition-colors">
                     退出登录
@@ -116,6 +153,14 @@
             </div>
         </div>
     </main>
+
+    <!-- ==================== 弹窗系统 ==================== -->
+    <div id="action-modal" class="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
+        <!-- 面板容器 -->
+        <div id="action-panel" class="modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto flex flex-col">
+            <!-- 内容由 JS 动态注入 -->
+        </div>
+    </div>
 
     <script src="../common.js"></script>
     <script src="../layout.js"></script>
@@ -127,8 +172,29 @@
         const emailEl = document.getElementById('user-email');
         const idEl = document.getElementById('user-id');
         const adminPanel = document.getElementById('admin-panel');
-        const logoutBtn = document.getElementById('profile-logout-btn');
+        
+        // 弹窗控制
+        const actionModal = document.getElementById('action-modal');
+        const actionPanel = document.getElementById('action-panel');
 
+        function openModal(htmlContent) {
+            actionPanel.innerHTML = htmlContent;
+            actionModal.classList.remove('hidden');
+            setTimeout(() => {
+                actionModal.classList.remove('opacity-0');
+                actionPanel.classList.remove('translate-y-full', 'sm:scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            actionModal.classList.add('opacity-0');
+            actionPanel.classList.add('translate-y-full', 'sm:scale-95');
+            setTimeout(() => actionModal.classList.add('hidden'), 300);
+        }
+
+        actionModal.addEventListener('click', (e) => { if (e.target === actionModal) closeModal(); });
+
+        // ================= 1. 加载用户数据 =================
         async function initProfile() {
             try {
                 const data = await API.getMe();
@@ -158,158 +224,169 @@
             }
         }
 
-        logoutBtn.addEventListener('click', async () => {
-            if (!confirm("确定要断开内界连接吗？")) return;
-            logoutBtn.textContent = '正在断开...';
-            try { await API.logout(); window.location.href = '/login/'; } catch (e) { alert("退出失败"); logoutBtn.textContent = '退出登录'; }
-        });
-
-        // ==========================================
-        // 账号安全中心 (动态生成 UI 和逻辑)
-        // ==========================================
-        
-        const securityModalHTML = `
-        <div id="security-modal" class="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
-            <div class="w-full max-w-lg bg-[#f2f2f7] dark:bg-[#1c1c1e] rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto" id="security-panel">
-                <div class="sticky top-0 bg-[#f2f2f7]/90 dark:bg-[#1c1c1e]/90 backdrop-blur z-10 px-4 py-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
-                    <h2 class="text-lg font-bold text-black dark:text-white">账号安全</h2>
-                    <button id="close-security" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
+        // ================= 2. 账号安全菜单 =================
+        document.getElementById('entry-security').addEventListener('click', (e) => {
+            e.preventDefault();
+            openModal(`
+                <div class="modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                    <h2 class="text-lg font-bold">账号安全</h2>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
-
                 <div class="p-4 space-y-4">
-                    <div class="bg-white dark:bg-[#2c2c2e] rounded-xl overflow-hidden p-4">
-                        <h3 class="text-sm font-bold text-black dark:text-white mb-3">更改密码</h3>
-                        <input type="password" id="old-password" placeholder="当前密码" class="w-full mb-2 px-3 py-2 bg-gray-50 dark:bg-[#1c1c1e] border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-black dark:text-white focus:outline-none">
-                        <input type="password" id="new-password" placeholder="新密码" class="w-full mb-3 px-3 py-2 bg-gray-50 dark:bg-[#1c1c1e] border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-black dark:text-white focus:outline-none">
-                        <button id="btn-change-password" class="w-full py-2 bg-[#111111] text-[#f5d78d] rounded-lg text-sm font-bold hover:bg-black transition">更新密码</button>
+                    <div class="bg-gray-50 dark:bg-[#2c2c2e] rounded-xl overflow-hidden">
+                        <button onclick="openChangePassword()" class="w-full p-4 text-left font-medium border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition">修改密码</button>
+                        <button onclick="openChangeEmail()" class="w-full p-4 text-left font-medium border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition">更改注册邮箱</button>
+                        <button onclick="showToast('第三方绑定开发中', 'info')" class="w-full p-4 text-left font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">第三方账号绑定</button>
                     </div>
-
-                    <div class="bg-white dark:bg-[#2c2c2e] rounded-xl overflow-hidden p-4">
-                        <h3 class="text-sm font-bold text-black dark:text-white mb-3">更改注册邮箱</h3>
-                        <div class="flex gap-2 mb-2">
-                            <input type="email" id="new-email" placeholder="新邮箱地址" class="flex-1 px-3 py-2 bg-gray-50 dark:bg-[#1c1c1e] border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-black dark:text-white focus:outline-none">
-                            <button id="btn-send-email-code" class="whitespace-nowrap px-3 py-2 bg-gray-200 dark:bg-gray-700 text-black dark:text-white rounded-lg text-sm font-bold">获取验证码</button>
-                        </div>
-                        <input type="text" id="email-otp" placeholder="新邮箱收到的验证码" class="w-full mb-3 px-3 py-2 bg-gray-50 dark:bg-[#1c1c1e] border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-black dark:text-white focus:outline-none">
-                        <button id="btn-change-email" class="w-full py-2 bg-[#111111] text-[#f5d78d] rounded-lg text-sm font-bold hover:bg-black transition">确认更改</button>
-                    </div>
-
-                    <div class="bg-white dark:bg-[#2c2c2e] rounded-xl overflow-hidden">
-                        <div class="p-4 flex justify-between items-center border-b border-gray-100 dark:border-gray-700">
-                            <span class="text-sm font-medium text-black dark:text-white">GitHub 账号</span>
-                            <span class="text-xs text-gray-500">未绑定 (开发中)</span>
-                        </div>
-                        <div class="p-4 flex justify-between items-center">
-                            <span class="text-sm font-medium text-black dark:text-white">Google 账号</span>
-                            <span class="text-xs text-gray-500">未绑定 (开发中)</span>
-                        </div>
-                    </div>
-
-                    <div class="bg-white dark:bg-[#2c2c2e] rounded-xl overflow-hidden mt-4">
-                        <button id="btn-delete-account" class="w-full p-4 text-red-500 text-sm font-bold text-center hover:bg-red-50 dark:hover:bg-red-500/10 transition">
-                            永久注销账号
-                        </button>
+                    <div class="bg-gray-50 dark:bg-[#2c2c2e] rounded-xl overflow-hidden">
+                        <button onclick="openDeleteAccount()" class="w-full p-4 text-center text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-500/10 transition">永久注销账号</button>
                     </div>
                 </div>
-            </div>
-        </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', securityModalHTML);
+            `);
+        });
 
-        const secModal = document.getElementById('security-modal');
-        const secPanel = document.getElementById('security-panel');
-        const closeSecBtn = document.getElementById('close-security');
-        const securityEntryBtn = Array.from(document.querySelectorAll('.ios-list-item')).find(el => el.textContent.includes('账号安全'));
-
-        function openSecurity() {
-            secModal.classList.remove('hidden');
-            setTimeout(() => {
-                secModal.classList.remove('opacity-0');
-                secPanel.classList.remove('translate-y-full', 'sm:scale-95');
-            }, 10);
-        }
-
-        function closeSecurity() {
-            secModal.classList.add('opacity-0');
-            secPanel.classList.add('translate-y-full', 'sm:scale-95');
-            setTimeout(() => secModal.classList.add('hidden'), 300);
-        }
-
-        if (securityEntryBtn) {
-            securityEntryBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                openSecurity();
+        // ================= 3. 修改密码 =================
+        window.openChangePassword = function() {
+            openModal(`
+                <div class="modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                    <div class="flex items-center gap-2">
+                        <button onclick="document.getElementById('entry-security').click()" class="text-gray-500 hover:text-black dark:hover:text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h2 class="text-lg font-bold">修改密码</h2>
+                    </div>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <input type="password" id="old-password" placeholder="当前密码" class="modal-input w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-[#c89f5d]">
+                    <input type="password" id="new-password" placeholder="新密码" class="modal-input w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-[#c89f5d]">
+                    <button id="btn-change-password" class="w-full py-3 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition">确认更新</button>
+                </div>
+            `);
+            document.getElementById('btn-change-password').addEventListener('click', async (e) => {
+                const oldPwd = document.getElementById('old-password').value;
+                const newPwd = document.getElementById('new-password').value;
+                if (!oldPwd || !newPwd) return showToast("请填写完整密码", "error");
+                
+                e.target.textContent = '处理中...';
+                const res = await API.changePassword(oldPwd, newPwd);
+                e.target.textContent = '确认更新';
+                if (res.error) showToast(res.error, 'error');
+                else {
+                    showToast("密码修改成功", "success");
+                    closeModal();
+                }
             });
-        }
-        closeSecBtn.addEventListener('click', closeSecurity);
-        secModal.addEventListener('click', (e) => { if (e.target === secModal) closeSecurity(); });
+        };
 
-        document.getElementById('btn-change-password').addEventListener('click', async (e) => {
-            const oldPwd = document.getElementById('old-password').value;
-            const newPwd = document.getElementById('new-password').value;
-            if (!oldPwd || !newPwd) return showToast("请填写完整密码", "error");
+        // ================= 4. 更改邮箱 =================
+        window.openChangeEmail = function() {
+            openModal(`
+                <div class="modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                    <div class="flex items-center gap-2">
+                        <button onclick="document.getElementById('entry-security').click()" class="text-gray-500 hover:text-black dark:hover:text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h2 class="text-lg font-bold">更改邮箱</h2>
+                    </div>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <div class="flex gap-2">
+                        <input type="email" id="new-email" placeholder="新邮箱地址" class="modal-input flex-1 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-[#c89f5d]">
+                        <button id="btn-send-code" class="whitespace-nowrap px-4 py-3 bg-gray-200 dark:bg-gray-700 text-black dark:text-white rounded-xl text-sm font-bold">获取验证码</button>
+                    </div>
+                    <input type="text" id="email-otp" placeholder="新邮箱收到的验证码" class="modal-input w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-[#c89f5d]">
+                    <button id="btn-change-email" class="w-full py-3 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition">确认更改</button>
+                </div>
+            `);
             
-            e.target.textContent = '处理中...';
-            const res = await API.changePassword(oldPwd, newPwd);
-            e.target.textContent = '更新密码';
-            if (res.error) showToast(res.error, 'error');
-            else {
-                showToast("密码修改成功", "success");
-                document.getElementById('old-password').value = '';
-                document.getElementById('new-password').value = '';
-            }
-        });
+            let emailTimer = null;
+            document.getElementById('btn-send-code').addEventListener('click', async (e) => {
+                if (emailTimer) return;
+                const newEmail = document.getElementById('new-email').value.trim();
+                if (!newEmail) return showToast("请输入新邮箱", "error");
+                
+                const res = await API.sendCode(newEmail);
+                if (!res.error) {
+                    let count = 60;
+                    e.target.classList.add('opacity-50');
+                    emailTimer = setInterval(() => {
+                        count--;
+                        e.target.textContent = `${count}s`;
+                        if (count <= 0) {
+                            clearInterval(emailTimer); emailTimer = null;
+                            e.target.classList.remove('opacity-50');
+                            e.target.textContent = '获取验证码';
+                        }
+                    }, 1000);
+                }
+            });
 
-        let emailTimer = null;
-        document.getElementById('btn-send-email-code').addEventListener('click', async (e) => {
-            if (emailTimer) return;
-            const newEmail = document.getElementById('new-email').value.trim();
-            if (!newEmail) return showToast("请输入新邮箱", "error");
+            document.getElementById('btn-change-email').addEventListener('click', async (e) => {
+                const newEmail = document.getElementById('new-email').value.trim();
+                const otp = document.getElementById('email-otp').value.trim();
+                if (!newEmail || !otp) return showToast("请填写完整", "error");
+                
+                e.target.textContent = '处理中...';
+                const res = await API.changeEmail(newEmail, otp);
+                e.target.textContent = '确认更改';
+                if (res.error) showToast(res.error, 'error');
+                else {
+                    showToast("邮箱更换成功", "success");
+                    setTimeout(() => window.location.reload(), 1500);
+                }
+            });
+        };
+
+        // ================= 5. 注销账号 =================
+        window.openDeleteAccount = function() {
+            openModal(`
+                <div class="modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                    <div class="flex items-center gap-2">
+                        <button onclick="document.getElementById('entry-security').click()" class="text-gray-500 hover:text-black dark:hover:text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h2 class="text-lg font-bold text-red-500">注销账号</h2>
+                    </div>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <p class="text-sm text-red-500 font-bold leading-relaxed">⚠️ 警告：注销账号将永久删除您的所有数据（包括创作、收藏、Wiki 贡献等），此操作绝对不可逆！</p>
+                    <p class="text-xs text-gray-500">如果您确认要继续，请在下方输入 "确认注销" 四个字：</p>
+                    <input type="text" id="delete-confirm-text" placeholder="确认注销" class="modal-input w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-red-500 text-red-500 font-bold">
+                    <button id="btn-delete-account" class="w-full py-3 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 transition">永久删除我的账号</button>
+                </div>
+            `);
             
-            const res = await API.sendCode(newEmail);
-            if (!res.error) {
-                let count = 60;
-                e.target.classList.add('opacity-50');
-                emailTimer = setInterval(() => {
-                    count--;
-                    e.target.textContent = `${count}s`;
-                    if (count <= 0) {
-                        clearInterval(emailTimer); emailTimer = null;
-                        e.target.classList.remove('opacity-50');
-                        e.target.textContent = '获取验证码';
-                    }
-                }, 1000);
-            }
-        });
+            document.getElementById('btn-delete-account').addEventListener('click', async (e) => {
+                const confirmText = document.getElementById('delete-confirm-text').value.trim();
+                if (confirmText !== "确认注销") return showToast("输入不正确，操作已取消", "error");
 
-        document.getElementById('btn-change-email').addEventListener('click', async (e) => {
-            const newEmail = document.getElementById('new-email').value.trim();
-            const otp = document.getElementById('email-otp').value.trim();
-            if (!newEmail || !otp) return showToast("请填写新邮箱和验证码", "error");
-            
-            e.target.textContent = '处理中...';
-            const res = await API.changeEmail(newEmail, otp);
-            e.target.textContent = '确认更改';
-            if (res.error) showToast(res.error, 'error');
-            else {
-                showToast("邮箱更换成功", "success");
-                setTimeout(() => window.location.reload(), 1500);
-            }
-        });
+                e.target.textContent = '正在注销...';
+                const res = await API.deleteAccount();
+                if (res.error) {
+                    showToast(res.error, 'error');
+                    e.target.textContent = '永久删除我的账号';
+                } else {
+                    showToast("账号已注销，即将返回登录页", "success");
+                    setTimeout(() => window.location.href = '/login/', 1500);
+                }
+            });
+        };
 
-        document.getElementById('btn-delete-account').addEventListener('click', async () => {
-            if (!confirm("⚠️ 警告：注销账号将永久删除你的所有数据，此操作不可逆！确定要继续吗？")) return;
-            const confirmText = prompt("请输入 '确认注销' 四个字以执行操作：");
-            if (confirmText !== "确认注销") return showToast("操作已取消", "info");
-
-            const res = await API.deleteAccount();
-            if (res.error) showToast(res.error, 'error');
-            else {
-                showToast("账号已注销，即将返回登录页", "success");
-                setTimeout(() => window.location.href = '/login/', 1500);
-            }
+        // 退出登录
+        document.getElementById('profile-logout-btn').addEventListener('click', async () => {
+            if (!confirm("确定要断开内界连接吗？")) return;
+            try { await API.logout(); window.location.href = '/login/'; } catch (e) { alert("退出失败"); }
         });
 
         window.addEventListener('load', initProfile);
