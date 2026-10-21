@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理中枢 · 匿境 Secarea</title>
+    <title>个人中心 · 匿境 Secarea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../style.css">
     <script>
@@ -15,172 +15,391 @@
 <body class="page-ios min-h-screen flex flex-col relative">
 
     <main class="flex-grow flex flex-col items-center w-full pt-20 pb-20 px-4">
-        <div class="w-full max-w-3xl mx-auto flex flex-col">
+        <div class="w-full max-w-lg flex flex-col" id="profile-container" style="opacity: 0; transition: opacity 0.5s;">
             
-            <div class="mb-6 flex justify-between items-end">
-                <div>
-                    <!-- 强制锁定管理中枢标题颜色 -->
-                    <h1 class="text-3xl font-serif font-bold !text-black dark:!text-white tracking-widest">管理中枢</h1>
-                    <p class="text-sm !text-gray-500 mt-1">CEC 内部最高权限控制台</p>
+            <!-- 顶部用户信息区 -->
+            <div class="flex flex-col items-center justify-center px-2 py-8 cursor-pointer group" onclick="openEditProfile()">
+                <div class="relative w-24 h-24 mb-4">
+                    <div class="w-full h-full rounded-full bg-[#e5e5ea] dark:bg-[#1c1c1e] flex items-center justify-center shadow-sm border ios-border transition-colors group-hover:opacity-80">
+                        <span class="text-4xl font-serif !text-black dark:!text-[#f5d78d]" id="user-avatar-letter">?</span>
+                    </div>
+                    <div class="absolute bottom-0 right-0 w-7 h-7 bg-[#111] dark:bg-white rounded-full border-2 border-white dark:border-[#1c1c1e] flex items-center justify-center">
+                        <svg class="w-3.5 h-3.5 text-white dark:text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </div>
                 </div>
-                <!-- 强制锁定权限徽章颜色 -->
-                <span id="current-admin-role" class="px-3 py-1 rounded bg-[#f5d78d]/20 !text-[#c89f5d] border border-[#f5d78d]/30 text-xs font-roman uppercase"></span>
-            </div>
-
-            <div class="w-full mb-6 relative">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg class="w-5 h-5 !text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                
+                <div class="flex items-center gap-2 mb-1">
+                    <!-- 强制锁定名字颜色 -->
+                    <h1 class="text-2xl font-bold tracking-wide !text-black dark:!text-white" id="user-name">加载中...</h1>
+                    <span class="hidden px-2 py-0.5 rounded text-[10px] font-sans font-medium bg-gray-200 dark:bg-gray-800 !text-gray-600 dark:!text-gray-300" id="user-role">member</span>
                 </div>
-                <input type="text" id="search-input" placeholder="搜索用户名或邮箱..." class="admin-input w-full pl-11 pr-4 py-3 shadow-sm focus:outline-none focus:border-[#c89f5d]">
+                
+                <p class="text-xs !text-gray-500 mt-1 max-w-[250px] text-center truncate" id="user-bio">这个人很神秘，还没有留下签名。</p>
+                <p class="text-xs font-sans !text-gray-400 mt-2">ID: <span id="user-id">---</span></p>
             </div>
 
-            <div id="user-list-container" class="w-full flex flex-col gap-3">
-                <!-- JS 动态注入卡片 -->
+            <!-- 功能列表 -->
+            <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm mb-6 ios-border border">
+                <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 ios-border border-b transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center text-white shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </div>
+                        <span class="text-[15px] font-medium ios-text">我的创作</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm !text-gray-400 font-roman">0 篇</span>
+                        <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                </a>
+                <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 ios-border border-b transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-7 h-7 rounded-lg bg-yellow-500 flex items-center justify-center text-white shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                        </div>
+                        <span class="text-[15px] font-medium ios-text">我的收藏</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm !text-gray-400 font-roman">0 项</span>
+                        <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                </a>
+                <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-7 h-7 rounded-lg bg-green-500 flex items-center justify-center text-white shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                        </div>
+                        <span class="text-[15px] font-medium ios-text">参与贡献</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm !text-gray-400 font-roman">0 次</span>
+                        <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
+                </a>
             </div>
 
+            <!-- 管理员专属面板 -->
+            <div id="admin-panel" class="hidden w-full ios-card rounded-xl overflow-hidden shadow-sm mb-6 ios-border border">
+                <a href="/admin/" class="ios-list-item flex items-center justify-between px-4 py-3.5 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] flex items-center justify-center !text-black shrink-0 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                        </div>
+                        <span class="text-[15px] font-bold !text-[#c89f5d]">CEC 管理中枢</span>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+
+            <!-- 设置与安全 -->
+            <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm mb-6 ios-border border">
+                <a href="#" id="entry-security" class="ios-list-item flex items-center justify-between px-4 py-3.5 ios-border border-b transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-7 h-7 rounded-lg bg-gray-400 flex items-center justify-center text-white shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        </div>
+                        <span class="text-[15px] font-medium ios-text">账号安全</span>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+                <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-7 h-7 rounded-lg bg-gray-400 flex items-center justify-center text-white shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </div>
+                        <span class="text-[15px] font-medium ios-text">偏好设置</span>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            </div>
+
+            <!-- 退出 -->
+            <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm ios-border border">
+                <button id="profile-logout-btn" class="w-full flex items-center justify-center px-4 py-3.5 text-red-500 font-medium text-[15px] active:bg-gray-50 dark:active:bg-gray-800 transition-colors">
+                    退出登录
+                </button>
+            </div>
         </div>
     </main>
+
+    <!-- 弹窗系统 -->
+    <div id="action-modal" class="sys-modal-overlay fixed inset-0 z-[9999] hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
+        <div id="action-panel" class="sys-modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto flex flex-col">
+            <!-- 内容由 JS 动态注入 -->
+        </div>
+    </div>
 
     <script src="../common.js"></script>
     <script src="../layout.js"></script>
     <script>
-        let allUsers = []; 
-        let isCreator = false;
+        const container = document.getElementById('profile-container');
+        const avatarLetter = document.getElementById('user-avatar-letter');
+        const nameEl = document.getElementById('user-name');
+        const bioEl = document.getElementById('user-bio');
+        const roleEl = document.getElementById('user-role');
+        const idEl = document.getElementById('user-id');
+        const adminPanel = document.getElementById('admin-panel');
+        
+        let currentUser = null;
 
-        async function initAdmin() {
+        const actionModal = document.getElementById('action-modal');
+        const actionPanel = document.getElementById('action-panel');
+
+        function openModal(htmlContent) {
+            actionPanel.innerHTML = htmlContent;
+            actionModal.classList.remove('hidden');
+            setTimeout(() => {
+                actionModal.classList.remove('opacity-0');
+                actionPanel.classList.remove('translate-y-full', 'sm:scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            actionModal.classList.add('opacity-0');
+            actionPanel.classList.add('translate-y-full', 'sm:scale-95');
+            setTimeout(() => actionModal.classList.add('hidden'), 300);
+        }
+
+        actionModal.addEventListener('click', (e) => { if (e.target === actionModal) closeModal(); });
+
+        async function initProfile() {
             try {
-                const me = await API.getMe();
-                if (!me || !me.user) { window.location.href = '/login/'; return; }
-                if (me.user.role !== 'creator' && me.user.role !== 'editor') {
-                    alert("您没有权限访问此页面"); window.location.href = '/'; return;
+                const data = await API.getMe();
+                if (!data || !data.user) {
+                    window.location.href = '/login/';
+                    return;
                 }
+                currentUser = data.user;
+                nameEl.textContent = currentUser.name;
+                idEl.textContent = currentUser.id.substring(0, 8).toUpperCase();
+                avatarLetter.textContent = currentUser.name.charAt(0).toUpperCase();
                 
-                isCreator = me.user.role === 'creator';
-                document.getElementById('current-admin-role').textContent = `权限: ${me.user.role}`;
+                if (currentUser.bio) bioEl.textContent = currentUser.bio;
 
-                const data = await API.getUsers();
-                if (data.error) throw new Error(data.error);
-                
-                allUsers = data.users;
-                renderUsers(allUsers);
-
-            } catch (e) {
-                console.error(e);
-                alert("加载失败: " + e.message);
+                if (currentUser.role === 'creator' || currentUser.role === 'editor') {
+                    roleEl.textContent = currentUser.role.toUpperCase();
+                    roleEl.classList.remove('hidden');
+                    if (currentUser.role === 'creator') {
+                        roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-[#f5d78d]/20 !text-[#c89f5d] border border-[#f5d78d]/30';
+                    } else {
+                        roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-blue-500/20 !text-blue-400 border border-blue-500/30';
+                    }
+                    adminPanel.classList.remove('hidden');
+                }
+                container.style.opacity = 1;
+            } catch (error) {
+                window.location.href = '/login/'; 
             }
         }
 
-        function renderUsers(users) {
-            const container = document.getElementById('user-list-container');
-            
-            if (users.length === 0) {
-                container.innerHTML = `<div class="text-center !text-gray-500 py-10">没有找到匹配的用户</div>`;
-                return;
-            }
-
-            container.innerHTML = users.map(user => {
-                const isBanned = user.is_banned === 1;
-                const roleColor = user.role === 'creator' ? '!text-[#c89f5d] bg-[#f5d78d]/10' : (user.role === 'editor' ? '!text-blue-500 bg-blue-500/10' : '!text-gray-500 bg-gray-500/10');
-                const statusColor = isBanned ? 'bg-red-500' : 'bg-green-500';
-
-                return `
-                <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm border transition-all">
-                    <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" onclick="toggleAccordion('${user.id}')">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-lg font-serif !text-black dark:!text-white">
-                                ${user.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div class="flex flex-col">
-                                <span class="font-bold text-base ios-text">${user.name}</span>
-                                <span class="text-xs !text-gray-500">${user.email}</span>
-                            </div>
+        window.openEditProfile = function() {
+            if (!currentUser) return;
+            openModal(`
+                <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                    <h2 class="text-lg font-bold">编辑个人资料</h2>
+                    <button onclick="closeModal()" class="!text-gray-500 hover:!text-black dark:hover:!text-white p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <div class="flex flex-col items-center mb-4">
+                        <div class="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-3xl font-serif !text-black dark:!text-[#f5d78d] mb-2 border border-gray-300 dark:border-gray-700">
+                            ${currentUser.name.charAt(0).toUpperCase()}
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ${roleColor}">${user.role}</span>
-                            <div class="w-2 h-2 rounded-full ${statusColor}"></div>
-                            <svg id="icon-${user.id}" class="w-5 h-5 !text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
+                        <button class="text-xs !text-[#c89f5d] font-medium border border-[#c89f5d]/30 px-3 py-1 rounded-full bg-[#f5d78d]/10 hover:bg-[#f5d78d]/20 transition">上传新头像 (待开发)</button>
                     </div>
+                    
+                    <div>
+                        <label class="block text-xs !text-gray-500 mb-1 ml-1">用户名</label>
+                        <input type="text" id="edit-name" value="${currentUser.name}" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                    </div>
+                    <div>
+                        <label class="block text-xs !text-gray-500 mb-1 ml-1">个性签名</label>
+                        <textarea id="edit-bio" placeholder="介绍一下自己吧..." class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d] resize-none h-24">${currentUser.bio || ''}</textarea>
+                    </div>
+                    
+                    <button onclick="saveProfile()" class="w-full py-3 bg-[#111111] !text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition mt-2">保存修改</button>
+                </div>
+            `);
+        };
 
-                    <div id="content-${user.id}" class="accordion-content border-t ios-border">
-                        <div class="p-4 flex flex-col gap-4">
-                            <div class="text-xs !text-gray-500 font-sans">
-                                <p>用户 ID: ${user.id}</p>
-                            </div>
-                            
-                            ${isCreator ? `
-                            <div class="flex flex-col sm:flex-row gap-3">
-                                <div class="flex-1">
-                                    <label class="block text-xs !text-gray-500 mb-1">修改角色</label>
-                                    <select onchange="changeRole('${user.id}', this.value)" class="admin-input w-full px-3 py-2 text-sm focus:outline-none">
-                                        <option value="user" ${user.role === 'user' ? 'selected' : ''}>普通用户 (user)</option>
-                                        <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>
-                                        <option value="creator" ${user.role === 'creator' ? 'selected' : ''}>创作者 (creator)</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="flex-1 flex items-end">
-                                    <button onclick="toggleBan('${user.id}', ${user.is_banned})" class="w-full py-2 rounded-lg text-sm font-bold transition-colors ${isBanned ? 'bg-green-500 !text-white hover:bg-green-600' : 'bg-red-500 !text-white hover:bg-red-600'}">
-                                        ${isBanned ? '解除封禁' : '封禁该用户'}
-                                    </button>
-                                </div>
-                            </div>
-                            ` : `
-                            <div class="text-xs !text-gray-400 py-2">只有 Creator 可以修改用户权限或封禁。</div>
-                            `}
-                        </div>
+        window.saveProfile = async function() {
+            const newName = document.getElementById('edit-name').value.trim();
+            const newBio = document.getElementById('edit-bio').value.trim();
+            if(!newName) return showToast("用户名不能为空", "error");
+            
+            currentUser.name = newName;
+            currentUser.bio = newBio;
+            
+            nameEl.textContent = newName;
+            bioEl.textContent = newBio || "这个人很神秘，还没有留下签名。";
+            avatarLetter.textContent = newName.charAt(0).toUpperCase();
+            
+            showToast("资料修改成功 (前端演示)", "success");
+            closeModal();
+        };
+
+        document.getElementById('entry-security').addEventListener('click', (e) => {
+            e.preventDefault();
+            openModal(`
+                <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                    <h2 class="text-lg font-bold">账号安全</h2>
+                    <button onclick="closeModal()" class="!text-gray-500 hover:!text-black dark:hover:!text-white p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <div class="sys-modal-group">
+                        <button onclick="openChangePassword()" class="sys-modal-btn w-full p-4 text-left font-medium">修改密码</button>
+                        <button onclick="openChangeEmail()" class="sys-modal-btn w-full p-4 text-left font-medium">更改注册邮箱</button>
+                        <button onclick="showToast('第三方绑定开发中', 'info')" class="sys-modal-btn w-full p-4 text-left font-medium">第三方账号绑定</button>
+                    </div>
+                    <div class="sys-modal-group">
+                        <button onclick="openDeleteAccount()" class="sys-modal-btn w-full p-4 text-center !text-red-500 font-bold">永久注销账号</button>
                     </div>
                 </div>
-                `;
-            }).join('');
-        }
-
-        function toggleAccordion(userId) {
-            const content = document.getElementById(`content-${userId}`);
-            const icon = document.getElementById(`icon-${userId}`);
-            
-            if (content.classList.contains('open')) {
-                content.classList.remove('open');
-                icon.style.transform = 'rotate(0deg)';
-            } else {
-                content.classList.add('open');
-                icon.style.transform = 'rotate(180deg)';
-            }
-        }
-
-        document.getElementById('search-input').addEventListener('input', (e) => {
-            const keyword = e.target.value.toLowerCase().trim();
-            const filtered = allUsers.filter(user => 
-                user.name.toLowerCase().includes(keyword) || 
-                user.email.toLowerCase().includes(keyword)
-            );
-            renderUsers(filtered);
+            `);
         });
 
-        async function changeRole(userId, newRole) {
-            if (!confirm(`确定要将该用户的角色修改为 ${newRole} 吗？`)) {
-                renderUsers(allUsers);
-                return;
-            }
-            await API.updateUser(userId, newRole, undefined);
-            const user = allUsers.find(u => u.id === userId);
-            if (user) user.role = newRole;
-            renderUsers(allUsers);
-            if (typeof showToast !== 'undefined') showToast("角色修改成功", "success");
-        }
+        window.openChangePassword = function() {
+            openModal(`
+                <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                    <div class="flex items-center gap-2">
+                        <button onclick="document.getElementById('entry-security').click()" class="!text-gray-500 hover:!text-black dark:hover:!text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h2 class="text-lg font-bold">修改密码</h2>
+                    </div>
+                    <button onclick="closeModal()" class="!text-gray-500 hover:!text-black dark:hover:!text-white p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <input type="password" id="old-password" placeholder="当前密码" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                    <input type="password" id="new-password" placeholder="新密码" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                    <button id="btn-change-password" class="w-full py-3 bg-[#111111] !text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition">确认更新</button>
+                </div>
+            `);
+            document.getElementById('btn-change-password').addEventListener('click', async (e) => {
+                const oldPwd = document.getElementById('old-password').value;
+                const newPwd = document.getElementById('new-password').value;
+                if (!oldPwd || !newPwd) return showToast("请填写完整密码", "error");
+                
+                e.target.textContent = '处理中...';
+                const res = await API.changePassword(oldPwd, newPwd);
+                e.target.textContent = '确认更新';
+                if (res.error) showToast(res.error, 'error');
+                else {
+                    showToast("密码修改成功", "success");
+                    closeModal();
+                }
+            });
+        };
 
-        async function toggleBan(userId, currentBanStatus) {
-            const newStatus = currentBanStatus === 1 ? 0 : 1;
-            if (!confirm(`确定要${newStatus === 1 ? '封禁' : '解封'}该用户吗？`)) return;
+        window.openChangeEmail = function() {
+            openModal(`
+                <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                    <div class="flex items-center gap-2">
+                        <button onclick="document.getElementById('entry-security').click()" class="!text-gray-500 hover:!text-black dark:hover:!text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h2 class="text-lg font-bold">更改邮箱</h2>
+                    </div>
+                    <button onclick="closeModal()" class="!text-gray-500 hover:!text-black dark:hover:!text-white p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <div class="flex gap-2">
+                        <input type="email" id="new-email" placeholder="新邮箱地址" class="sys-modal-input flex-1 px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                        <button id="btn-send-code" class="whitespace-nowrap px-4 py-3 bg-gray-200 dark:bg-gray-700 !text-black dark:!text-white rounded-xl text-sm font-bold">获取验证码</button>
+                    </div>
+                    <input type="text" id="email-otp" placeholder="新邮箱收到的验证码" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                    <button id="btn-change-email" class="w-full py-3 bg-[#111111] !text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition">确认更改</button>
+                </div>
+            `);
             
-            await API.updateUser(userId, undefined, newStatus);
-            const user = allUsers.find(u => u.id === userId);
-            if (user) user.is_banned = newStatus;
-            renderUsers(allUsers);
-            if (typeof showToast !== 'undefined') showToast(newStatus === 1 ? "用户已封禁" : "用户已解封", "success");
-        }
+            let emailTimer = null;
+            document.getElementById('btn-send-code').addEventListener('click', async (e) => {
+                if (emailTimer) return;
+                const newEmail = document.getElementById('new-email').value.trim();
+                if (!newEmail) return showToast("请输入新邮箱", "error");
+                
+                const res = await API.sendCode(newEmail);
+                if (!res.error) {
+                    let count = 60;
+                    e.target.classList.add('opacity-50');
+                    emailTimer = setInterval(() => {
+                        count--;
+                        e.target.textContent = `${count}s`;
+                        if (count <= 0) {
+                            clearInterval(emailTimer); emailTimer = null;
+                            e.target.classList.remove('opacity-50');
+                            e.target.textContent = '获取验证码';
+                        }
+                    }, 1000);
+                }
+            });
 
-        window.addEventListener('load', initAdmin);
+            document.getElementById('btn-change-email').addEventListener('click', async (e) => {
+                const newEmail = document.getElementById('new-email').value.trim();
+                const otp = document.getElementById('email-otp').value.trim();
+                if (!newEmail || !otp) return showToast("请填写完整", "error");
+                
+                e.target.textContent = '处理中...';
+                const res = await API.changeEmail(newEmail, otp);
+                e.target.textContent = '确认更改';
+                if (res.error) showToast(res.error, 'error');
+                else {
+                    showToast("邮箱更换成功", "success");
+                    setTimeout(() => window.location.reload(), 1500);
+                }
+            });
+        };
+
+        window.openDeleteAccount = function() {
+            openModal(`
+                <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                    <div class="flex items-center gap-2">
+                        <button onclick="document.getElementById('entry-security').click()" class="!text-gray-500 hover:!text-black dark:hover:!text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h2 class="text-lg font-bold !text-red-500">注销账号</h2>
+                    </div>
+                    <button onclick="closeModal()" class="!text-gray-500 hover:!text-black dark:hover:!text-white p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <p class="text-sm !text-red-500 font-bold leading-relaxed">⚠️ 警告：注销账号将永久删除您的所有数据，此操作绝对不可逆！</p>
+                    <p class="text-xs !text-gray-500">请在下方输入 "确认注销" 四个字：</p>
+                    <input type="text" id="delete-confirm-text" placeholder="确认注销" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-red-500 !text-red-500 font-bold">
+                    <button id="btn-delete-account" class="w-full py-3 bg-red-500 !text-white rounded-xl text-sm font-bold hover:bg-red-600 transition">永久删除我的账号</button>
+                </div>
+            `);
+            
+            document.getElementById('btn-delete-account').addEventListener('click', async (e) => {
+                const confirmText = document.getElementById('delete-confirm-text').value.trim();
+                if (confirmText !== "确认注销") return showToast("输入不正确，操作已取消", "error");
+
+                e.target.textContent = '正在注销...';
+                const res = await API.deleteAccount();
+                if (res.error) {
+                    showToast(res.error, 'error');
+                    e.target.textContent = '永久删除我的账号';
+                } else {
+                    showToast("账号已注销，即将返回登录页", "success");
+                    setTimeout(() => window.location.href = '/login/', 1500);
+                }
+            });
+        };
+
+        document.getElementById('profile-logout-btn').addEventListener('click', async () => {
+            if (!confirm("确定要断开内界连接吗？")) return;
+            try { await API.logout(); window.location.href = '/login/'; } catch (e) { alert("退出失败"); }
+        });
+
+        window.addEventListener('load', initProfile);
     </script>
 </body>
 </html>
