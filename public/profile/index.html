@@ -20,8 +20,9 @@
             <!-- 顶部用户信息区 -->
             <div class="flex flex-col items-center justify-center px-2 py-8 cursor-pointer group" onclick="openEditProfile()">
                 <div class="relative w-24 h-24 mb-4">
+                    <!-- 头像外圈 -->
                     <div class="w-full h-full rounded-full bg-[#e5e5ea] dark:bg-[#1c1c1e] flex items-center justify-center shadow-sm border ios-border transition-colors group-hover:opacity-80">
-                        <!-- 使用 ios-avatar-letter 专属类 -->
+                        <!-- 头像字母，使用 ios-avatar-letter -->
                         <span class="text-4xl font-serif ios-avatar-letter" id="user-avatar-letter">?</span>
                     </div>
                     <div class="absolute bottom-0 right-0 w-7 h-7 bg-[#111] dark:bg-white rounded-full border-2 border-white dark:border-[#1c1c1e] flex items-center justify-center">
@@ -30,12 +31,13 @@
                 </div>
                 
                 <div class="flex items-center gap-2 mb-1">
+                    <!-- 名字，使用 ios-title -->
                     <h1 class="text-2xl font-bold tracking-wide ios-title" id="user-name">加载中...</h1>
                     <span class="hidden px-2 py-0.5 rounded text-[10px] font-sans font-medium bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300" id="user-role">member</span>
                 </div>
                 
-                <p class="text-xs text-gray-500 mt-1 max-w-[250px] text-center truncate" id="user-bio">这个人很神秘，还没有留下签名。</p>
-                <p class="text-xs font-sans text-gray-400 mt-2">ID: <span id="user-id">---</span></p>
+                <p class="text-xs ios-text opacity-60 mt-1 max-w-[250px] text-center truncate" id="user-bio">这个人很神秘，还没有留下签名。</p>
+                <p class="text-xs font-sans ios-text opacity-40 mt-2">ID: <span id="user-id">---</span></p>
             </div>
 
             <!-- 功能列表 -->
@@ -48,8 +50,8 @@
                         <span class="text-[15px] font-medium ios-text">我的创作</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-400 font-roman">0 篇</span>
-                        <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        <span class="text-sm ios-text opacity-50 font-roman">0 篇</span>
+                        <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </div>
                 </a>
                 <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 ios-border border-b transition-colors">
@@ -60,8 +62,8 @@
                         <span class="text-[15px] font-medium ios-text">我的收藏</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-400 font-roman">0 项</span>
-                        <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        <span class="text-sm ios-text opacity-50 font-roman">0 项</span>
+                        <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </div>
                 </a>
                 <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 transition-colors">
@@ -72,8 +74,8 @@
                         <span class="text-[15px] font-medium ios-text">参与贡献</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-400 font-roman">0 次</span>
-                        <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        <span class="text-sm ios-text opacity-50 font-roman">0 次</span>
+                        <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </div>
                 </a>
             </div>
@@ -100,7 +102,7 @@
                         </div>
                         <span class="text-[15px] font-medium ios-text">账号安全</span>
                     </div>
-                    <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </a>
                 <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 transition-colors">
                     <div class="flex items-center gap-3">
@@ -109,7 +111,7 @@
                         </div>
                         <span class="text-[15px] font-medium ios-text">偏好设置</span>
                     </div>
-                    <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </a>
             </div>
 
