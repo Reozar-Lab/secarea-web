@@ -19,7 +19,8 @@
             
             <div class="mb-6 flex justify-between items-end">
                 <div>
-                    <h1 class="text-3xl font-serif font-bold text-black dark:text-white tracking-widest">管理中枢</h1>
+                    <!-- 强制使用 ios-title 锁死标题颜色 -->
+                    <h1 class="text-3xl font-serif font-bold ios-title tracking-widest">管理中枢</h1>
                     <p class="text-sm text-gray-500 mt-1">CEC 内部最高权限控制台</p>
                 </div>
                 <span id="current-admin-role" class="px-3 py-1 rounded bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30 text-xs font-roman uppercase"></span>
@@ -85,7 +86,7 @@
                 <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm border transition-all">
                     <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" onclick="toggleAccordion('${user.id}')">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-lg font-serif text-black dark:text-white">
+                            <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-lg font-serif ios-title">
                                 ${user.name.charAt(0).toUpperCase()}
                             </div>
                             <div class="flex flex-col">
