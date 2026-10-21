@@ -1,6 +1,5 @@
 const currentPath = window.location.pathname;
-// 配置哪些页面不显示页脚
-const hideFooterPages = ['/login/', '/register/', '/profile/'];
+const hideFooterPages = ['/login/', '/register/', '/profile/', '/admin/'];
 
 const loadingHTML = `
 <div id="loading-screen" class="fixed inset-0 z-[9999] bg-[#252525] flex items-center justify-center transition-opacity duration-500">
@@ -35,12 +34,12 @@ const navHTML = `
         <div class="flex flex-col py-3 px-2 gap-1 font-sans">
             <a href="/login/index.html" id="nav-login-btn" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">登录</a>
             <a href="#" id="nav-logout-btn" class="hidden px-4 py-2 text-sm font-medium rounded-lg text-red-400 hover:bg-red-500/10 transition-colors">退出登录</a>
+            <a href="/admin/" id="nav-admin-btn" class="hidden px-4 py-2 text-sm font-bold rounded-lg text-black bg-gradient-to-r from-[#e8c88c] to-[#c89f5d] hover:opacity-90 transition-colors">⚡ 管理中枢</a>
             <div class="h-px bg-white/10 my-1 mx-2"></div>
             <a href="/wiki/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">WIKI</a>
             <a href="/creation/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">创作</a>
             <a href="/forum/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">贴吧</a>
             <a href="/about/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">关于</a>
-            <a href="/join/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">加入我们</a>
         </div>
     </div>
 </header>
@@ -55,36 +54,24 @@ const footerHTML = `
             <a href="/wiki/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Wiki</a>
             <a href="/about/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">About</a>
         </div>
-        <div class="text-[11px] text-[#c89f5d] tracking-wide mt-2 font-roman text-center">
-            © 2026 Reozar Lab. CC-BY-SA 4.0
-        </div>
+        <div class="text-[11px] text-[#c89f5d] tracking-wide mt-2 font-roman text-center">© 2026 Reozar Lab. CC-BY-SA 4.0</div>
     </div>
 </footer>
 `;
 
 document.body.insertAdjacentHTML('afterbegin', loadingHTML);
 document.body.insertAdjacentHTML('afterbegin', navHTML);
-
 if (!hideFooterPages.some(path => currentPath.includes(path))) {
     document.body.insertAdjacentHTML('beforeend', footerHTML);
 }
 
 function initLayout() {
-    // 1. 页面加载完毕后读取闪存消息 (Flash Message)
     window.addEventListener('load', () => {
         const loader = document.getElementById('loading-screen');
-        if (loader) {
-            loader.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => loader.remove(), 500);
-        }
-        
-        // 延迟半秒弹出提示，避免和加载动画冲突
+        if (loader) { loader.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => loader.remove(), 500); }
         setTimeout(() => {
             const msg = sessionStorage.getItem('flash_message');
-            if (msg && typeof showToast !== 'undefined') {
-                showToast(msg, 'success');
-                sessionStorage.removeItem('flash_message');
-            }
+            if (msg && typeof showToast !== 'undefined') { showToast(msg, 'success'); sessionStorage.removeItem('flash_message'); }
         }, 600);
     });
 
@@ -94,17 +81,12 @@ function initLayout() {
     const themeToggleBtn = document.getElementById('theme-toggle');
     const iconSun = document.getElementById('icon-sun');
     const iconMoon = document.getElementById('icon-moon');
-    
     const loginBtn = document.getElementById('nav-login-btn');
     const logoutBtn = document.getElementById('nav-logout-btn');
 
     window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-            header.classList.add('header-scrolled');
-            closeMenu();
-        } else {
-            header.classList.remove('header-scrolled');
-        }
+        if (window.scrollY > 50) { header.classList.add('header-scrolled'); closeMenu(); }
+        else header.classList.remove('header-scrolled');
     });
 
     function closeMenu() {
@@ -114,74 +96,50 @@ function initLayout() {
 
     menuBtn.addEventListener('click', (e) => {
         e.stopPropagation(); 
-        const isOpen = dropdownMenu.classList.contains('opacity-100');
-        if (isOpen) {
-            closeMenu();
-        } else {
+        if (dropdownMenu.classList.contains('opacity-100')) closeMenu();
+        else {
             dropdownMenu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
             dropdownMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
         }
     });
     
-    document.addEventListener('click', (e) => {
-        if (!dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) {
-            closeMenu();
-        }
-    });
+    document.addEventListener('click', (e) => { if (!dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) closeMenu(); });
 
     function updateThemeIcons() {
-        if (document.documentElement.classList.contains('dark')) {
-            iconSun.classList.remove('hidden');
-            iconMoon.classList.add('hidden');
-        } else {
-            iconSun.classList.add('hidden');
-            iconMoon.classList.remove('hidden');
-        }
+        if (document.documentElement.classList.contains('dark')) { iconSun.classList.remove('hidden'); iconMoon.classList.add('hidden'); }
+        else { iconSun.classList.add('hidden'); iconMoon.classList.remove('hidden'); }
     }
     updateThemeIcons();
 
     themeToggleBtn.addEventListener('click', () => {
-        if (document.documentElement.classList.contains('dark')) {
-            document.documentElement.classList.remove('dark');
-            localStorage.theme = 'light';
-        } else {
-            document.documentElement.classList.add('dark');
-            localStorage.theme = 'dark';
-        }
+        if (document.documentElement.classList.contains('dark')) { document.documentElement.classList.remove('dark'); localStorage.theme = 'light'; }
+        else { document.documentElement.classList.add('dark'); localStorage.theme = 'dark'; }
         updateThemeIcons();
     });
 
-    // 2. 登录状态检测与侧边栏按钮切换
     if (typeof API !== 'undefined') {
         API.getMe().then(data => {
             if (data && data.user) {
-                if (loginBtn) {
-                    loginBtn.textContent = `欢迎, ${data.user.name}`;
-                    loginBtn.href = "/profile/"; 
-                }
-                if (logoutBtn) {
-                    logoutBtn.classList.remove('hidden');
+                const user = data.user;
+                if (loginBtn) { loginBtn.textContent = `欢迎, ${user.name}`; loginBtn.href = "/profile/"; }
+                if (logoutBtn) logoutBtn.classList.remove('hidden');
+                
+                // 如果有权限，显示管理中枢按钮
+                if (user.role === 'creator' || user.role === 'editor') {
+                    const adminBtn = document.getElementById('nav-admin-btn');
+                    if (adminBtn) adminBtn.classList.remove('hidden');
                 }
             }
         }).catch(console.log);
     }
 
-    // 3. 退出登录绑定
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            try {
-                await API.logout();
-                window.location.href = '/login/'; // 退出后直接跳转
-            } catch (error) {
-                if (typeof showToast !== 'undefined') showToast("退出失败，请重试", "error");
-            }
+            try { await API.logout(); window.location.href = '/login/'; } catch (error) { if (typeof showToast !== 'undefined') showToast("退出失败", "error"); }
         });
     }
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initLayout);
-} else {
-    initLayout();
-}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLayout);
+else initLayout();
