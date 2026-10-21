@@ -98,7 +98,61 @@ export default {
       return new Response(JSON.stringify({ user: user }), { headers: { "Content-Type": "application/json" } });
     }
 
-    // ================= 6. 管理员接口：获取所有用户 =================
+    // ================= 6. 账号安全：修改密码 =================
+    if (url.pathname === '/api/auth/change-password' && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser) return new Response(JSON.stringify({ error: "未登录" }), { status: 401 });
+      
+      const { oldPassword, newPassword } = await request.json();
+      const user = await env.DB.prepare("SELECT password FROM users WHERE id = ?").bind(currentUser.id).first();
+      
+      const salt = env.BETTER_AUTH_SECRET;
+      const msgBufferOld = new TextEncoder().encode(oldPassword + salt);
+      const hashBufferOld = await crypto.subtle.digest('SHA-256', msgBufferOld);
+      const hashedOld = Array.from(new Uint8Array(hashBufferOld)).map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      if (hashedOld !== user.password) return new Response(JSON.stringify({ error: "原密码错误" }), { status: 400 });
+      
+      const msgBufferNew = new TextEncoder().encode(newPassword + salt);
+      const hashBufferNew = await crypto.subtle.digest('SHA-256', msgBufferNew);
+      const hashedNew = Array.from(new Uint8Array(hashBufferNew)).map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      await env.DB.prepare("UPDATE users SET password = ? WHERE id = ?").bind(hashedNew, currentUser.id).run();
+      return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
+    }
+
+    // ================= 7. 账号安全：修改邮箱 =================
+    if (url.pathname === '/api/auth/change-email' && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser) return new Response(JSON.stringify({ error: "未登录" }), { status: 401 });
+      
+      const { newEmail, otp } = await request.json();
+      const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(newEmail, otp).first();
+      if (!record || record.expires_at < Date.now()) return new Response(JSON.stringify({ error: "验证码错误或已过期" }), { status: 400 });
+      
+      const exist = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(newEmail).first();
+      if (exist) return new Response(JSON.stringify({ error: "该邮箱已被其他账号占用" }), { status: 400 });
+      
+      await env.DB.prepare("UPDATE users SET email = ? WHERE id = ?").bind(newEmail, currentUser.id).run();
+      await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(newEmail).run();
+      
+      return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
+    }
+
+    // ================= 8. 账号安全：注销账号 =================
+    if (url.pathname === '/api/auth/delete-account' && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser) return new Response(JSON.stringify({ error: "未登录" }), { status: 401 });
+      
+      await env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(currentUser.id).run();
+      await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(currentUser.id).run();
+      
+      return new Response(JSON.stringify({ success: true }), { 
+          headers: { "Content-Type": "application/json", "Set-Cookie": "session=; Path=/; Max-Age=0" } 
+      });
+    }
+
+    // ================= 9. 管理员接口：获取所有用户 =================
     if (url.pathname === '/api/admin/users' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'creator' && currentUser.role !== 'editor')) {
@@ -108,7 +162,7 @@ export default {
       return new Response(JSON.stringify({ users: results }), { headers: { "Content-Type": "application/json" } });
     }
 
-    // ================= 7. 管理员接口：修改用户状态 =================
+    // ================= 10. 管理员接口：修改用户状态 =================
     if (url.pathname === '/api/admin/update-user' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || currentUser.role !== 'creator') {
@@ -117,7 +171,6 @@ export default {
       
       const { targetUserId, newRole, newBanStatus } = await request.json();
       
-      // 防止自己封禁自己或降级自己
       if (targetUserId === currentUser.id) {
           return new Response(JSON.stringify({ error: "你不能修改自己的状态" }), { status: 400, headers: { "Content-Type": "application/json" } });
       }
