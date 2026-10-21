@@ -114,3 +114,34 @@ body.page-ios { background-color: var(--page-bg) !important; }
 
 .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, opacity 0.3s ease-out; opacity: 0; background-color: var(--input-bg) !important; }
 .accordion-content.open { max-height: 300px; opacity: 1; }
+
+/* ================= 5. 终极防污染组件类 ================= */
+
+/* 1. 特殊页面背景 */
+body.page-ios { background-color: #f2f2f7 !important; }
+html.dark body.page-ios { background-color: #000000 !important; }
+
+/* 2. 强制黑/白文字（用于标题、名字） */
+.cec-text-dark { color: #000000 !important; }
+html.dark .cec-text-dark { color: #ffffff !important; }
+
+/* 3. 全局统一头像类（你以后在别的页面也可以直接用） */
+.cec-avatar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 9999px !important;
+    font-family: 'Times New Roman', serif !important; 
+    
+    /* 明亮模式 */
+    background-color: #e5e5ea !important;
+    color: #000000 !important;
+    border: 1px solid #e5e5ea !important;
+}
+
+html.dark .cec-avatar {
+    /* 暗黑模式 */
+    background-color: #1c1c1e !important;
+    color: #f5d78d !important; /* 暗黑下变为烫金色 */
+    border: 1px solid #2c2c2e !important;
+}
