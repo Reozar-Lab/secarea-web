@@ -12,12 +12,11 @@
         }
     </script>
 </head>
-<body class="min-h-screen flex flex-col relative bg-[#f2f2f7] dark:bg-black">
+<body class="page-ios min-h-screen flex flex-col relative">
 
     <main class="flex-grow flex flex-col items-center w-full pt-20 pb-20 px-4">
         <div class="w-full max-w-3xl mx-auto flex flex-col">
             
-            <!-- 头部与权限展示 -->
             <div class="mb-6 flex justify-between items-end">
                 <div>
                     <h1 class="text-3xl font-serif font-bold text-black dark:text-white tracking-widest">管理中枢</h1>
@@ -26,16 +25,13 @@
                 <span id="current-admin-role" class="px-3 py-1 rounded bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30 text-xs font-roman uppercase"></span>
             </div>
 
-            <!-- 查询框 -->
             <div class="w-full mb-6 relative">
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
-                <!-- 输入框加上 admin-input 类 -->
                 <input type="text" id="search-input" placeholder="搜索用户名或邮箱..." class="admin-input w-full pl-11 pr-4 py-3 shadow-sm focus:outline-none focus:border-[#c89f5d]">
             </div>
 
-            <!-- 用户列表容器 -->
             <div id="user-list-container" class="w-full flex flex-col gap-3">
                 <!-- JS 动态注入卡片 -->
             </div>
@@ -87,7 +83,6 @@
 
                 return `
                 <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm border transition-all">
-                    <!-- 头部：点击展开 -->
                     <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" onclick="toggleAccordion('${user.id}')">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-lg font-serif text-black dark:text-white">
@@ -105,7 +100,6 @@
                         </div>
                     </div>
 
-                    <!-- 展开的操作面板 -->
                     <div id="content-${user.id}" class="accordion-content border-t ios-border">
                         <div class="p-4 flex flex-col gap-4">
                             <div class="text-xs text-gray-500 font-sans">
@@ -114,7 +108,6 @@
                             
                             ${isCreator ? `
                             <div class="flex flex-col sm:flex-row gap-3">
-                                <!-- 角色修改下拉框 -->
                                 <div class="flex-1">
                                     <label class="block text-xs text-gray-500 mb-1">修改角色</label>
                                     <select onchange="changeRole('${user.id}', this.value)" class="admin-input w-full px-3 py-2 text-sm focus:outline-none">
@@ -124,7 +117,6 @@
                                     </select>
                                 </div>
                                 
-                                <!-- 封禁按钮 -->
                                 <div class="flex-1 flex items-end">
                                     <button onclick="toggleBan('${user.id}', ${user.is_banned})" class="w-full py-2 rounded-lg text-sm font-bold transition-colors ${isBanned ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-red-500 text-white hover:bg-red-600'}">
                                         ${isBanned ? '解除封禁' : '封禁该用户'}
