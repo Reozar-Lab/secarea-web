@@ -1,6 +1,5 @@
 const API_BASE = '/api/auth';
 
-// 全局 Toast 提示
 const toastContainer = document.createElement('div');
 toastContainer.id = 'toast-container';
 toastContainer.className = 'fixed top-16 left-1/2 transform -translate-x-1/2 z-[10000] flex flex-col gap-2 pointer-events-none w-[90%] max-w-sm';
@@ -61,7 +60,27 @@ const API = {
     return await res.json();
   },
 
-  // === 管理员接口 ===
+  async changePassword(oldPassword, newPassword) {
+    const res = await fetch(`${API_BASE}/change-password`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldPassword, newPassword })
+    });
+    return await res.json();
+  },
+
+  async changeEmail(newEmail, otp) {
+    const res = await fetch(`${API_BASE}/change-email`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newEmail, otp })
+    });
+    return await res.json();
+  },
+
+  async deleteAccount() {
+    const res = await fetch(`${API_BASE}/delete-account`, { method: 'POST' });
+    return await res.json();
+  },
+
   async getUsers() {
     const res = await fetch(`/api/admin/users`);
     return await res.json();
@@ -69,8 +88,7 @@ const API = {
 
   async updateUser(targetUserId, newRole, newBanStatus) {
     const res = await fetch(`/api/admin/update-user`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ targetUserId, newRole, newBanStatus })
     });
     return await res.json();
