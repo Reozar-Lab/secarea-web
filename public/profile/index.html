@@ -21,7 +21,7 @@
             <div class="flex flex-col items-center justify-center px-2 py-8 cursor-pointer group" onclick="openEditProfile()">
                 <div class="relative w-24 h-24 mb-4">
                     <div class="w-full h-full rounded-full bg-[#e5e5ea] dark:bg-[#1c1c1e] flex items-center justify-center shadow-sm border ios-border transition-colors group-hover:opacity-80">
-                        <span class="text-4xl font-serif text-black dark:text-[#f5d78d]" id="user-avatar-letter">?</span>
+                        <span class="text-4xl font-serif !text-black dark:!text-[#f5d78d]" id="user-avatar-letter">?</span>
                     </div>
                     <div class="absolute bottom-0 right-0 w-7 h-7 bg-[#111] dark:bg-white rounded-full border-2 border-white dark:border-[#1c1c1e] flex items-center justify-center">
                         <svg class="w-3.5 h-3.5 text-white dark:text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
@@ -29,12 +29,13 @@
                 </div>
                 
                 <div class="flex items-center gap-2 mb-1">
-                    <h1 class="text-2xl font-bold tracking-wide text-black dark:text-white" id="user-name">加载中...</h1>
-                    <span class="hidden px-2 py-0.5 rounded text-[10px] font-sans font-medium bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300" id="user-role">member</span>
+                    <!-- 强制锁定名字颜色 -->
+                    <h1 class="text-2xl font-bold tracking-wide !text-black dark:!text-white" id="user-name">加载中...</h1>
+                    <span class="hidden px-2 py-0.5 rounded text-[10px] font-sans font-medium bg-gray-200 dark:bg-gray-800 !text-gray-600 dark:!text-gray-300" id="user-role">member</span>
                 </div>
                 
-                <p class="text-xs text-gray-500 mt-1 max-w-[250px] text-center truncate" id="user-bio">这个人很神秘，还没有留下签名。</p>
-                <p class="text-xs font-sans text-gray-400 mt-2">ID: <span id="user-id">---</span></p>
+                <p class="text-xs !text-gray-500 mt-1 max-w-[250px] text-center truncate" id="user-bio">这个人很神秘，还没有留下签名。</p>
+                <p class="text-xs font-sans !text-gray-400 mt-2">ID: <span id="user-id">---</span></p>
             </div>
 
             <!-- 功能列表 -->
@@ -47,7 +48,7 @@
                         <span class="text-[15px] font-medium ios-text">我的创作</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-400 font-roman">0 篇</span>
+                        <span class="text-sm !text-gray-400 font-roman">0 篇</span>
                         <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </div>
                 </a>
@@ -59,7 +60,7 @@
                         <span class="text-[15px] font-medium ios-text">我的收藏</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-400 font-roman">0 项</span>
+                        <span class="text-sm !text-gray-400 font-roman">0 项</span>
                         <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </div>
                 </a>
@@ -71,7 +72,7 @@
                         <span class="text-[15px] font-medium ios-text">参与贡献</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-400 font-roman">0 次</span>
+                        <span class="text-sm !text-gray-400 font-roman">0 次</span>
                         <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </div>
                 </a>
@@ -81,10 +82,10 @@
             <div id="admin-panel" class="hidden w-full ios-card rounded-xl overflow-hidden shadow-sm mb-6 ios-border border">
                 <a href="/admin/" class="ios-list-item flex items-center justify-between px-4 py-3.5 transition-colors">
                     <div class="flex items-center gap-3">
-                        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] flex items-center justify-center text-black shrink-0 shadow-sm">
+                        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] flex items-center justify-center !text-black shrink-0 shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                         </div>
-                        <span class="text-[15px] font-bold text-[#c89f5d]">CEC 管理中枢</span>
+                        <span class="text-[15px] font-bold !text-[#c89f5d]">CEC 管理中枢</span>
                     </div>
                     <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </a>
@@ -179,9 +180,9 @@
                     roleEl.textContent = currentUser.role.toUpperCase();
                     roleEl.classList.remove('hidden');
                     if (currentUser.role === 'creator') {
-                        roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30';
+                        roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-[#f5d78d]/20 !text-[#c89f5d] border border-[#f5d78d]/30';
                     } else {
-                        roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30';
+                        roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-blue-500/20 !text-blue-400 border border-blue-500/30';
                     }
                     adminPanel.classList.remove('hidden');
                 }
@@ -196,28 +197,28 @@
             openModal(`
                 <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
                     <h2 class="text-lg font-bold">编辑个人资料</h2>
-                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
+                    <button onclick="closeModal()" class="!text-gray-500 hover:!text-black dark:hover:!text-white p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
                 <div class="p-4 space-y-4">
                     <div class="flex flex-col items-center mb-4">
-                        <div class="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-3xl font-serif text-black dark:text-[#f5d78d] mb-2 border border-gray-300 dark:border-gray-700">
+                        <div class="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-3xl font-serif !text-black dark:!text-[#f5d78d] mb-2 border border-gray-300 dark:border-gray-700">
                             ${currentUser.name.charAt(0).toUpperCase()}
                         </div>
-                        <button class="text-xs text-[#c89f5d] font-medium border border-[#c89f5d]/30 px-3 py-1 rounded-full bg-[#f5d78d]/10 hover:bg-[#f5d78d]/20 transition">上传新头像 (待开发)</button>
+                        <button class="text-xs !text-[#c89f5d] font-medium border border-[#c89f5d]/30 px-3 py-1 rounded-full bg-[#f5d78d]/10 hover:bg-[#f5d78d]/20 transition">上传新头像 (待开发)</button>
                     </div>
                     
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1 ml-1">用户名</label>
+                        <label class="block text-xs !text-gray-500 mb-1 ml-1">用户名</label>
                         <input type="text" id="edit-name" value="${currentUser.name}" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-500 mb-1 ml-1">个性签名</label>
+                        <label class="block text-xs !text-gray-500 mb-1 ml-1">个性签名</label>
                         <textarea id="edit-bio" placeholder="介绍一下自己吧..." class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d] resize-none h-24">${currentUser.bio || ''}</textarea>
                     </div>
                     
-                    <button onclick="saveProfile()" class="w-full py-3 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition mt-2">保存修改</button>
+                    <button onclick="saveProfile()" class="w-full py-3 bg-[#111111] !text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition mt-2">保存修改</button>
                 </div>
             `);
         };
@@ -243,7 +244,7 @@
             openModal(`
                 <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
                     <h2 class="text-lg font-bold">账号安全</h2>
-                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
+                    <button onclick="closeModal()" class="!text-gray-500 hover:!text-black dark:hover:!text-white p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
@@ -254,7 +255,7 @@
                         <button onclick="showToast('第三方绑定开发中', 'info')" class="sys-modal-btn w-full p-4 text-left font-medium">第三方账号绑定</button>
                     </div>
                     <div class="sys-modal-group">
-                        <button onclick="openDeleteAccount()" class="sys-modal-btn w-full p-4 text-center text-red-500 font-bold">永久注销账号</button>
+                        <button onclick="openDeleteAccount()" class="sys-modal-btn w-full p-4 text-center !text-red-500 font-bold">永久注销账号</button>
                     </div>
                 </div>
             `);
@@ -264,19 +265,19 @@
             openModal(`
                 <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
                     <div class="flex items-center gap-2">
-                        <button onclick="document.getElementById('entry-security').click()" class="text-gray-500 hover:text-black dark:hover:text-white">
+                        <button onclick="document.getElementById('entry-security').click()" class="!text-gray-500 hover:!text-black dark:hover:!text-white">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                         </button>
                         <h2 class="text-lg font-bold">修改密码</h2>
                     </div>
-                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
+                    <button onclick="closeModal()" class="!text-gray-500 hover:!text-black dark:hover:!text-white p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
                 <div class="p-4 space-y-4">
                     <input type="password" id="old-password" placeholder="当前密码" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
                     <input type="password" id="new-password" placeholder="新密码" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
-                    <button id="btn-change-password" class="w-full py-3 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition">确认更新</button>
+                    <button id="btn-change-password" class="w-full py-3 bg-[#111111] !text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition">确认更新</button>
                 </div>
             `);
             document.getElementById('btn-change-password').addEventListener('click', async (e) => {
@@ -299,22 +300,22 @@
             openModal(`
                 <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
                     <div class="flex items-center gap-2">
-                        <button onclick="document.getElementById('entry-security').click()" class="text-gray-500 hover:text-black dark:hover:text-white">
+                        <button onclick="document.getElementById('entry-security').click()" class="!text-gray-500 hover:!text-black dark:hover:!text-white">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                         </button>
                         <h2 class="text-lg font-bold">更改邮箱</h2>
                     </div>
-                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
+                    <button onclick="closeModal()" class="!text-gray-500 hover:!text-black dark:hover:!text-white p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
                 <div class="p-4 space-y-4">
                     <div class="flex gap-2">
                         <input type="email" id="new-email" placeholder="新邮箱地址" class="sys-modal-input flex-1 px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
-                        <button id="btn-send-code" class="whitespace-nowrap px-4 py-3 bg-gray-200 dark:bg-gray-700 text-black dark:text-white rounded-xl text-sm font-bold">获取验证码</button>
+                        <button id="btn-send-code" class="whitespace-nowrap px-4 py-3 bg-gray-200 dark:bg-gray-700 !text-black dark:!text-white rounded-xl text-sm font-bold">获取验证码</button>
                     </div>
                     <input type="text" id="email-otp" placeholder="新邮箱收到的验证码" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
-                    <button id="btn-change-email" class="w-full py-3 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition">确认更改</button>
+                    <button id="btn-change-email" class="w-full py-3 bg-[#111111] !text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition">确认更改</button>
                 </div>
             `);
             
@@ -360,20 +361,20 @@
             openModal(`
                 <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
                     <div class="flex items-center gap-2">
-                        <button onclick="document.getElementById('entry-security').click()" class="text-gray-500 hover:text-black dark:hover:text-white">
+                        <button onclick="document.getElementById('entry-security').click()" class="!text-gray-500 hover:!text-black dark:hover:!text-white">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                         </button>
-                        <h2 class="text-lg font-bold text-red-500">注销账号</h2>
+                        <h2 class="text-lg font-bold !text-red-500">注销账号</h2>
                     </div>
-                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
+                    <button onclick="closeModal()" class="!text-gray-500 hover:!text-black dark:hover:!text-white p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
                 <div class="p-4 space-y-4">
-                    <p class="text-sm text-red-500 font-bold leading-relaxed">⚠️ 警告：注销账号将永久删除您的所有数据，此操作绝对不可逆！</p>
-                    <p class="text-xs text-gray-500">请在下方输入 "确认注销" 四个字：</p>
-                    <input type="text" id="delete-confirm-text" placeholder="确认注销" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-red-500 text-red-500 font-bold">
-                    <button id="btn-delete-account" class="w-full py-3 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 transition">永久删除我的账号</button>
+                    <p class="text-sm !text-red-500 font-bold leading-relaxed">⚠️ 警告：注销账号将永久删除您的所有数据，此操作绝对不可逆！</p>
+                    <p class="text-xs !text-gray-500">请在下方输入 "确认注销" 四个字：</p>
+                    <input type="text" id="delete-confirm-text" placeholder="确认注销" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-red-500 !text-red-500 font-bold">
+                    <button id="btn-delete-account" class="w-full py-3 bg-red-500 !text-white rounded-xl text-sm font-bold hover:bg-red-600 transition">永久删除我的账号</button>
                 </div>
             `);
             
