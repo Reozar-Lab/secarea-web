@@ -19,11 +19,10 @@
             
             <!-- 顶部用户信息区 -->
             <div class="flex flex-col items-center justify-center px-2 py-8 cursor-pointer group" onclick="openEditProfile()">
-                <div class="relative w-24 h-24 mb-4">
-                    <!-- 头像外圈 -->
-                    <div class="w-full h-full rounded-full bg-[#e5e5ea] dark:bg-[#1c1c1e] flex items-center justify-center shadow-sm border ios-border transition-colors group-hover:opacity-80">
-                        <!-- 头像字母，使用 ios-avatar-letter -->
-                        <span class="text-4xl font-serif ios-avatar-letter" id="user-avatar-letter">?</span>
+                <div class="relative mb-4 group-hover:opacity-80 transition-opacity">
+                    <!-- 抽离出来的头像类：大小由 w-24 h-24 text-4xl 控制，外观全由 cec-avatar 控制 -->
+                    <div class="cec-avatar w-24 h-24 text-4xl shadow-sm">
+                        <span id="user-avatar-letter">?</span>
                     </div>
                     <div class="absolute bottom-0 right-0 w-7 h-7 bg-[#111] dark:bg-white rounded-full border-2 border-white dark:border-[#1c1c1e] flex items-center justify-center">
                         <svg class="w-3.5 h-3.5 text-white dark:text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
@@ -31,8 +30,8 @@
                 </div>
                 
                 <div class="flex items-center gap-2 mb-1">
-                    <!-- 名字，使用 ios-title -->
-                    <h1 class="text-2xl font-bold tracking-wide ios-title" id="user-name">加载中...</h1>
+                    <!-- 使用 cec-text-dark 锁死标题颜色 -->
+                    <h1 class="text-2xl font-bold tracking-wide cec-text-dark" id="user-name">加载中...</h1>
                     <span class="hidden px-2 py-0.5 rounded text-[10px] font-sans font-medium bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300" id="user-role">member</span>
                 </div>
                 
@@ -89,7 +88,7 @@
                         </div>
                         <span class="text-[15px] font-bold text-[#c89f5d]">CEC 管理中枢</span>
                     </div>
-                    <svg class="w-5 h-5 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </a>
             </div>
 
@@ -198,14 +197,15 @@
             if (!currentUser) return;
             openModal(`
                 <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
-                    <h2 class="text-lg font-bold">编辑个人资料</h2>
+                    <h2 class="text-lg font-bold cec-text-dark">编辑个人资料</h2>
                     <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
                 <div class="p-4 space-y-4">
                     <div class="flex flex-col items-center mb-4">
-                        <div class="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-3xl font-serif ios-avatar-letter mb-2 border border-gray-300 dark:border-gray-700">
+                        <!-- 弹窗里也复用 cec-avatar -->
+                        <div class="cec-avatar w-20 h-20 text-3xl mb-2 shadow-sm">
                             ${currentUser.name.charAt(0).toUpperCase()}
                         </div>
                         <button class="text-xs text-[#c89f5d] font-medium border border-[#c89f5d]/30 px-3 py-1 rounded-full bg-[#f5d78d]/10 hover:bg-[#f5d78d]/20 transition">上传新头像 (待开发)</button>
@@ -245,7 +245,7 @@
             e.preventDefault();
             openModal(`
                 <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
-                    <h2 class="text-lg font-bold">账号安全</h2>
+                    <h2 class="text-lg font-bold cec-text-dark">账号安全</h2>
                     <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -270,7 +270,7 @@
                         <button onclick="document.getElementById('entry-security').click()" class="text-gray-500 hover:text-black dark:hover:text-white">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                         </button>
-                        <h2 class="text-lg font-bold">修改密码</h2>
+                        <h2 class="text-lg font-bold cec-text-dark">修改密码</h2>
                     </div>
                     <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -305,7 +305,7 @@
                         <button onclick="document.getElementById('entry-security').click()" class="text-gray-500 hover:text-black dark:hover:text-white">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                         </button>
-                        <h2 class="text-lg font-bold">更改邮箱</h2>
+                        <h2 class="text-lg font-bold cec-text-dark">更改邮箱</h2>
                     </div>
                     <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
