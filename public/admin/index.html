@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理中枢 · 匿境 Secarea</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        body { background-color: #f2f2f7 !important; }
+        html.dark body { background-color: #000000 !important; }
+        #theme-toggle, #menu-btn { color: #f5d78d !important; }
+        .ios-card { background-color: #ffffff !important; }
+        html.dark .ios-card { background-color: #1c1c1e !important; }
+        .ios-border { border-color: #e5e5ea !important; }
+        html.dark .ios-border { border-color: #2c2c2e !important; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative">
+
+    <main class="flex-grow flex flex-col items-center w-full pt-20 pb-20 px-4">
+        <div class="w-full max-w-4xl flex flex-col">
+            
+            <div class="mb-6 flex justify-between items-end">
+                <div>
+                    <h1 class="text-3xl font-serif font-bold text-black dark:text-white tracking-widest">管理中枢</h1>
+                    <p class="text-sm text-gray-500 mt-1">CEC 内部最高权限控制台</p>
+                </div>
+                <span id="current-admin-role" class="px-3 py-1 rounded bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30 text-xs font-roman"></span>
+            </div>
+
+            <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm ios-border border">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="ios-border border-b text-xs text-gray-400 uppercase tracking-wider">
+                                <th class="p-4 font-medium">用户</th>
+                                <th class="p-4 font-medium">邮箱</th>
+                                <th class="p-4 font-medium">角色</th>
+                                <th class="p-4 font-medium">状态</th>
+                                <th class="p-4 font-medium text-right">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body" class="text-sm">
+                            <!-- JS 动态注入 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="../common.js"></script>
+    <script src="../layout.js"></script>
+    <script>
+        async function loadUsers() {
+            try {
+                const me = await API.getMe();
+                if (!me || !me.user) {
+                    window.location.href = '/login/';
+                    return;
+                }
+                if (me.user.role !== 'creator' && me.user.role !== 'editor') {
+                    alert("您没有权限访问此页面");
+                    window.location.href = '/';
+                    return;
+                }
+                
+                document.getElementById('current-admin-role').textContent = `当前权限: ${me.user.role}`;
+                const isCreator = me.user.role === 'creator';
+
+                const data = await API.getUsers();
+                if (data.error) throw new Error(data.error);
+
+                const tbody = document.getElementById('user-table-body');
+                tbody.innerHTML = data.users.map(user => `
+                    <tr class="ios-border border-b">
+                        <td class="p-4 font-bold text-black dark:text-white">${user.name}</td>
+                        <td class="p-4 text-gray-500 font-sans">${user.email}</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded text-[10px] font-roman uppercase ${user.role === 'creator' ? 'bg-[#f5d78d]/20 text-[#c89f5d]' : (user.role === 'editor' ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400')}">
+                                ${user.role}
+                            </span>
+                        </td>
+                        <td class="p-4">
+                            <span class="${user.is_banned === 1 ? 'text-red-500' : 'text-green-500'}">${user.is_banned === 1 ? '已封禁' : '正常'}</span>
+                        </td>
+                        <td class="p-4 text-right space-x-2">
+                            ${isCreator ? `
+                                <button onclick="changeRole('${user.id}', '${user.role === 'user' ? 'editor' : 'user'}')" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-black dark:text-white rounded-md text-xs hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                                    ${user.role === 'user' ? '升为编者' : '降为普通'}
+                                </button>
+                                <button onclick="toggleBan('${user.id}', ${user.is_banned})" class="px-3 py-1 ${user.is_banned === 1 ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'} rounded-md text-xs hover:opacity-80 transition">
+                                    ${user.is_banned === 1 ? '解封' : '封禁'}
+                                </button>
+                            ` : '<span class="text-gray-400 text-xs">无操作权限</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (e) {
+                console.error(e);
+                alert("加载失败: " + e.message);
+            }
+        }
+
+        async function changeRole(userId, newRole) {
+            if (!confirm(`确定要将该用户的角色修改为 ${newRole} 吗？`)) return;
+            await API.updateUser(userId, newRole, undefined);
+            loadUsers();
+        }
+
+        async function toggleBan(userId, currentBanStatus) {
+            const newStatus = currentBanStatus === 1 ? 0 : 1;
+            if (!confirm(`确定要${newStatus === 1 ? '封禁' : '解封'}该用户吗？`)) return;
+            await API.updateUser(userId, undefined, newStatus);
+            loadUsers();
+        }
+
+        window.addEventListener('load', loadUsers);
+    </script>
+</body>
+</html>
