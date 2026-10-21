@@ -67,6 +67,7 @@ export default {
         const user = await env.DB.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
         if (!user) return new Response(JSON.stringify({ error: "邮箱或密码错误" }), { status: 401, headers: { "Content-Type": "application/json" } });
         
+        // 检查是否被封禁
         if (user.is_banned === 1) return new Response(JSON.stringify({ error: "该账号已被全域封禁" }), { status: 403, headers: { "Content-Type": "application/json" } });
 
         const salt = env.BETTER_AUTH_SECRET;
@@ -110,28 +111,28 @@ export default {
     // ================= 7. 管理员接口：修改用户状态 =================
     if (url.pathname === '/api/admin/update-user' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
-      if (!currentUser || currentUser.role !== 'creator') { // 只有 Creator 能改角色和封禁
+      if (!currentUser || currentUser.role !== 'creator') {
         return new Response(JSON.stringify({ error: "只有最高创作者拥有此权限" }), { status: 403, headers: { "Content-Type": "application/json" } });
       }
       
       const { targetUserId, newRole, newBanStatus } = await request.json();
       
-      // 防止自己封禁自己
+      // 防止自己封禁自己或降级自己
       if (targetUserId === currentUser.id) {
           return new Response(JSON.stringify({ error: "你不能修改自己的状态" }), { status: 400, headers: { "Content-Type": "application/json" } });
       }
 
-      if (newRole !== undefined) {
+      if (newRole !== undefined && newRole !== null) {
           await env.DB.prepare("UPDATE users SET role = ? WHERE id = ?").bind(newRole, targetUserId).run();
       }
-      if (newBanStatus !== undefined) {
+      if (newBanStatus !== undefined && newBanStatus !== null) {
           await env.DB.prepare("UPDATE users SET is_banned = ? WHERE id = ?").bind(newBanStatus, targetUserId).run();
       }
 
       return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
     }
 
-    // 静态页面兜底
+    // ================= 兜底：静态页面 =================
     return env.ASSETS.fetch(request);
   }
 };
