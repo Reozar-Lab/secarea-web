@@ -11,17 +11,6 @@
             document.documentElement.classList.add('dark');
         }
     </script>
-    <style>
-        html, body { background-color: #141414; margin: 0; padding: 0; }
-        .input-error { border-color: #ef4444 !important; }
-        html:not(.dark) .bg-\[\#f4f4f5\] { background-color: #f4f4f5 !important; }
-        html:not(.dark) .bg-white { background-color: #ffffff !important; }
-        html:not(.dark) input { background-color: #ffffff !important; color: #000000 !important; }
-        html:not(.dark) .text-black { color: #000000 !important; }
-        html:not(.dark) .text-gray-700 { color: #374151 !important; }
-        html:not(.dark) .text-gray-500 { color: #6b7280 !important; }
-        html:not(.dark) .border-gray-200 { border-color: #e5e7eb !important; }
-    </style>
 </head>
 <body class="text-gray-900 min-h-screen flex flex-col relative bg-[#141414] bg-grid">
 
@@ -32,19 +21,23 @@
 
     <div class="relative w-full flex-grow z-10 pt-14">
         <div class="w-full h-[45vh]"></div>
-        <div class="w-full bg-[#f4f4f5] rounded-t-[3rem] pt-12 pb-32 flex flex-col items-center shadow-[0_-15px_40px_rgba(0,0,0,0.6)]">
+        <div class="w-full bg-[#f4f4f5] dark:bg-[#1c1c1e] rounded-t-[3rem] pt-12 pb-32 flex flex-col items-center shadow-[0_-15px_40px_rgba(0,0,0,0.6)] border-t ios-border">
             <div class="w-[85%] max-w-md flex flex-col gap-5">
                 
                 <form class="w-full flex flex-col gap-4 mt-2" onsubmit="return false;">
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2 font-serif tracking-widest">邮箱</label>
-                        <input type="email" id="login-email" placeholder="输入你的邮箱地址" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors shadow-sm">
+                        <label class="block text-sm font-bold ios-text mb-2 font-serif tracking-widest">邮箱</label>
+                        <input type="email" id="login-email" placeholder="输入你的邮箱地址" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
                         <p id="email-error" class="text-red-500 text-xs mt-1 hidden"></p>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2 font-serif tracking-widest">密码</label>
-                        <input type="password" id="login-password" placeholder="输入密码" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-black transition-colors shadow-sm">
+                        <label class="block text-sm font-bold ios-text mb-2 font-serif tracking-widest">密码</label>
+                        <input type="password" id="login-password" placeholder="输入密码" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
                         <p id="password-error" class="text-red-500 text-xs mt-1 hidden"></p>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="button" id="btn-forgot" class="text-xs ios-text opacity-60 hover:opacity-100 transition">忘记密码？</button>
                     </div>
 
                     <button type="button" id="submit-login" class="w-full mt-2 py-3.5 bg-[#111111] text-[#f5d78d] font-bold rounded-xl hover:bg-black transition-colors interactive-btn shadow-md">
@@ -53,9 +46,36 @@
                 </form>
 
                 <div class="text-center mt-6">
-                    <span class="text-sm text-gray-500">还没有账号？</span>
-                    <a href="../register/index.html" class="text-sm font-bold text-black border-b border-black hover:text-gray-600 hover:border-gray-600 transition-colors ml-1 pb-0.5">立即注册</a>
+                    <span class="text-sm ios-text opacity-60">还没有账号？</span>
+                    <a href="../register/index.html" class="text-sm font-bold ios-text border-b ios-border hover:opacity-70 transition-colors ml-1 pb-0.5">立即注册</a>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 忘记密码弹窗 -->
+    <div id="reset-modal" class="sys-modal-overlay fixed inset-0 z-[9999] hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
+        <div id="reset-panel" class="sys-modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto flex flex-col">
+            <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                <h2 class="text-lg font-bold ios-title">重置密码</h2>
+                <button onclick="closeResetModal()" class="ios-text opacity-50 hover:opacity-100 p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 space-y-4">
+                <div>
+                    <label class="block text-xs ios-text opacity-60 mb-1 ml-1">注册邮箱</label>
+                    <div class="flex gap-2">
+                        <input type="email" id="reset-email" placeholder="输入注册邮箱" class="sys-modal-input flex-1 px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                        <button id="btn-reset-code" class="whitespace-nowrap px-4 py-3 bg-gray-200 dark:bg-gray-700 ios-text rounded-xl text-sm font-bold">获取验证码</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs ios-text opacity-60 mb-1 ml-1">验证码 & 新密码</label>
+                    <input type="text" id="reset-otp" placeholder="邮箱收到的验证码" class="sys-modal-input w-full px-4 py-3 text-sm mb-2 focus:outline-none focus:border-[#c89f5d]">
+                    <input type="password" id="reset-new-password" placeholder="设置新密码" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                </div>
+                <button id="btn-submit-reset" class="w-full py-3 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition mt-2">重置密码</button>
             </div>
         </div>
     </div>
@@ -65,41 +85,79 @@
     <script>
         const emailInput = document.getElementById('login-email');
         const passwordInput = document.getElementById('login-password');
-        const emailError = document.getElementById('email-error');
-        const passwordError = document.getElementById('password-error');
         const loginBtn = document.getElementById('submit-login');
-
-        emailInput.addEventListener('input', () => { emailInput.classList.remove('input-error'); emailError.classList.add('hidden'); });
-        passwordInput.addEventListener('input', () => { passwordInput.classList.remove('input-error'); passwordError.classList.add('hidden'); });
 
         loginBtn.addEventListener('click', async () => {
             const email = emailInput.value.trim();
             const password = passwordInput.value;
+            if (!email || !password) return showToast("请填写邮箱和密码", "error");
 
-            let hasError = false;
-            if (!email) { emailInput.classList.add('input-error'); emailError.textContent = "请输入邮箱"; emailError.classList.remove('hidden'); hasError = true; }
-            if (!password) { passwordInput.classList.add('input-error'); passwordError.textContent = "请输入密码"; passwordError.classList.remove('hidden'); hasError = true; }
-            if (hasError) return;
-
-            loginBtn.textContent = '正在验证身份...';
+            loginBtn.textContent = '正在验证...';
             loginBtn.disabled = true;
 
             try {
                 const data = await API.login(email, password);
-                if (data.error) {
-                    if (data.error.includes("密码") || data.error.includes("邮箱")) {
-                        passwordInput.classList.add('input-error');
-                        passwordError.textContent = "邮箱或密码错误";
-                        passwordError.classList.remove('hidden');
-                    }
-                    throw new Error(data.error);
-                }
+                if (data.error) throw new Error(data.error);
                 window.location.href = '/'; 
             } catch (error) {
-                console.error(error);
                 loginBtn.textContent = '进入内界';
                 loginBtn.disabled = false;
             }
+        });
+
+        // 忘记密码逻辑
+        const resetModal = document.getElementById('reset-modal');
+        const resetPanel = document.getElementById('reset-panel');
+        
+        document.getElementById('btn-forgot').addEventListener('click', () => {
+            resetModal.classList.remove('hidden');
+            setTimeout(() => {
+                resetModal.classList.remove('opacity-0');
+                resetPanel.classList.remove('translate-y-full', 'sm:scale-95');
+            }, 10);
+        });
+
+        function closeResetModal() {
+            resetModal.classList.add('opacity-0');
+            resetPanel.classList.add('translate-y-full', 'sm:scale-95');
+            setTimeout(() => resetModal.classList.add('hidden'), 300);
+        }
+        resetModal.addEventListener('click', (e) => { if (e.target === resetModal) closeResetModal(); });
+
+        // 重置密码发码
+        let resetTimer = null;
+        document.getElementById('btn-reset-code').addEventListener('click', async (e) => {
+            if (resetTimer) return;
+            const email = document.getElementById('reset-email').value.trim();
+            if (!email) return showToast("请输入邮箱", "error");
+
+            const res = await API.sendCode(email);
+            if (!res.error) {
+                let count = 60;
+                e.target.classList.add('opacity-50');
+                resetTimer = setInterval(() => {
+                    count--;
+                    e.target.textContent = `${count}s`;
+                    if (count <= 0) {
+                        clearInterval(resetTimer); resetTimer = null;
+                        e.target.classList.remove('opacity-50');
+                        e.target.textContent = '获取验证码';
+                    }
+                }, 1000);
+            }
+        });
+
+        // 提交重置密码
+        document.getElementById('btn-submit-reset').addEventListener('click', async (e) => {
+            const email = document.getElementById('reset-email').value.trim();
+            const otp = document.getElementById('reset-otp').value.trim();
+            const newPwd = document.getElementById('reset-new-password').value;
+            if (!email || !otp || !newPwd) return showToast("请填写完整", "error");
+
+            e.target.textContent = '处理中...';
+            const res = await API.resetPassword(email, otp, newPwd);
+            e.target.textContent = '重置密码';
+            if (!res.error) closeResetModal();
         });
     </script>
 </body>
