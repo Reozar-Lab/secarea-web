@@ -54,4 +54,157 @@
                     alert("您没有权限访问此页面"); window.location.href = '/'; return;
                 }
                 
-                currentAdmin =
+                currentAdmin = me.user;
+                document.getElementById('current-admin-role').textContent = `权限: ${currentAdmin.role}`;
+
+                const data = await API.getUsers();
+                if (data.error) throw new Error(data.error);
+                
+                allUsers = data.users;
+                renderUsers(allUsers);
+
+            } catch (e) {
+                console.error(e);
+                alert("加载失败: " + e.message);
+            }
+        }
+
+        function renderUsers(users) {
+            const container = document.getElementById('user-list-container');
+            
+            if (users.length === 0) {
+                container.innerHTML = `<div class="text-center ios-text opacity-50 py-10">没有找到匹配的用户</div>`;
+                return;
+            }
+
+            container.innerHTML = users.map(user => {
+                const isBanned = user.is_banned === 1;
+                
+                let roleColor = 'text-gray-500 bg-gray-500/10';
+                if (user.role === 'root') roleColor = 'text-red-500 bg-red-500/10';
+                if (user.role === 'admin') roleColor = 'text-[#c89f5d] bg-[#f5d78d]/10';
+                if (user.role === 'editor') roleColor = 'text-blue-500 bg-blue-500/10';
+
+                const statusColor = isBanned ? 'bg-red-500' : 'bg-green-500';
+
+                let canEdit = false;
+                if (currentAdmin.role === 'root') {
+                    canEdit = (user.id !== currentAdmin.id) && (user.role !== 'root'); 
+                } else if (currentAdmin.role === 'admin') {
+                    canEdit = (user.id !== currentAdmin.id) && (user.role !== 'root') && (user.role !== 'admin');
+                }
+
+                let roleOptions = `<option value="user" ${user.role === 'user' ? 'selected' : ''}>普通用户 (user)</option>`;
+                
+                if (currentAdmin.role === 'root') {
+                    roleOptions += `
+                        <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>
+                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>管理员 (admin)</option>
+                    `;
+                } else if (currentAdmin.role === 'admin') {
+                    roleOptions += `<option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>`;
+                }
+
+                return `
+                <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm border transition-all">
+                    <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" onclick="toggleAccordion('${user.id}')">
+                        <div class="flex items-center gap-3">
+                            <div class="cec-avatar w-10 h-10 text-lg shadow-sm">
+                                ${user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-base ios-text">${user.name}</span>
+                                <span class="text-xs ios-text opacity-50">${user.email}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ${roleColor}">${user.role}</span>
+                            <div class="w-2 h-2 rounded-full ${statusColor}"></div>
+                            <svg id="icon-${user.id}" class="w-5 h-5 ios-text opacity-30 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+
+                    <div id="content-${user.id}" class="accordion-content border-t ios-border">
+                        <div class="p-4 flex flex-col gap-4">
+                            <div class="text-xs ios-text opacity-50 font-sans">
+                                <p>用户 ID: ${user.id}</p>
+                            </div>
+                            
+                            ${canEdit ? `
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <div class="flex-1">
+                                    <label class="block text-xs ios-text opacity-50 mb-1">修改角色</label>
+                                    <select onchange="changeRole('${user.id}', this.value)" class="admin-input w-full px-3 py-2 text-sm focus:outline-none">
+                                        ${roleOptions}
+                                    </select>
+                                </div>
+                                
+                                <div class="flex-1 flex items-end">
+                                    <button onclick="toggleBan('${user.id}', ${user.is_banned})" class="w-full py-2 rounded-lg text-sm font-bold transition-colors ${isBanned ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-red-500 text-white hover:bg-red-600'}">
+                                        ${isBanned ? '解除封禁' : '封禁该用户'}
+                                    </button>
+                                </div>
+                            </div>
+                            ` : `
+                            <div class="text-xs text-red-500 py-2">你无权修改该用户的权限。</div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function toggleAccordion(userId) {
+            const content = document.getElementById(`content-${userId}`);
+            const icon = document.getElementById(`icon-${userId}`);
+            
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.classList.add('open');
+                icon.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const keyword = e.target.value.toLowerCase().trim();
+            const filtered = allUsers.filter(user => 
+                user.name.toLowerCase().includes(keyword) || 
+                user.email.toLowerCase().includes(keyword)
+            );
+            renderUsers(filtered);
+        });
+
+        async function changeRole(userId, newRole) {
+            if (!confirm(`确定要将该用户的角色修改为 ${newRole} 吗？`)) {
+                renderUsers(allUsers);
+                return;
+            }
+            const res = await API.updateUser(userId, newRole, undefined);
+            if (res.error) { showToast(res.error, 'error'); renderUsers(allUsers); return; }
+            
+            const user = allUsers.find(u => u.id === userId);
+            if (user) user.role = newRole;
+            renderUsers(allUsers);
+            showToast("角色修改成功", "success");
+        }
+
+        async function toggleBan(userId, currentBanStatus) {
+            const newStatus = currentBanStatus === 1 ? 0 : 1;
+            if (!confirm(`确定要${newStatus === 1 ? '封禁' : '解封'}该用户吗？`)) return;
+            
+            const res = await API.updateUser(userId, undefined, newStatus);
+            if (res.error) { showToast(res.error, 'error'); return; }
+
+            const user = allUsers.find(u => u.id === userId);
+            if (user) user.is_banned = newStatus;
+            renderUsers(allUsers);
+            showToast(newStatus === 1 ? "用户已封禁" : "用户已解封", "success");
+        }
+
+        window.addEventListener('load', initAdmin);
+    </script>
+</body>
+</html>
