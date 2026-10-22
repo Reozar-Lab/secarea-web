@@ -29,16 +29,15 @@ export default {
         await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
         await env.DB.prepare("INSERT INTO otp_codes (email, code, expires_at) VALUES (?, ?, ?)").bind(email, otp, expiresAt).run();
 
-        // 防封延迟，模拟人工操作
+        // 防封延迟
         await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // 使用 EmailJS 发送
         const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
             'Origin': env.BASE_URL || 'http://localhost:8787',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': 'Mozilla/5.0'
           },
           body: JSON.stringify({
             service_id: env.EMAILJS_SERVICE_ID, 
@@ -48,12 +47,7 @@ export default {
           })
         });
 
-        if (!res.ok) {
-          const errText = await res.text();
-          console.error('EmailJS Error:', errText);
-          throw new Error('邮件发送失败，Outlook可能被风控');
-        }
-
+        if (!res.ok) throw new Error('邮件发送失败');
         return new Response(JSON.stringify({ success: true, message: "验证码已发送" }), { headers: { "Content-Type": "application/json" } });
       } catch (error) { 
         return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { "Content-Type": "application/json" } }); 
@@ -104,10 +98,8 @@ export default {
     if (url.pathname === '/api/auth/reset-password' && method === 'POST') {
       try {
         const { email, otp, newPassword } = await request.json();
-        
         const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(email, otp).first();
         if (!record || record.expires_at < Date.now()) return new Response(JSON.stringify({ error: "验证码错误或已过期" }), { status: 400, headers: { "Content-Type": "application/json" } });
-
         const user = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
         if (!user) return new Response(JSON.stringify({ error: "该邮箱未注册" }), { status: 404, headers: { "Content-Type": "application/json" } });
 
@@ -118,7 +110,6 @@ export default {
 
         await env.DB.prepare("UPDATE users SET password = ? WHERE id = ?").bind(hashedPassword, user.id).run();
         await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
-
         return new Response(JSON.stringify({ success: true, message: "密码重置成功" }), { headers: { "Content-Type": "application/json" } });
       } catch (error) { return new Response(JSON.stringify({ error: "重置失败" }), { status: 500, headers: { "Content-Type": "application/json" } }); }
     }
@@ -139,7 +130,7 @@ export default {
       return new Response(JSON.stringify({ user: user }), { headers: { "Content-Type": "application/json" } });
     }
 
-    // ================= 6. 账号安全：修改密码 =================
+    // ================= 6-8. 账号安全 (改密/改邮箱/注销) =================
     if (url.pathname === '/api/auth/change-password' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return new Response(JSON.stringify({ error: "未登录" }), { status: 401 });
@@ -149,9 +140,7 @@ export default {
       const msgBufferOld = new TextEncoder().encode(oldPassword + salt);
       const hashBufferOld = await crypto.subtle.digest('SHA-256', msgBufferOld);
       const hashedOld = Array.from(new Uint8Array(hashBufferOld)).map(b => b.toString(16).padStart(2, '0')).join('');
-      
       if (hashedOld !== user.password) return new Response(JSON.stringify({ error: "原密码错误" }), { status: 400 });
-      
       const msgBufferNew = new TextEncoder().encode(newPassword + salt);
       const hashBufferNew = await crypto.subtle.digest('SHA-256', msgBufferNew);
       const hashedNew = Array.from(new Uint8Array(hashBufferNew)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -159,7 +148,6 @@ export default {
       return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
     }
 
-    // ================= 7. 账号安全：修改邮箱 =================
     if (url.pathname === '/api/auth/change-email' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return new Response(JSON.stringify({ error: "未登录" }), { status: 401 });
@@ -173,7 +161,6 @@ export default {
       return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json" } });
     }
 
-    // ================= 8. 账号安全：注销账号 =================
     if (url.pathname === '/api/auth/delete-account' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return new Response(JSON.stringify({ error: "未登录" }), { status: 401 });
@@ -185,7 +172,8 @@ export default {
     // ================= 9. 管理员接口：获取所有用户 =================
     if (url.pathname === '/api/admin/users' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
-      if (!currentUser || (currentUser.role !== 'creator' && currentUser.role !== 'editor')) {
+      // 只有 root 和 admin 才能获取列表
+      if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) {
         return new Response(JSON.stringify({ error: "权限不足" }), { status: 403, headers: { "Content-Type": "application/json" } });
       }
       const { results } = await env.DB.prepare("SELECT id, name, email, role, is_banned FROM users ORDER BY created_at DESC").all();
@@ -195,12 +183,13 @@ export default {
     // ================= 10. 管理员接口：修改用户状态 =================
     if (url.pathname === '/api/admin/update-user' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
-      if (!currentUser || (currentUser.role !== 'creator' && currentUser.role !== 'editor')) {
+      if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) {
         return new Response(JSON.stringify({ error: "权限不足" }), { status: 403, headers: { "Content-Type": "application/json" } });
       }
       
       const { targetUserId, newRole, newBanStatus } = await request.json();
       
+      // 1. 不能操作自己
       if (targetUserId === currentUser.id) {
           return new Response(JSON.stringify({ error: "你不能修改自己的状态" }), { status: 400, headers: { "Content-Type": "application/json" } });
       }
@@ -208,14 +197,25 @@ export default {
       const targetUser = await env.DB.prepare("SELECT role FROM users WHERE id = ?").bind(targetUserId).first();
       if (!targetUser) return new Response(JSON.stringify({ error: "用户不存在" }), { status: 404 });
 
-      if (currentUser.role === 'creator' && targetUser.role === 'creator') {
-          return new Response(JSON.stringify({ error: "不能修改同级 Creator 的权限" }), { status: 403 });
+      // 2. Admin 的权限限制
+      if (currentUser.role === 'admin') {
+          // Admin 不能动 Root，不能动 Admin
+          if (targetUser.role === 'root' || targetUser.role === 'admin') {
+              return new Response(JSON.stringify({ error: "你无权修改同级或最高权限者" }), { status: 403 });
+          }
+          // Admin 不能任命 Root 或 Admin
+          if (newRole === 'root' || newRole === 'admin') {
+              return new Response(JSON.stringify({ error: "管理员只能任命编者" }), { status: 403 });
+          }
       }
-      if (currentUser.role === 'editor' && (targetUser.role === 'creator' || targetUser.role === 'editor')) {
-          return new Response(JSON.stringify({ error: "编者只能修改普通用户" }), { status: 403 });
-      }
-      if (newRole === 'creator' && currentUser.role !== 'creator') {
-          return new Response(JSON.stringify({ error: "只有 Creator 可以任命 Creator" }), { status: 403 });
+
+      // 3. Root 的权限限制
+      if (currentUser.role === 'root') {
+          // Root 不能动其他 Root（防止误操作）
+          if (targetUser.role === 'root') {
+              return new Response(JSON.stringify({ error: "不能修改同为 Root 的权限" }), { status: 403 });
+          }
+          // 注意：Root 可以任命 Admin，所以这里不需要拦截 newRole === 'admin'
       }
 
       if (newRole !== undefined && newRole !== null) {
