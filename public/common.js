@@ -50,6 +50,16 @@ const API = {
     } catch (e) { showToast("网络请求失败", "error"); throw e; }
   },
 
+  async resetPassword(email, otp, newPassword) {
+    try {
+      const res = await fetch(`${API_BASE}/reset-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, otp, newPassword }) });
+      const data = await res.json();
+      if (data.error) showToast(data.error, 'error');
+      else showToast('密码重置成功，请重新登录', 'success');
+      return data;
+    } catch (e) { showToast("网络请求失败", "error"); throw e; }
+  },
+
   async getMe() {
     const res = await fetch(`${API_BASE}/me`);
     return await res.json();
@@ -61,18 +71,12 @@ const API = {
   },
 
   async changePassword(oldPassword, newPassword) {
-    const res = await fetch(`${API_BASE}/change-password`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ oldPassword, newPassword })
-    });
+    const res = await fetch(`${API_BASE}/change-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ oldPassword, newPassword }) });
     return await res.json();
   },
 
   async changeEmail(newEmail, otp) {
-    const res = await fetch(`${API_BASE}/change-email`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ newEmail, otp })
-    });
+    const res = await fetch(`${API_BASE}/change-email`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newEmail, otp }) });
     return await res.json();
   },
 
