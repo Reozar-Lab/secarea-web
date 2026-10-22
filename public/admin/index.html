@@ -49,7 +49,9 @@
             try {
                 const me = await API.getMe();
                 if (!me || !me.user) { window.location.href = '/login/'; return; }
-                if (me.user.role !== 'creator' && me.user.role !== 'editor') {
+                
+                // 权限门禁：只有 root 和 admin 能进
+                if (me.user.role !== 'root' && me.user.role !== 'admin') {
                     alert("您没有权限访问此页面"); window.location.href = '/'; return;
                 }
                 
@@ -78,28 +80,35 @@
 
             container.innerHTML = users.map(user => {
                 const isBanned = user.is_banned === 1;
-                const roleColor = user.role === 'creator' ? 'text-[#c89f5d] bg-[#f5d78d]/10' : (user.role === 'editor' ? 'text-blue-500 bg-blue-500/10' : 'text-gray-500 bg-gray-500/10');
+                
+                let roleColor = 'text-gray-500 bg-gray-500/10';
+                if (user.role === 'root') roleColor = 'text-red-500 bg-red-500/10';
+                if (user.role === 'admin') roleColor = 'text-[#c89f5d] bg-[#f5d78d]/10';
+                if (user.role === 'editor') roleColor = 'text-blue-500 bg-blue-500/10';
+
                 const statusColor = isBanned ? 'bg-red-500' : 'bg-green-500';
 
-                // 判断是否允许编辑
+                // ====== 权限判定逻辑 ======
                 let canEdit = false;
-                if (currentAdmin.role === 'creator') {
-                    canEdit = (user.id !== currentAdmin.id) && (user.role !== 'creator'); 
-                } else if (currentAdmin.role === 'editor') {
-                    canEdit = (user.id !== currentAdmin.id) && (user.role === 'user');
+                if (currentAdmin.role === 'root') {
+                    canEdit = (user.id !== currentAdmin.id) && (user.role !== 'root'); 
+                } else if (currentAdmin.role === 'admin') {
+                    canEdit = (user.id !== currentAdmin.id) && (user.role !== 'root') && (user.role !== 'admin');
                 }
 
-                // 动态生成角色下拉
-                let roleOptions = `
-                    <option value="user" ${user.role === 'user' ? 'selected' : ''}>普通用户 (user)</option>
-                `;
-                if (currentAdmin.role === 'creator') {
+                // 动态生成下拉框
+                let roleOptions = `<option value="user" ${user.role === 'user' ? 'selected' : ''}>普通用户 (user)</option>`;
+                
+                // Root 可以选 Editor 和 Admin
+                if (currentAdmin.role === 'root') {
                     roleOptions += `
                         <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>
-                        <option value="creator" ${user.role === 'creator' ? 'selected' : ''}>创作者 (creator)</option>
+                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>管理员 (admin)</option>
                     `;
-                } else if (currentAdmin.role === 'editor' && user.role === 'editor') {
-                    roleOptions += `<option value="editor" selected>编者 (editor)</option>`;
+                } 
+                // Admin 只能选 Editor
+                else if (currentAdmin.role === 'admin') {
+                    roleOptions += `<option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>`;
                 }
 
                 return `
@@ -138,7 +147,7 @@
                                 
                                 <div class="flex-1 flex items-end">
                                     <button onclick="toggleBan('${user.id}', ${user.is_banned})" class="w-full py-2 rounded-lg text-sm font-bold transition-colors ${isBanned ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-red-500 text-white hover:bg-red-600'}">
-                                        ${isBanned ? '解除功能限制' : '限制该用户功能'}
+                                        ${isBanned ? '解除封禁' : '封禁该用户'}
                                     </button>
                                 </div>
                             </div>
@@ -190,7 +199,7 @@
 
         async function toggleBan(userId, currentBanStatus) {
             const newStatus = currentBanStatus === 1 ? 0 : 1;
-            if (!confirm(`确定要${newStatus === 1 ? '限制' : '解除限制'}该用户的功能吗？`)) return;
+            if (!confirm(`确定要${newStatus === 1 ? '封禁' : '解封'}该用户吗？`)) return;
             
             const res = await API.updateUser(userId, undefined, newStatus);
             if (res.error) { showToast(res.error, 'error'); return; }
@@ -198,7 +207,7 @@
             const user = allUsers.find(u => u.id === userId);
             if (user) user.is_banned = newStatus;
             renderUsers(allUsers);
-            showToast(newStatus === 1 ? "用户功能已限制" : "用户功能已解除限制", "success");
+            showToast(newStatus === 1 ? "用户已封禁" : "用户已解封", "success");
         }
 
         window.addEventListener('load', initAdmin);
