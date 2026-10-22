@@ -85,4 +85,123 @@
                 let canEdit = false;
                 if (currentAdmin.role === 'creator') {
                     canEdit = (user.id !== currentAdmin.id) && (user.role !== 'creator'); 
-                } else if (currentAdmin.
+                } else if (currentAdmin.role === 'editor') {
+                    canEdit = (user.id !== currentAdmin.id) && (user.role === 'user');
+                }
+
+                // 动态生成角色下拉
+                let roleOptions = `
+                    <option value="user" ${user.role === 'user' ? 'selected' : ''}>普通用户 (user)</option>
+                `;
+                if (currentAdmin.role === 'creator') {
+                    roleOptions += `
+                        <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>
+                        <option value="creator" ${user.role === 'creator' ? 'selected' : ''}>创作者 (creator)</option>
+                    `;
+                } else if (currentAdmin.role === 'editor' && user.role === 'editor') {
+                    roleOptions += `<option value="editor" selected>编者 (editor)</option>`;
+                }
+
+                return `
+                <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm border transition-all">
+                    <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" onclick="toggleAccordion('${user.id}')">
+                        <div class="flex items-center gap-3">
+                            <div class="cec-avatar w-10 h-10 text-lg shadow-sm">
+                                ${user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-base ios-text">${user.name}</span>
+                                <span class="text-xs ios-text opacity-50">${user.email}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ${roleColor}">${user.role}</span>
+                            <div class="w-2 h-2 rounded-full ${statusColor}"></div>
+                            <svg id="icon-${user.id}" class="w-5 h-5 ios-text opacity-30 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+
+                    <div id="content-${user.id}" class="accordion-content border-t ios-border">
+                        <div class="p-4 flex flex-col gap-4">
+                            <div class="text-xs ios-text opacity-50 font-sans">
+                                <p>用户 ID: ${user.id}</p>
+                            </div>
+                            
+                            ${canEdit ? `
+                            <div class="flex flex-col sm:flex-row gap-3">
+                                <div class="flex-1">
+                                    <label class="block text-xs ios-text opacity-50 mb-1">修改角色</label>
+                                    <select onchange="changeRole('${user.id}', this.value)" class="admin-input w-full px-3 py-2 text-sm focus:outline-none">
+                                        ${roleOptions}
+                                    </select>
+                                </div>
+                                
+                                <div class="flex-1 flex items-end">
+                                    <button onclick="toggleBan('${user.id}', ${user.is_banned})" class="w-full py-2 rounded-lg text-sm font-bold transition-colors ${isBanned ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-red-500 text-white hover:bg-red-600'}">
+                                        ${isBanned ? '解除功能限制' : '限制该用户功能'}
+                                    </button>
+                                </div>
+                            </div>
+                            ` : `
+                            <div class="text-xs text-red-500 py-2">你无权修改该用户的权限。</div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function toggleAccordion(userId) {
+            const content = document.getElementById(`content-${userId}`);
+            const icon = document.getElementById(`icon-${userId}`);
+            
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.classList.add('open');
+                icon.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const keyword = e.target.value.toLowerCase().trim();
+            const filtered = allUsers.filter(user => 
+                user.name.toLowerCase().includes(keyword) || 
+                user.email.toLowerCase().includes(keyword)
+            );
+            renderUsers(filtered);
+        });
+
+        async function changeRole(userId, newRole) {
+            if (!confirm(`确定要将该用户的角色修改为 ${newRole} 吗？`)) {
+                renderUsers(allUsers);
+                return;
+            }
+            const res = await API.updateUser(userId, newRole, undefined);
+            if (res.error) { showToast(res.error, 'error'); renderUsers(allUsers); return; }
+            
+            const user = allUsers.find(u => u.id === userId);
+            if (user) user.role = newRole;
+            renderUsers(allUsers);
+            showToast("角色修改成功", "success");
+        }
+
+        async function toggleBan(userId, currentBanStatus) {
+            const newStatus = currentBanStatus === 1 ? 0 : 1;
+            if (!confirm(`确定要${newStatus === 1 ? '限制' : '解除限制'}该用户的功能吗？`)) return;
+            
+            const res = await API.updateUser(userId, undefined, newStatus);
+            if (res.error) { showToast(res.error, 'error'); return; }
+
+            const user = allUsers.find(u => u.id === userId);
+            if (user) user.is_banned = newStatus;
+            renderUsers(allUsers);
+            showToast(newStatus === 1 ? "用户功能已限制" : "用户功能已解除限制", "success");
+        }
+
+        window.addEventListener('load', initAdmin);
+    </script>
+</body>
+</html>
