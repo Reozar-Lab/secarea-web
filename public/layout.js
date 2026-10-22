@@ -1,5 +1,5 @@
 const currentPath = window.location.pathname;
-const hideFooterPages = ['/login/', '/register/', '/profile/', '/admin/'];
+const hideFooterPages = ['/login/', '/register/', '/profile/', '/admin/', '/forum/'];
 
 const loadingHTML = `
 <div id="loading-screen" class="fixed inset-0 z-[9999] bg-[#252525] flex items-center justify-center transition-opacity duration-500">
@@ -14,7 +14,7 @@ const loadingHTML = `
 const navHTML = `
 <header id="main-header" class="fixed top-0 z-50 w-full h-14 bg-[#252525] flex items-center transition-all duration-300">
     <div class="px-5 w-full flex items-center justify-between h-full">
-        <a href="/" class="flex items-center">
+        <a href="/" id="nav-logo-btn" class="flex items-center">
             <span class="logo-text text-xl font-black tracking-tighter pt-1">CEC</span>
         </a>
         <div class="flex items-center gap-2">
@@ -34,7 +34,6 @@ const navHTML = `
         <div class="flex flex-col py-3 px-2 gap-1 font-sans">
             <a href="/login/index.html" id="nav-login-btn" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">登录</a>
             <a href="#" id="nav-logout-btn" class="hidden px-4 py-2 text-sm font-medium rounded-lg text-red-400 hover:bg-red-500/10 transition-colors">退出登录</a>
-            <!-- 管理中枢入口：默认隐藏 -->
             <a href="/admin/" id="nav-admin-btn" class="hidden px-4 py-2 text-sm font-bold rounded-lg text-black bg-gradient-to-r from-[#e8c88c] to-[#c89f5d] hover:opacity-90 transition-colors">⚡ 管理中枢</a>
             <div class="h-px bg-white/10 my-1 mx-2"></div>
             <a href="/wiki/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">WIKI</a>
@@ -56,7 +55,9 @@ const footerHTML = `
             <a href="/wiki/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Wiki</a>
             <a href="/about/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">About</a>
         </div>
-        <div class="text-[11px] text-[#c89f5d] tracking-wide mt-2 font-roman text-center">© 2026 Reozar Lab. CC-BY-SA 4.0</div>
+        <div class="text-[11px] text-[#c89f5d] tracking-wide mt-2 font-roman text-center">
+            © 2026 Reozar Lab. CC-BY-SA 4.0
+        </div>
     </div>
 </footer>
 `;
@@ -86,10 +87,27 @@ function initLayout() {
     const loginBtn = document.getElementById('nav-login-btn');
     const logoutBtn = document.getElementById('nav-logout-btn');
 
+    // ===== 解决系统栏滑动冲突 =====
+    let ticking = false;
+    let isHeaderScrolled = false;
+
     window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) { header.classList.add('header-scrolled'); closeMenu(); }
-        else header.classList.remove('header-scrolled');
-    });
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                // 阈值调高到 80，忽略系统栏收起时的微小高度变化
+                if (window.scrollY > 80 && !isHeaderScrolled) {
+                    header.classList.add('header-scrolled');
+                    isHeaderScrolled = true;
+                    closeMenu();
+                } else if (window.scrollY <= 80 && isHeaderScrolled) {
+                    header.classList.remove('header-scrolled');
+                    isHeaderScrolled = false;
+                }
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
 
     function closeMenu() {
         dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
@@ -119,15 +137,12 @@ function initLayout() {
         updateThemeIcons();
     });
 
-    // ===== 登录状态检测与侧边栏显示 =====
     if (typeof API !== 'undefined') {
         API.getMe().then(data => {
             if (data && data.user) {
                 const user = data.user;
                 if (loginBtn) { loginBtn.textContent = `欢迎, ${user.name}`; loginBtn.href = "/profile/"; }
                 if (logoutBtn) logoutBtn.classList.remove('hidden');
-                
-                // 只有 root 和 admin 显示管理中枢按钮
                 if (user.role === 'root' || user.role === 'admin') {
                     const adminBtn = document.getElementById('nav-admin-btn');
                     if (adminBtn) adminBtn.classList.remove('hidden');
