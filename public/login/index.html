@@ -21,7 +21,7 @@
 
     <div class="relative w-full flex-grow z-10 pt-14">
         <div class="w-full h-[45vh]"></div>
-        <div class="w-full bg-[#f4f4f5] dark:bg-[#1c1c1e] rounded-t-[3rem] pt-12 pb-32 flex flex-col items-center shadow-[0_-15px_40px_rgba(0,0,0,0.6)] border-t ios-border">
+        <div class="w-full bg-[#f4f4f5] rounded-t-[3rem] pt-12 pb-32 flex flex-col items-center shadow-[0_-15px_40px_rgba(0,0,0,0.6)] border-t ios-border">
             <div class="w-[85%] max-w-md flex flex-col gap-5">
                 
                 <form class="w-full flex flex-col gap-4 mt-2" onsubmit="return false;">
@@ -105,7 +105,6 @@
             }
         });
 
-        // 忘记密码逻辑
         const resetModal = document.getElementById('reset-modal');
         const resetPanel = document.getElementById('reset-panel');
         
@@ -124,7 +123,6 @@
         }
         resetModal.addEventListener('click', (e) => { if (e.target === resetModal) closeResetModal(); });
 
-        // 重置密码发码
         let resetTimer = null;
         document.getElementById('btn-reset-code').addEventListener('click', async (e) => {
             if (resetTimer) return;
@@ -147,7 +145,6 @@
             }
         });
 
-        // 提交重置密码
         document.getElementById('btn-submit-reset').addEventListener('click', async (e) => {
             const email = document.getElementById('reset-email').value.trim();
             const otp = document.getElementById('reset-otp').value.trim();
