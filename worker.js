@@ -29,47 +29,29 @@ export default {
         await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
         await env.DB.prepare("INSERT INTO otp_codes (email, code, expires_at) VALUES (?, ?, ?)").bind(email, otp, expiresAt).run();
 
-        // 使用 Resend API 发送邮件
-        const res = await fetch('https://api.resend.com/emails', {
+        // 防封延迟，模拟人工操作
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // 使用 EmailJS 发送
+        const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST',
-          headers: {
+          headers: { 
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${env.RESEND_API_KEY}`
+            'Origin': env.BASE_URL || 'http://localhost:8787',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
           },
           body: JSON.stringify({
-            from: 'C.E.C. 密保会 <onboarding@resend.dev>', // Resend 官方测试发件人
-            to: [email],
-            subject: '【匿境 Secarea】CEC 内部身份认证密文',
-            html: `
-              <div style="background-color: #f4f4f5; padding: 40px 10px; font-family: sans-serif;">
-                  <div style="max-width: 500px; margin: 0 auto; background-color: #1a1a1a; border-radius: 16px; overflow: hidden; border: 1px solid #333;">
-                      <div style="height: 4px; background: linear-gradient(90deg, #c89f5d, #f5d78d, #c89f5d);"></div>
-                      <div style="padding: 40px 30px; text-align: center;">
-                          <h1 style="color: #f5d78d; font-size: 24px; margin: 0 0 10px 0; letter-spacing: 4px;">C.E.C. | 匿境</h1>
-                          <p style="color: #888; font-size: 12px; margin: 0 0 30px 0; letter-spacing: 2px;">SECAREA ACCESS TERMINAL</p>
-                          <p style="color: #e5e5e5; font-size: 15px; text-align: left; line-height: 1.6; margin-bottom: 20px;">
-                              尊敬的觉醒者/沉睡者：<br><br>
-                              您正在尝试建立或访问匿境的档案。请使用以下安全密文完成身份验证：
-                          </p>
-                          <div style="background-color: #0a0a0a; border: 1px solid rgba(245,215,141,0.3); border-radius: 12px; padding: 20px; margin: 30px 0;">
-                              <span style="color: #f5d78d; font-size: 36px; font-weight: bold; letter-spacing: 8px; font-family: monospace;">${otp}</span>
-                          </div>
-                          <p style="color: #666; font-size: 12px; text-align: left; line-height: 1.6;">
-                              * 此密文将在 10 分钟后失效。<br>
-                              * 如果这不是您本人的操作，请忽略此邮件。<br>
-                              * 请勿向任何人泄露此密文。
-                          </p>
-                      </div>
-                  </div>
-              </div>
-            `
+            service_id: env.EMAILJS_SERVICE_ID, 
+            template_id: env.EMAILJS_TEMPLATE_ID, 
+            user_id: env.EMAILJS_PUBLIC_KEY,
+            template_params: { to_email: email, otp: otp }
           })
         });
 
         if (!res.ok) {
           const errText = await res.text();
-          console.error('Resend Error:', errText);
-          throw new Error('邮件发送失败，请检查 Resend 配置');
+          console.error('EmailJS Error:', errText);
+          throw new Error('邮件发送失败，Outlook可能被风控');
         }
 
         return new Response(JSON.stringify({ success: true, message: "验证码已发送" }), { headers: { "Content-Type": "application/json" } });
@@ -219,24 +201,19 @@ export default {
       
       const { targetUserId, newRole, newBanStatus } = await request.json();
       
-      // 1. 不能操作自己
       if (targetUserId === currentUser.id) {
           return new Response(JSON.stringify({ error: "你不能修改自己的状态" }), { status: 400, headers: { "Content-Type": "application/json" } });
       }
 
-      // 2. 获取目标用户
       const targetUser = await env.DB.prepare("SELECT role FROM users WHERE id = ?").bind(targetUserId).first();
       if (!targetUser) return new Response(JSON.stringify({ error: "用户不存在" }), { status: 404 });
 
-      // 3. 越级限制
       if (currentUser.role === 'creator' && targetUser.role === 'creator') {
           return new Response(JSON.stringify({ error: "不能修改同级 Creator 的权限" }), { status: 403 });
       }
       if (currentUser.role === 'editor' && (targetUser.role === 'creator' || targetUser.role === 'editor')) {
           return new Response(JSON.stringify({ error: "编者只能修改普通用户" }), { status: 403 });
       }
-
-      // 4. 越级提升限制
       if (newRole === 'creator' && currentUser.role !== 'creator') {
           return new Response(JSON.stringify({ error: "只有 Creator 可以任命 Creator" }), { status: 403 });
       }
