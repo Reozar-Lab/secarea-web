@@ -84,15 +84,12 @@ export default {
       try {
         const { email, otp, newPassword } = await request.json();
         
-        // 校验验证码
         const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(email, otp).first();
         if (!record || record.expires_at < Date.now()) return new Response(JSON.stringify({ error: "验证码错误或已过期" }), { status: 400, headers: { "Content-Type": "application/json" } });
 
-        // 找用户
         const user = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
         if (!user) return new Response(JSON.stringify({ error: "该邮箱未注册" }), { status: 404, headers: { "Content-Type": "application/json" } });
 
-        // 更新密码
         const salt = env.BETTER_AUTH_SECRET;
         const msgBuffer = new TextEncoder().encode(newPassword + salt);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -177,19 +174,32 @@ export default {
     // ================= 10. 管理员接口：修改用户状态 =================
     if (url.pathname === '/api/admin/update-user' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
-      if (!currentUser || currentUser.role !== 'creator') {
-        return new Response(JSON.stringify({ error: "只有最高创作者拥有此权限" }), { status: 403, headers: { "Content-Type": "application/json" } });
+      if (!currentUser || (currentUser.role !== 'creator' && currentUser.role !== 'editor')) {
+        return new Response(JSON.stringify({ error: "权限不足" }), { status: 403, headers: { "Content-Type": "application/json" } });
       }
       
       const { targetUserId, newRole, newBanStatus } = await request.json();
+      
+      // 1. 不能操作自己
       if (targetUserId === currentUser.id) {
           return new Response(JSON.stringify({ error: "你不能修改自己的状态" }), { status: 400, headers: { "Content-Type": "application/json" } });
       }
 
-      // 判断目标用户是否是 Creator
+      // 2. 获取目标用户
       const targetUser = await env.DB.prepare("SELECT role FROM users WHERE id = ?").bind(targetUserId).first();
-      if (targetUser && targetUser.role === 'creator') {
-          return new Response(JSON.stringify({ error: "不能修改其他 Creator 的权限或状态" }), { status: 403, headers: { "Content-Type": "application/json" } });
+      if (!targetUser) return new Response(JSON.stringify({ error: "用户不存在" }), { status: 404 });
+
+      // 3. 越级限制
+      if (currentUser.role === 'creator' && targetUser.role === 'creator') {
+          return new Response(JSON.stringify({ error: "不能修改同级 Creator 的权限" }), { status: 403 });
+      }
+      if (currentUser.role === 'editor' && (targetUser.role === 'creator' || targetUser.role === 'editor')) {
+          return new Response(JSON.stringify({ error: "编者只能修改普通用户" }), { status: 403 });
+      }
+
+      // 4. 越级提升限制
+      if (newRole === 'creator' && currentUser.role !== 'creator') {
+          return new Response(JSON.stringify({ error: "只有 Creator 可以任命 Creator" }), { status: 403 });
       }
 
       if (newRole !== undefined && newRole !== null) {
