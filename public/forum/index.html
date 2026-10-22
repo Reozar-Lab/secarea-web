@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>龙港 · 匿境 Secarea</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../style.css">
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { display: none; }
+        #left-drawer { transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        #left-drawer.open { transform: translateX(0); }
+        #drawer-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        #drawer-overlay.open { opacity: 1; pointer-events: auto; }
+    </style>
+</head>
+<body class="page-ios min-h-screen flex flex-col relative">
+
+    <!-- 中间信息流（动态渲染） -->
+    <main id="feed" class="flex-grow w-full max-w-lg mx-auto pt-16 pb-24 px-3 space-y-3">
+        <div id="feed-loading" class="ios-card rounded-2xl p-8 shadow-sm border ios-border text-center">
+            <div class="inline-block w-6 h-6 border-2 border-[#c89f5d]/30 border-t-[#c89f5d] rounded-full animate-spin"></div>
+            <p class="text-xs ios-text opacity-50 mt-3 tracking-widest">接入龙港通讯网...</p>
+        </div>
+    </main>
+
+    <!-- 底部 Tab 栏 -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/90 dark:bg-[#1c1c1e]/90 backdrop-blur-lg border-t ios-border h-14 flex items-center justify-around">
+        <a href="#" class="flex flex-col items-center justify-center w-full h-full text-[#c89f5d]">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span class="text-[10px] font-bold tracking-widest">龙港</span>
+        </a>
+        <a href="/wiki/index.html" class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            <span class="text-[10px] tracking-widest">档案</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            <span class="text-[10px] tracking-widest">通讯</span>
+        </a>
+        <a href="#" class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <span class="text-[10px] tracking-widest">检索</span>
+        </a>
+    </nav>
+
+    <!-- 左侧侧边栏 -->
+    <div id="drawer-overlay" class="fixed inset-0 bg-black/40 z-[60] backdrop-blur-sm" onclick="toggleDrawer()"></div>
+
+    <aside id="left-drawer" class="fixed top-0 bottom-0 left-0 w-56 ios-card z-[70] shadow-2xl flex flex-col border-r ios-border overflow-hidden">
+        <div class="p-4 border-b ios-border">
+            <div class="flex items-center justify-between mb-3">
+                <div class="cec-avatar w-12 h-12 text-xl shadow-sm" id="drawer-avatar">?</div>
+                <button onclick="toggleDrawer()" class="ios-text opacity-40 hover:opacity-100 transition p-1.5 bg-black/5 dark:bg-white/5 rounded-full">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <h2 class="text-base font-bold cec-text-dark w-full truncate" id="drawer-name">加载中...</h2>
+            <p class="text-xs ios-text opacity-50 mt-1 w-full truncate" id="drawer-email">---</p>
+            <div class="flex gap-4 mt-3 text-sm">
+                <div class="flex flex-col"><span class="font-bold cec-text-dark" id="drawer-following">0</span><span class="text-xs ios-text opacity-50">关注</span></div>
+                <div class="flex flex-col"><span class="font-bold cec-text-dark" id="drawer-followers">0</span><span class="text-xs ios-text opacity-50">追随者</span></div>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-3 space-y-1">
+            <a href="/profile/index.html" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
+                <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <span class="ios-text font-medium text-sm truncate">个人中心</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
+                <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                <span class="ios-text font-medium text-sm truncate">我的收藏</span>
+            </a>
+            <a href="#" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
+                <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="ios-text font-medium text-sm truncate">偏好设置</span>
+            </a>
+
+            <a href="/admin/" id="drawer-admin-link" class="hidden items-center gap-3 p-2.5 rounded-xl bg-[#f5d78d]/10 hover:bg-[#f5d78d]/20 transition">
+                <svg class="w-5 h-5 text-[#c89f5d] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                <span class="text-[#c89f5d] font-bold text-sm truncate">管理中枢</span>
+            </a>
+        </div>
+
+        <div class="p-3 border-t ios-border">
+            <button id="drawer-publish-btn" class="w-full py-2.5 bg-[#111111] text-[#f5d78d] rounded-xl font-bold hover:bg-black transition-colors shadow-md flex items-center justify-center gap-2 active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                <span class="text-sm">发布新内容</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- 发布弹窗 -->
+    <div id="publish-modal" class="fixed inset-0 z-[80] hidden items-center justify-center sys-modal-overlay">
+        <div class="w-[90%] max-w-md rounded-2xl overflow-hidden sys-modal-panel shadow-2xl">
+            <div class="px-5 py-3 sys-modal-header flex justify-between items-center">
+                <h3 class="font-serif font-bold tracking-widest cec-text-dark text-sm">发布到龙港</h3>
+                <button id="publish-close" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+            </div>
+            <div class="p-5 flex flex-col gap-3">
+                <textarea id="publish-content" rows="5" maxlength="500" placeholder="在这片灰色地带，你想说些什么？"
+                    class="w-full px-3 py-2.5 rounded-xl sys-modal-input text-sm outline-none resize-none"></textarea>
+                <input type="url" id="publish-image" placeholder="图片链接（可选）"
+                    class="w-full px-3 py-2.5 rounded-xl sys-modal-input text-sm outline-none">
+                <div class="flex justify-between items-center mt-1">
+                    <span id="publish-count" class="text-xs text-gray-400">0 / 500</span>
+                    <button id="publish-submit"
+                        class="px-5 py-2 bg-[#111111] text-[#f5d78d] font-bold rounded-xl hover:bg-[#252525] transition-colors text-sm tracking-widest">
+                        发布
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../common.js"></script>
+    <script src="../layout.js"></script>
+    <script>
+        // ========== 工具函数 ==========
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, s => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[s]));
+        }
+
+        function timeAgo(ts) {
+            if (!ts) return '刚刚';
+            const diff = Math.floor((Date.now() - ts) / 1000);
+            if (diff < 60) return '刚刚';
+            if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+            if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+            if (diff < 604800) return Math.floor(diff / 86400) + ' 天前';
+            return new Date(ts).toLocaleDateString('zh-CN');
+        }
+
+        function roleBadge(role) {
+            if (role === 'root') return '<span class="text-[9px] bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded font-bold uppercase">ROOT</span>';
+            if (role === 'admin') return '<span class="text-[9px] bg-yellow-500/20 text-yellow-600 px-1.5 py-0.5 rounded font-bold uppercase">ADMIN</span>';
+            if (role === 'editor') return '<span class="text-[9px] bg-blue-500/20 text-blue-500 px-1.5 py-0.5 rounded font-bold uppercase">EDITOR</span>';
+            return '';
+        }
+
+        // ========== 抽屉 ==========
+        function toggleDrawer() {
+            document.getElementById('left-drawer').classList.toggle('open');
+            document.getElementById('drawer-overlay').classList.toggle('open');
+        }
+
+        // ========== 帖子渲染 ==========
+        function renderPost(post) {
+            const initial = (post.authorName || '?').charAt(0).toUpperCase();
+            return `
+                <article class="ios-card rounded-2xl p-4 shadow-sm border ios-border">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="cec-avatar w-10 h-10 text-lg shrink-0">${escapeHtml(initial)}</div>
+                        <div class="flex flex-col min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-sm cec-text-dark truncate">${escapeHtml(post.authorName)}</span>
+                                ${roleBadge(post.authorRole)}
+                            </div>
+                            <span class="text-xs ios-text opacity-50 truncate">@${escapeHtml(post.authorName)} · ${timeAgo(post.createdAt)}</span>
+                        </div>
+                    </div>
+                    <p class="text-sm ios-text leading-relaxed mb-3 whitespace-pre-wrap break-words">${escapeHtml(post.content)}</p>
+                    ${post.imageUrl ? `<div class="w-full bg-gray-200 dark:bg-gray-800 rounded-xl mb-3 overflow-hidden border ios-border"><img src="${escapeHtml(post.imageUrl)}" class="w-full h-auto" alt=""></div>` : ''}
+                    <div class="flex items-center justify-between ios-text opacity-50 text-xs px-2">
+                        <button class="comment-btn flex items-center gap-1 hover:text-[#c89f5d] transition" data-id="${post.id}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                            ${post.replies || 0}
+                        </button>
+                        <button class="repost-btn flex items-center gap-1 hover:text-[#c89f5d] transition" data-id="${post.id}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            ${post.reposts || 0}
+                        </button>
+                        <button class="like-btn flex items-center gap-1 transition ${post.likedByMe ? 'text-red-500' : 'hover:text-red-500'}" data-id="${post.id}">
+                            <svg class="w-4 h-4" fill="${post.likedByMe ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            <span class="like-count">${post.likes || 0}</span>
+                        </button>
+                    </div>
+                </article>
+            `;
+        }
+
+        function renderEmpty() {
+            return `
+                <div class="ios-card rounded-2xl p-10 shadow-sm border ios-border text-center">
+                    <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-[#f5d78d]/10 flex items-center justify-center">
+                        <svg class="w-7 h-7 text-[#c89f5d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    </div>
+                    <p class="text-sm cec-text-dark font-bold tracking-widest mb-1">通讯网静默中</p>
+                    <p class="text-xs ios-text opacity-50">还没有任何记录，成为第一个发帖的人。</p>
+                </div>
+            `;
+        }
+
+        // ========== 数据加载 ==========
+        async function loadFeed() {
+            const feed = document.getElementById('feed');
+            const loading = document.getElementById('feed-loading');
+            try {
+                const data = await API.getPosts(1, 20);
+                if (loading) loading.remove();
+                if (data && data.posts && data.posts.length > 0) {
+                    feed.innerHTML = data.posts.map(renderPost).join('');
+                    bindPostActions();
+                } else {
+                    feed.innerHTML = renderEmpty();
+                }
+            } catch (e) {
+                if (loading) loading.remove();
+                feed.innerHTML = renderEmpty();
+            }
+        }
+
+        async function loadUserStats() {
+            try {
+                const stats = await API.getUserStats();
+                document.getElementById('drawer-following').textContent = stats.following ?? 0;
+                document.getElementById('drawer-followers').textContent = stats.followers ?? 0;
+            } catch (e) { /* 静默 */ }
+        }
+
+        function bindPostActions() {
+            document.querySelectorAll('.like-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = btn.dataset.id;
+                    const countEl = btn.querySelector('.like-count');
+                    const wasLiked = btn.classList.contains('text-red-500');
+                    if (wasLiked) {
+                        btn.classList.remove('text-red-500');
+                        countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
+                    } else {
+                        btn.classList.add('text-red-500');
+                        countEl.textContent = parseInt(countEl.textContent) + 1;
+                    }
+                    try { await API.likePost(id); } catch (e) {}
+                });
+            });
+
+            document.querySelectorAll('.repost-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (typeof showToast !== 'undefined') showToast('转发功能即将上线', 'info');
+                });
+            });
+
+            document.querySelectorAll('.comment-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (typeof showToast !== 'undefined') showToast('评论功能即将上线', 'info');
+                });
+            });
+        }
+
+        // ========== 发布弹窗 ==========
+        const publishModal = document.getElementById('publish-modal');
+        const publishContent = document.getElementById('publish-content');
+        const publishImage = document.getElementById('publish-image');
+        const publishCount = document.getElementById('publish-count');
+
+        function openPublish() {
+            API.getMe().then(data => {
+                if (!data || !data.user) {
+                    if (typeof showToast !== 'undefined') showToast('请先登录', 'error');
+                    setTimeout(() => { window.location.href = '/login/'; }, 600);
+                    return;
+                }
+                publishModal.classList.remove('hidden');
+                publishModal.classList.add('flex');
+                setTimeout(() => publishContent.focus(), 100);
+            });
+        }
+
+        function closePublish() {
+            publishModal.classList.add('hidden');
+            publishModal.classList.remove('flex');
+        }
+
+        publishContent.addEventListener('input', () => {
+            publishCount.textContent = `${publishContent.value.length} / 500`;
+        });
+
+        document.getElementById('publish-close').addEventListener('click', closePublish);
+        publishModal.addEventListener('click', (e) => { if (e.target === publishModal) closePublish(); });
+
+        document.getElementById('publish-submit').addEventListener('click', async () => {
+            const content = publishContent.value.trim();
+            const imageUrl = publishImage.value.trim() || null;
+            if (!content) { if (typeof showToast !== 'undefined') showToast('内容不能为空', 'error'); return; }
+            const btn = document.getElementById('publish-submit');
+            btn.disabled = true; btn.textContent = '发布中...';
+            try {
+                const data = await API.createPost(content, imageUrl);
+                if (data.success) {
+                    publishContent.value = '';
+                    publishImage.value = '';
+                    publishCount.textContent = '0 / 500';
+                    closePublish();
+                    if (typeof showToast !== 'undefined') showToast('已发布到龙港', 'success');
+                    loadFeed();
+                }
+            } finally {
+                btn.disabled = false; btn.textContent = '发布';
+            }
+        });
+
+        // ========== 初始化 ==========
+        window.addEventListener('load', async () => {
+            // 拦截左上角 CEC 点击 → 打开抽屉
+            const logoBtn = document.getElementById('nav-logo-btn');
+            if (logoBtn) {
+                const newLogoBtn = logoBtn.cloneNode(true);
+                logoBtn.parentNode.replaceChild(newLogoBtn, logoBtn);
+                newLogoBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleDrawer();
+                });
+            }
+
+            // 填充用户数据
+            try {
+                const data = await API.getMe();
+                if (data && data.user) {
+                    const user = data.user;
+                    document.getElementById('drawer-name').textContent = user.name;
+                    document.getElementById('drawer-email').textContent = user.email;
+                    document.getElementById('drawer-avatar').textContent = user.name.charAt(0).toUpperCase();
+                    if (user.role === 'root' || user.role === 'admin') {
+                        const adminLink = document.getElementById('drawer-admin-link');
+                        adminLink.classList.remove('hidden');
+                        adminLink.classList.add('flex');
+                    }
+                    loadUserStats();
+                } else {
+                    document.getElementById('drawer-name').textContent = '访客';
+                    document.getElementById('drawer-email').textContent = '未登录';
+                }
+            } catch (e) {
+                document.getElementById('drawer-name').textContent = '访客';
+                document.getElementById('drawer-email').textContent = '未登录';
+            }
+
+            // 加载信息流
+            loadFeed();
+        });
+
+        document.getElementById('drawer-publish-btn').addEventListener('click', () => {
+            toggleDrawer();
+            openPublish();
+        });
+    </script>
+</body>
+</html>
