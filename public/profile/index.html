@@ -20,7 +20,6 @@
             <!-- 顶部用户信息区 -->
             <div class="flex flex-col items-center justify-center px-2 py-8 cursor-pointer group" onclick="openEditProfile()">
                 <div class="relative mb-4 group-hover:opacity-80 transition-opacity">
-                    <!-- 抽离出来的头像类：大小由 w-24 h-24 text-4xl 控制，外观全由 cec-avatar 控制 -->
                     <div class="cec-avatar w-24 h-24 text-4xl shadow-sm">
                         <span id="user-avatar-letter">?</span>
                     </div>
@@ -30,12 +29,11 @@
                 </div>
                 
                 <div class="flex items-center gap-2 mb-1">
-                    <!-- 使用 cec-text-dark 锁死标题颜色 -->
                     <h1 class="text-2xl font-bold tracking-wide cec-text-dark" id="user-name">加载中...</h1>
-                    <span class="hidden px-2 py-0.5 rounded text-[10px] font-sans font-medium bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300" id="user-role">member</span>
+                    <span class="hidden px-2 py-0.5 rounded text-[10px] font-sans font-bold" id="user-role">member</span>
                 </div>
                 
-                <p class="text-xs ios-text opacity-60 mt-1 max-w-[250px] text-center truncate" id="user-bio">这个人很神秘，还没有留下签名。</p>
+                <!-- 移除了个性签名，保留ID -->
                 <p class="text-xs font-sans ios-text opacity-40 mt-2">ID: <span id="user-id">---</span></p>
             </div>
 
@@ -79,7 +77,7 @@
                 </a>
             </div>
 
-            <!-- 管理员专属面板 -->
+            <!-- 管理员专属面板 (只有 root 和 admin 会显示) -->
             <div id="admin-panel" class="hidden w-full ios-card rounded-xl overflow-hidden shadow-sm mb-6 ios-border border">
                 <a href="/admin/" class="ios-list-item flex items-center justify-between px-4 py-3.5 transition-colors">
                     <div class="flex items-center gap-3">
@@ -136,7 +134,6 @@
         const container = document.getElementById('profile-container');
         const avatarLetter = document.getElementById('user-avatar-letter');
         const nameEl = document.getElementById('user-name');
-        const bioEl = document.getElementById('user-bio');
         const roleEl = document.getElementById('user-role');
         const idEl = document.getElementById('user-id');
         const adminPanel = document.getElementById('admin-panel');
@@ -175,18 +172,26 @@
                 idEl.textContent = currentUser.id.substring(0, 8).toUpperCase();
                 avatarLetter.textContent = currentUser.name.charAt(0).toUpperCase();
                 
-                if (currentUser.bio) bioEl.textContent = currentUser.bio;
-
-                if (currentUser.role === 'creator' || currentUser.role === 'editor') {
+                // ===== 角色徽章渲染逻辑 =====
+                if (currentUser.role) {
                     roleEl.textContent = currentUser.role.toUpperCase();
                     roleEl.classList.remove('hidden');
-                    if (currentUser.role === 'creator') {
+                    
+                    if (currentUser.role === 'root') {
+                        roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-red-500/20 text-red-500 border border-red-500/30';
+                    } else if (currentUser.role === 'admin') {
                         roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30';
-                    } else {
+                    } else if (currentUser.role === 'editor') {
                         roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30';
+                    } else {
+                        roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-gray-500/20 text-gray-500 border border-gray-500/30';
                     }
-                    adminPanel.classList.remove('hidden');
+
+                    if (currentUser.role === 'root' || currentUser.role === 'admin') {
+                        adminPanel.classList.remove('hidden');
+                    }
                 }
+
                 container.style.opacity = 1;
             } catch (error) {
                 window.location.href = '/login/'; 
@@ -204,7 +209,6 @@
                 </div>
                 <div class="p-4 space-y-4">
                     <div class="flex flex-col items-center mb-4">
-                        <!-- 弹窗里也复用 cec-avatar -->
                         <div class="cec-avatar w-20 h-20 text-3xl mb-2 shadow-sm">
                             ${currentUser.name.charAt(0).toUpperCase()}
                         </div>
@@ -215,10 +219,6 @@
                         <label class="block text-xs text-gray-500 mb-1 ml-1">用户名</label>
                         <input type="text" id="edit-name" value="${currentUser.name}" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
                     </div>
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1 ml-1">个性签名</label>
-                        <textarea id="edit-bio" placeholder="介绍一下自己吧..." class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d] resize-none h-24">${currentUser.bio || ''}</textarea>
-                    </div>
                     
                     <button onclick="saveProfile()" class="w-full py-3 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition mt-2">保存修改</button>
                 </div>
@@ -227,14 +227,11 @@
 
         window.saveProfile = async function() {
             const newName = document.getElementById('edit-name').value.trim();
-            const newBio = document.getElementById('edit-bio').value.trim();
             if(!newName) return showToast("用户名不能为空", "error");
             
             currentUser.name = newName;
-            currentUser.bio = newBio;
             
             nameEl.textContent = newName;
-            bioEl.textContent = newBio || "这个人很神秘，还没有留下签名。";
             avatarLetter.textContent = newName.charAt(0).toUpperCase();
             
             showToast("资料修改成功 (前端演示)", "success");
