@@ -21,6 +21,7 @@ function showToast(message, type = 'info') {
 }
 
 const API = {
+  // ================= 认证模块 =================
   async sendCode(email) {
     try {
       const res = await fetch(`${API_BASE}/send-code`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
@@ -70,6 +71,7 @@ const API = {
     return await res.json();
   },
 
+  // ================= 账号安全模块 =================
   async changePassword(oldPassword, newPassword) {
     const res = await fetch(`${API_BASE}/change-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ oldPassword, newPassword }) });
     return await res.json();
@@ -85,6 +87,7 @@ const API = {
     return await res.json();
   },
 
+  // ================= 管理员模块 =================
   async getUsers() {
     const res = await fetch(`/api/admin/users`);
     return await res.json();
@@ -96,5 +99,63 @@ const API = {
       body: JSON.stringify({ targetUserId, newRole, newBanStatus })
     });
     return await res.json();
+  },
+
+  // ================= 龙港（Forum）接口 =================
+  async getPosts(page = 1, limit = 20) {
+    try {
+      const res = await fetch(`/api/forum/posts?page=${page}&limit=${limit}`);
+      if (!res.ok) return { posts: [], total: 0, hasMore: false };
+      return await res.json();
+    } catch (e) {
+      return { posts: [], total: 0, hasMore: false };
+    }
+  },
+
+  async createPost(content, imageUrl = null) {
+    try {
+      const res = await fetch(`/api/forum/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, imageUrl })
+      });
+      const data = await res.json();
+      if (data.error) showToast(data.error, 'error');
+      return data;
+    } catch (e) {
+      showToast('网络请求失败', 'error');
+      return { error: '网络请求失败' };
+    }
+  },
+
+  async deletePost(postId) {
+    try {
+      const res = await fetch(`/api/forum/posts/${postId}`, { method: 'DELETE' });
+      return await res.json();
+    } catch (e) { return { error: '网络请求失败' }; }
+  },
+
+  async likePost(postId) {
+    try {
+      const res = await fetch(`/api/forum/posts/${postId}/like`, { method: 'POST' });
+      return await res.json();
+    } catch (e) { return { error: '网络请求失败' }; }
+  },
+
+  async repostPost(postId) {
+    try {
+      const res = await fetch(`/api/forum/posts/${postId}/repost`, { method: 'POST' });
+      return await res.json();
+    } catch (e) { return { error: '网络请求失败' }; }
+  },
+
+  async getUserStats() {
+    try {
+      const res = await fetch(`/api/forum/stats`);
+      if (!res.ok) return { following: 0, followers: 0 };
+      return await res.json();
+    } catch (e) {
+      return { following: 0, followers: 0 };
+    }
   }
 };
