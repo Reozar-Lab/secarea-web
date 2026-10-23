@@ -1,12 +1,3 @@
-/**
- * Secarea 全站 API 封装
- *
- * 命名说明：
- *   - /forum/ 路径现对应 UI 名称「发现」，承载原「龙港（贴吧）」+「创作」功能。
- *   - 后端 API 路径保持 /api/forum/* 不变，仅在数据语义层扩展 category 字段。
- *   - category 取值建议：'discussion'（讨论/贴吧）、'creation'（创作）、null（全部）。
- */
-
 const API_BASE = '/api/auth';
 
 const toastContainer = document.createElement('div');
@@ -110,79 +101,54 @@ const API = {
     return await res.json();
   },
 
-  // ================= 发现（原龙港 + 创作）接口 =================
-  // 后端路径沿用 /api/forum/*，仅语义扩展 category 字段。
-
-  /**
-   * 获取信息流
-   * @param {number} page    页码（默认 1）
-   * @param {number} limit   每页条数（默认 20）
-   * @param {string|null} category  分类过滤：'discussion' | 'creation' | null（全部）
-   */
-  async getPosts(page = 1, limit = 20, category = null) {
+  // ================= 发现（Forum）模块 =================
+  
+  // 获取信息流（游标分页）
+  async getPosts(cursor = null, tab = 'discover', limit = 20) {
     try {
-      let qs = `page=${page}&limit=${limit}`;
-      if (category) qs += `&category=${encodeURIComponent(category)}`;
-      const res = await fetch(`/api/forum/posts?${qs}`);
-      if (!res.ok) return { posts: [], total: 0, hasMore: false };
+      let url = `/api/forum/posts?tab=${tab}&limit=${limit}`;
+      if (cursor) url += `&cursor=${cursor}`;
+      const res = await fetch(url);
+      if (!res.ok) return { posts: [], nextCursor: null };
       return await res.json();
-    } catch (e) {
-      return { posts: [], total: 0, hasMore: false };
-    }
+    } catch (e) { return { posts: [], nextCursor: null }; }
   },
 
-  /**
-   * 发布内容
-   * @param {string} content  正文
-   * @param {string|null} imageUrl  图片链接
-   * @param {string|null} category  分类：'discussion' | 'creation' | null
-   */
-  async createPost(content, imageUrl = null, category = null) {
+  // 发帖
+  async createPost(content, imageUrl = null, category = 'discussion', tags = []) {
     try {
-      const body = { content, imageUrl };
-      if (category) body.category = category;
-      const res = await fetch(`/api/forum/posts`, {
+      const res = await fetch('/api/forum/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ content, imageUrl, category, tags })
       });
       const data = await res.json();
       if (data.error) showToast(data.error, 'error');
       return data;
-    } catch (e) {
-      showToast('网络请求失败', 'error');
-      return { error: '网络请求失败' };
-    }
+    } catch (e) { showToast('网络错误', 'error'); return { error: '网络错误' }; }
   },
 
+  // 点赞/取消点赞
+  async toggleLike(postId) {
+    try {
+      const res = await fetch(`/api/forum/posts/${postId}/like`, { method: 'POST' });
+      return await res.json();
+    } catch (e) { return { error: '网络错误' }; }
+  },
+
+  // 收藏/取消收藏
+  async toggleFavorite(postId) {
+    try {
+      const res = await fetch(`/api/forum/posts/${postId}/favorite`, { method: 'POST' });
+      return await res.json();
+    } catch (e) { return { error: '网络错误' }; }
+  },
+
+  // 删除帖子
   async deletePost(postId) {
     try {
       const res = await fetch(`/api/forum/posts/${postId}`, { method: 'DELETE' });
       return await res.json();
-    } catch (e) { return { error: '网络请求失败' }; }
-  },
-
-  async likePost(postId) {
-    try {
-      const res = await fetch(`/api/forum/posts/${postId}/like`, { method: 'POST' });
-      return await res.json();
-    } catch (e) { return { error: '网络请求失败' }; }
-  },
-
-  async repostPost(postId) {
-    try {
-      const res = await fetch(`/api/forum/posts/${postId}/repost`, { method: 'POST' });
-      return await res.json();
-    } catch (e) { return { error: '网络请求失败' }; }
-  },
-
-  async getUserStats() {
-    try {
-      const res = await fetch(`/api/forum/stats`);
-      if (!res.ok) return { following: 0, followers: 0 };
-      return await res.json();
-    } catch (e) {
-      return { following: 0, followers: 0 };
-    }
+    } catch (e) { return { error: '网络错误' }; }
   }
 };
