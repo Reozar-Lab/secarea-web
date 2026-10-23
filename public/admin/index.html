@@ -29,7 +29,7 @@
                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg class="w-5 h-5 ios-text opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
-                <input type="text" id="search-input" placeholder="搜索用户名或邮箱..." class="admin-input w-full pl-11 pr-4 py-3 shadow-sm focus:outline-none focus:border-[#c89f5d]">
+                <input type="text" id="search-input" placeholder="搜索用户名、邮箱或用户 ID..." class="admin-input w-full pl-11 pr-4 py-3 shadow-sm focus:outline-none focus:border-[#c89f5d]">
             </div>
 
             <div id="user-list-container" class="w-full flex flex-col gap-3">
@@ -127,7 +127,11 @@
                     <div id="content-${user.id}" class="accordion-content border-t ios-border">
                         <div class="p-4 flex flex-col gap-4">
                             <div class="text-xs ios-text opacity-50 font-sans">
-                                <p>用户 ID: ${user.id}</p>
+                                <p class="flex items-center gap-2 flex-wrap">
+                                    <span>用户 ID:</span>
+                                    <code class="font-mono text-[11px] break-all">${user.id}</code>
+                                    <button onclick="event.stopPropagation(); copyUserId('${user.id}')" class="px-2 py-0.5 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors text-[10px] ios-text">复制</button>
+                                </p>
                             </div>
                             
                             ${canEdit ? `
@@ -168,11 +172,36 @@
             }
         }
 
+        function copyUserId(userId) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(userId).then(() => {
+                    showToast('用户 ID 已复制', 'success');
+                }).catch(() => {
+                    showToast('复制失败', 'error');
+                });
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = userId;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('用户 ID 已复制', 'success');
+                } catch (e) {
+                    showToast('复制失败', 'error');
+                }
+                document.body.removeChild(ta);
+            }
+        }
+
         document.getElementById('search-input').addEventListener('input', (e) => {
             const keyword = e.target.value.toLowerCase().trim();
             const filtered = allUsers.filter(user => 
                 user.name.toLowerCase().includes(keyword) || 
-                user.email.toLowerCase().includes(keyword)
+                user.email.toLowerCase().includes(keyword) ||
+                user.id.toLowerCase().includes(keyword)
             );
             renderUsers(filtered);
         });
