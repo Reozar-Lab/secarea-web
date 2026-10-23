@@ -68,6 +68,15 @@
         </div>
     </main>
 
+    <!-- 更多操作菜单 -->
+    <div id="more-menu" class="fixed z-[90] hidden">
+        <div class="w-36 rounded-xl overflow-hidden shadow-2xl ios-card py-1 border">
+            <button data-action="delete" class="more-item hidden w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/5 transition">删除</button>
+            <button data-action="report" class="more-item hidden w-full text-left px-4 py-2.5 text-sm ios-text hover:bg-black/5 dark:hover:bg-white/5 transition">举报</button>
+            <button data-action="cancel" class="more-item w-full text-left px-4 py-2.5 text-sm ios-text opacity-60 hover:bg-black/5 dark:hover:bg-white/5 transition">取消</button>
+        </div>
+    </div>
+
     <!-- 底部评论弹窗 -->
     <div id="comment-modal" class="sys-modal-overlay fixed inset-0 z-[9999] hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
         <div id="comment-panel" class="sys-modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 flex flex-col">
@@ -84,11 +93,39 @@
         </div>
     </div>
 
+    <!-- 举报弹窗 -->
+    <div id="report-modal" class="sys-modal-overlay fixed inset-0 z-[80] hidden items-center justify-center">
+        <div class="w-[90%] max-w-sm rounded-2xl overflow-hidden sys-modal-panel shadow-2xl">
+            <div class="px-5 py-3 sys-modal-header flex justify-between items-center">
+                <h3 class="font-serif font-bold tracking-widest text-red-500 text-sm">举报帖子</h3>
+                <button id="report-close" class="ios-text opacity-50 hover:opacity-100 text-xl leading-none">&times;</button>
+            </div>
+            <div class="p-5 flex flex-col gap-3">
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1 ml-1">举报理由（必填）</label>
+                    <select id="report-reason" class="w-full px-3 py-2.5 rounded-xl sys-modal-input text-sm outline-none">
+                        <option value="垃圾广告">垃圾广告</option>
+                        <option value="人身攻击">人身攻击</option>
+                        <option value="泄露隐私">泄露隐私</option>
+                        <option value="违规内容">违规/违法内容</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1 ml-1">补充说明（选填）</label>
+                    <textarea id="report-detail" rows="3" maxlength="100" placeholder="请简述举报原因..." class="w-full px-3 py-2.5 rounded-xl sys-modal-input text-sm outline-none resize-none"></textarea>
+                </div>
+                <button id="report-submit" class="w-full mt-1 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors text-[13px] tracking-widest">提交举报</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../../common.js"></script>
     <script src="../../layout.js"></script>
     <script>
         let postId = null;
         let currentUser = null;
+        let postAuthorId = null;
 
         function getQueryParam(name) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -125,23 +162,29 @@
             }
 
             const p = res.post;
+            postAuthorId = p.author_id;
             const initial = (p.author_name || '?').charAt(0).toUpperCase();
 
+            // 渲染详情页内容，右上角新增更多按钮
             container.innerHTML = `
-                <div class="flex items-start gap-3 mb-3">
-                    <a href="/profile/index.html?id=${p.author_id}" class="forum-avatar">${escapeHtml(initial)}</a>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center">
-                            <a href="/profile/index.html?id=${p.author_id}" class="forum-author-name hover:underline">${escapeHtml(p.author_name)}</a>
-                            ${roleBadge(p.author_role)}
+                <div class="flex items-start justify-between gap-3 mb-3">
+                    <div class="flex items-start gap-3 flex-1">
+                        <a href="/profile/index.html?id=${p.author_id}" class="forum-avatar">${escapeHtml(initial)}</a>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center">
+                                <a href="/profile/index.html?id=${p.author_id}" class="forum-author-name hover:underline">${escapeHtml(p.author_name)}</a>
+                                ${roleBadge(p.author_role)}
+                            </div>
+                            <span class="text-[11px] ios-text opacity-50 block mt-0.5">${timeAgo(p.created_at)}</span>
                         </div>
-                        <span class="text-[11px] ios-text opacity-50 block mt-0.5">${timeAgo(p.created_at)}</span>
                     </div>
+                    <button id="detail-more-btn" class="shrink-0 p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition">
+                        <svg class="w-5 h-5 ios-text opacity-40" fill="currentColor" viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                    </button>
                 </div>
                 <div class="forum-post-text whitespace-pre-wrap break-words mt-4">${escapeHtml(p.content)}</div>
                 ${p.image_url ? `<div class="w-full rounded-xl mt-3 overflow-hidden border ios-border"><img src="${escapeHtml(p.image_url)}" class="w-full h-auto"></div>` : ''}
                 
-                <!-- 详情页交互区：加入点赞、收藏、评论按钮 -->
                 <div class="flex items-center justify-end gap-6 mt-6 pt-4 border-t ios-border text-[13px] ios-text opacity-50">
                     <button id="btn-detail-comment" class="flex items-center gap-1.5 hover:text-[#c89f5d] hover:opacity-100 transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
@@ -172,7 +215,6 @@
                 const countEl = document.getElementById('detail-like-count');
                 const wasLiked = btn.classList.contains('text-red-500');
                 
-                // 乐观更新
                 if (wasLiked) {
                     btn.classList.remove('text-red-500', 'opacity-100');
                     btn.querySelector('svg').setAttribute('fill', 'none');
@@ -182,9 +224,7 @@
                     btn.querySelector('svg').setAttribute('fill', 'currentColor');
                     countEl.textContent = parseInt(countEl.textContent) + 1;
                 }
-                
-                const resApi = await API.toggleLike(postId);
-                if (resApi.error) showToast(resApi.error, 'error');
+                await API.toggleLike(postId);
             });
 
             document.getElementById('btn-detail-favorite').addEventListener('click', async (e) => {
@@ -194,7 +234,6 @@
                 const countEl = document.getElementById('detail-fav-count');
                 const wasFav = btn.classList.contains('text-[#c89f5d]');
                 
-                // 乐观更新
                 if (wasFav) {
                     btn.classList.remove('text-[#c89f5d]', 'opacity-100');
                     btn.querySelector('svg').setAttribute('fill', 'none');
@@ -204,11 +243,15 @@
                     btn.querySelector('svg').setAttribute('fill', 'currentColor');
                     countEl.textContent = parseInt(countEl.textContent) + 1;
                 }
-                
-                const resApi = await API.toggleFavorite(postId);
-                if (resApi.error) showToast(resApi.error, 'error');
+                await API.toggleFavorite(postId);
             });
 
+            // 绑定更多按钮
+            document.getElementById('detail-more-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openMoreMenu(e.currentTarget);
+            });
 
             // 渲染评论列表
             document.getElementById('comment-count').textContent = res.comments.length;
@@ -239,25 +282,94 @@
             }
         }
 
+        // ========== 更多菜单逻辑 ==========
+        const moreMenu = document.getElementById('more-menu');
+        
+        function openMoreMenu(anchorBtn) {
+            const isOwner = currentUser && currentUser.id === postAuthorId;
+            const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'root');
+
+            const rect = anchorBtn.getBoundingClientRect();
+            moreMenu.style.top = `${rect.bottom + 6}px`;
+            moreMenu.style.right = `${window.innerWidth - rect.right}px`;
+            moreMenu.classList.remove('hidden');
+
+            moreMenu.querySelectorAll('.more-item').forEach(item => {
+                item.classList.add('hidden');
+                const action = item.dataset.action;
+                if (action === 'delete' && (isOwner || isAdmin)) item.classList.remove('hidden');
+                if (action === 'report' && !isOwner) item.classList.remove('hidden');
+                if (action === 'cancel') item.classList.remove('hidden');
+            });
+        }
+
+        moreMenu.addEventListener('click', async (e) => {
+            const item = e.target.closest('.more-item');
+            if (!item) return;
+            const action = item.dataset.action;
+            moreMenu.classList.add('hidden');
+            
+            if (action === 'delete') {
+                if (confirm('确定要删除这条帖子吗？删除后将无法恢复。')) {
+                    const res = await API.deletePost(postId);
+                    if (res.success) {
+                        showToast('帖子已删除', 'success');
+                        setTimeout(() => { window.location.href = '/forum/'; }, 1000);
+                    }
+                }
+            } else if (action === 'report') {
+                if (!currentUser) return showToast('请先登录', 'error');
+                document.getElementById('report-modal').classList.remove('hidden');
+                document.getElementById('report-modal').classList.add('flex');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!moreMenu.contains(e.target) && !e.target.closest('#detail-more-btn')) moreMenu.classList.add('hidden');
+        });
+
+        // ========== 举报弹窗逻辑 ==========
+        document.getElementById('report-close').addEventListener('click', () => {
+            document.getElementById('report-modal').classList.add('hidden');
+            document.getElementById('report-modal').classList.remove('flex');
+        });
+
+        document.getElementById('report-submit').addEventListener('click', async (e) => {
+            const reason = document.getElementById('report-reason').value;
+            const detail = document.getElementById('report-detail').value.trim();
+            const btn = e.target;
+            
+            btn.disabled = true;
+            btn.textContent = '提交中...';
+
+            const res = await API.reportPost(postId, reason, detail);
+            
+            if (!res.error) {
+                document.getElementById('report-modal').classList.add('hidden');
+                document.getElementById('report-modal').classList.remove('flex');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '提交举报';
+        });
+
         // ========== 删评逻辑 ==========
         window.deleteComment = async function(commentId) {
             if (!confirm("确定删除这条评论吗？")) return;
-            
             const res = await API.deleteComment(commentId);
             if (res.success) {
                 showToast("评论已删除", "success");
-                loadPost(); // 刷新评论列表
+                loadPost();
             }
         };
 
-        // ========== 弹窗逻辑 ==========
+        // ========== 评论弹窗逻辑 ==========
         const commentModal = document.getElementById('comment-modal');
         const commentPanel = document.getElementById('comment-panel');
         const commentInput = document.getElementById('comment-input');
 
         document.getElementById('open-comment-modal').addEventListener('click', () => {
             if (!currentUser) return showToast('请先登录', 'error');
-            
             commentModal.classList.remove('hidden');
             setTimeout(() => {
                 commentModal.classList.remove('opacity-0');
@@ -276,7 +388,6 @@
             if (e.target === commentModal) closeCommentModal(); 
         });
 
-        // 发送评论
         document.getElementById('comment-submit').addEventListener('click', async () => {
             const content = commentInput.value.trim();
             if (!content) return;
@@ -289,7 +400,7 @@
             if (res.success) {
                 commentInput.value = '';
                 closeCommentModal();
-                loadPost(); // 刷新评论列表和计数
+                loadPost();
             }
             
             btn.disabled = false;
