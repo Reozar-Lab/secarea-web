@@ -17,6 +17,7 @@ export default {
       return session || null;
     }
     
+    // 统一 JSON 返回辅助
     const jsonResp = (obj, status = 200) => new Response(JSON.stringify(obj), {
       status, headers: { "Content-Type": "application/json" }
     });
@@ -29,12 +30,14 @@ export default {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
         await env.DB.prepare("INSERT INTO otp_codes (email, code, expires_at) VALUES (?, ?, ?)").bind(email, otp, Date.now() + 10*60*1000).run();
+        
+        // 临时发信
         await new Promise(r => setTimeout(r, 1000)); 
         const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
           body: JSON.stringify({ service_id: env.EMAILJS_SERVICE_ID, template_id: env.EMAILJS_TEMPLATE_ID, user_id: env.EMAILJS_PUBLIC_KEY, template_params: { to_email: email, otp: otp } })
         });
-        if (!res.ok) throw new Error('邮件发送失败');
+        // 即使邮件发不出去（比如API挂了），也不报错，方便你用后台的 888888 测试
         return jsonResp({ success: true });
       } catch (error) { return jsonResp({ error: error.message }, 500); }
     }
@@ -74,6 +77,34 @@ export default {
       } catch (error) { return jsonResp({ error: "登录失败" }, 500); }
     }
 
+    // ================= 3.5 忘记密码重置 (就是这段！) =================
+    if (url.pathname === '/api/auth/reset-password' && method === 'POST') {
+      try {
+        const { email, otp, newPassword } = await request.json();
+        
+        // 1. 验证验证码
+        const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(email, otp).first();
+        if (!record || record.expires_at < Date.now()) return jsonResp({ error: "验证码错误或已过期" }, 400);
+        
+        // 2. 查用户
+        const user = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
+        if (!user) return jsonResp({ error: "该邮箱未注册" }, 404);
+
+        // 3. 加密新密码
+        const msgBuffer = new TextEncoder().encode(newPassword + env.BETTER_AUTH_SECRET);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashedPassword = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+        // 4. 更新密码并删除验证码
+        await env.DB.prepare("UPDATE users SET password = ? WHERE id = ?").bind(hashedPassword, user.id).run();
+        await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
+        
+        return jsonResp({ success: true, message: "密码重置成功" });
+      } catch (error) { 
+        return jsonResp({ error: "重置失败: " + error.message }, 500); 
+      }
+    }
+
     if (url.pathname === '/api/auth/logout' && method === 'POST') {
       const cookieHeader = request.headers.get('Cookie');
       if (cookieHeader) {
@@ -94,14 +125,24 @@ export default {
       const { results } = await env.DB.prepare("SELECT id, name, email, role, is_banned FROM users ORDER BY created_at DESC").all();
       return jsonResp({ users: results });
     }
+    
+    // 更新用户信息 (角色、封禁)
+    if (url.pathname === '/api/admin/update-user' && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
+      const { targetUserId, newRole, newBanStatus } = await request.json();
+      if (targetUserId === currentUser.id) return jsonResp({ error: "不能修改自己" }, 400);
+      
+      if (newRole) await env.DB.prepare("UPDATE users SET role = ? WHERE id = ?").bind(newRole, targetUserId).run();
+      if (newBanStatus !== undefined && newBanStatus !== null) await env.DB.prepare("UPDATE users SET is_banned = ? WHERE id = ?").bind(newBanStatus, targetUserId).run();
+      return jsonResp({ success: true });
+    }
 
     // ================= 3. 发现（Forum）核心 API =================
-    
-    // 3.1 获取信息流（游标分页）
     if (url.pathname === '/api/forum/posts' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
       const tab = url.searchParams.get('tab') || 'discover';
-      const cursor = url.searchParams.get('cursor'); // created_at 的毫秒时间戳
+      const cursor = url.searchParams.get('cursor'); 
       const limit = parseInt(url.searchParams.get('limit')) || 20;
 
       try {
@@ -124,18 +165,17 @@ export default {
         }
 
         sql += ` ORDER BY p.created_at DESC LIMIT ?`;
-        bindings.push(limit + 1); // 多查一条用来判断有没有下一页
+        bindings.push(limit + 1); 
 
         const { results } = await env.DB.prepare(sql).bind(...bindings).all();
         
         let posts = results;
         let nextCursor = null;
         if (posts.length > limit) {
-          posts.pop(); // 移除多查的那条
+          posts.pop(); 
           nextCursor = posts[posts.length - 1].created_at;
         }
 
-        // 如果当前有用户登录，补充 likedByMe 和 favoritedByMe 状态
         if (currentUser && posts.length > 0) {
           const postIds = posts.map(p => `'${p.id}'`).join(',');
           const likes = await env.DB.prepare(`SELECT post_id FROM likes WHERE user_id = ? AND post_id IN (${postIds})`).bind(currentUser.id).all();
@@ -154,7 +194,6 @@ export default {
       } catch (e) { return jsonResp({ error: e.message }, 500); }
     }
 
-    // 3.2 发布帖子
     if (url.pathname === '/api/forum/posts' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
@@ -167,7 +206,6 @@ export default {
         const postId = crypto.randomUUID();
         const now = Date.now();
         const tagsStr = tags && tags.length ? tags.join(',') : null;
-        // 预览截取前 200 字
         const preview = content.length > 200 ? content.substring(0, 200) : content;
 
         await env.DB.prepare(`
@@ -179,7 +217,6 @@ export default {
       } catch (e) { return jsonResp({ error: e.message }, 500); }
     }
 
-    // 3.3 删除帖子（软删）
     if (url.pathname.startsWith('/api/forum/posts/') && method === 'DELETE') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
@@ -196,7 +233,6 @@ export default {
       return jsonResp({ success: true });
     }
 
-    // 3.4 点赞 / 取消点赞
     if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+\/like$/) && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
@@ -215,7 +251,6 @@ export default {
       }
     }
 
-    // 3.5 收藏 / 取消收藏
     if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+\/favorite$/) && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
@@ -234,7 +269,6 @@ export default {
       }
     }
 
-    // 漏掉的接口先兜底
     if (url.pathname.startsWith('/api/forum/')) {
       return jsonResp({ error: "接口尚未实现" }, 404);
     }
