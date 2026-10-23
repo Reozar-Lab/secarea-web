@@ -14,6 +14,8 @@
     <style>
         ::-webkit-scrollbar { display: none; }
         html, body { -webkit-text-size-adjust: 100% !important; text-size-adjust: 100% !important; }
+        
+        /* 头像 */
         .forum-avatar {
             width: 40px !important; height: 40px !important; flex-shrink: 0 !important;
             display: flex !important; align-items: center !important; justify-content: center !important;
@@ -21,16 +23,26 @@
             background-color: #e5e5ea !important; color: #000000 !important; border: 1px solid #d1d5db !important;
         }
         html.dark .forum-avatar { background-color: #1c1c1e !important; color: #f5d78d !important; border: 1px solid #3f3f46 !important; }
+        
+        /* 作者名、正文 */
         .forum-author-name { color: #000000 !important; font-size: 13px !important; font-weight: bold !important; text-decoration: none !important; }
         html.dark .forum-author-name { color: #ffffff !important; }
         .forum-post-text { color: #111111 !important; font-size: 14px !important; line-height: 1.6 !important; margin: 0 !important; padding: 0 !important; }
         html.dark .forum-post-text { color: #eeeeee !important; }
+
+        /* 强行锁定评论区的亮暗底色 */
+        .comment-bubble { background-color: #f2f2f7 !important; }
+        html.dark .comment-bubble { background-color: #2c2c2e !important; }
+
+        /* 强行锁定顶部导航栏，保证明亮模式纯白 */
+        .forum-top-nav { background-color: #ffffff !important; border-bottom: 1px solid #e5e5ea !important; }
+        html.dark .forum-top-nav { background-color: #1c1c1e !important; border-bottom: 1px solid #2c2c2e !important; }
     </style>
 </head>
-<body class="page-ios min-h-screen flex flex-col relative pb-20">
+<body class="page-ios min-h-screen flex flex-col relative pb-10">
 
-    <!-- 顶部导航 -->
-    <div class="fixed top-14 left-0 right-0 z-30 bg-white/90 dark:bg-[#1c1c1e]/90 backdrop-blur-lg border-b ios-border h-12 flex items-center px-4">
+    <!-- 顶部导航 (已修复明亮模式黑底问题) -->
+    <div class="fixed top-14 left-0 right-0 z-30 forum-top-nav h-12 flex items-center px-4">
         <button onclick="window.history.back()" class="flex items-center gap-1 text-[#c89f5d] text-sm font-bold">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             返回
@@ -39,12 +51,20 @@
     </div>
 
     <main class="flex-grow w-full max-w-lg mx-auto pt-28">
+        <!-- 帖子主内容 -->
         <div id="post-container" class="border-b ios-border p-4">
             <div class="text-center py-10 text-gray-500">加载中...</div>
         </div>
 
+        <!-- 评论列表 -->
         <div class="p-4">
-            <h3 class="text-sm font-bold ios-text mb-4">评论 <span id="comment-count" class="text-gray-400 font-normal">0</span></h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold ios-text">评论 <span id="comment-count" class="text-gray-400 font-normal">0</span></h3>
+                <button id="open-comment-modal" class="px-4 py-1.5 bg-[#f5d78d]/20 text-[#c89f5d] text-xs font-bold rounded-full hover:bg-[#f5d78d]/30 transition">
+                    写评论
+                </button>
+            </div>
+            
             <div id="comment-list" class="space-y-4">
                 <!-- 评论渲染区 -->
             </div>
@@ -52,11 +72,19 @@
         </div>
     </main>
 
-    <!-- 底部评论输入框 -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-md border-t ios-border p-3 z-40">
-        <div class="max-w-lg mx-auto flex gap-2">
-            <input type="text" id="comment-input" placeholder="发布你的评论..." class="flex-1 bg-gray-100 dark:bg-[#2c2c2e] text-sm px-4 py-2.5 rounded-full outline-none ios-text">
-            <button id="comment-submit" class="px-5 bg-[#111111] text-[#f5d78d] text-sm font-bold rounded-full">发送</button>
+    <!-- 底部评论弹窗 (完全贴合 Login 的设计语言) -->
+    <div id="comment-modal" class="sys-modal-overlay fixed inset-0 z-[9999] hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
+        <div id="comment-panel" class="sys-modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 flex flex-col">
+            <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                <h2 class="text-lg font-bold ios-title">发表评论</h2>
+                <button onclick="closeCommentModal()" class="ios-text opacity-50 hover:opacity-100 p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 space-y-4">
+                <textarea id="comment-input" rows="4" placeholder="发布你的评论..." class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d] resize-none"></textarea>
+                <button id="comment-submit" class="w-full py-3 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition">发送</button>
+            </div>
         </div>
     </div>
 
@@ -134,7 +162,7 @@
                     return `
                         <div class="flex items-start gap-3">
                             <a href="/profile/index.html?id=${c.author_id}" class="forum-avatar w-8 h-8 !text-[14px]">${escapeHtml(cInit)}</a>
-                            <div class="flex-1 bg-gray-50 dark:bg-[#2c2c2e] p-3 rounded-2xl rounded-tl-none">
+                            <div class="flex-1 comment-bubble p-3 rounded-2xl rounded-tl-none">
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="text-[12px] font-bold ios-text">${escapeHtml(c.author_name)}</span>
                                     <span class="text-[10px] text-gray-400">${timeAgo(c.created_at)}</span>
@@ -147,21 +175,50 @@
             }
         }
 
-        document.getElementById('comment-submit').addEventListener('click', async () => {
+        // ========== 弹窗逻辑 ==========
+        const commentModal = document.getElementById('comment-modal');
+        const commentPanel = document.getElementById('comment-panel');
+        const commentInput = document.getElementById('comment-input');
+
+        document.getElementById('open-comment-modal').addEventListener('click', () => {
             if (!currentUser) return showToast('请先登录', 'error');
-            const input = document.getElementById('comment-input');
-            const content = input.value.trim();
+            
+            commentModal.classList.remove('hidden');
+            setTimeout(() => {
+                commentModal.classList.remove('opacity-0');
+                commentPanel.classList.remove('translate-y-full', 'sm:scale-95');
+                commentInput.focus();
+            }, 10);
+        });
+
+        function closeCommentModal() {
+            commentModal.classList.add('opacity-0');
+            commentPanel.classList.add('translate-y-full', 'sm:scale-95');
+            setTimeout(() => commentModal.classList.add('hidden'), 300);
+        }
+
+        commentModal.addEventListener('click', (e) => { 
+            if (e.target === commentModal) closeCommentModal(); 
+        });
+
+        // 发送评论
+        document.getElementById('comment-submit').addEventListener('click', async () => {
+            const content = commentInput.value.trim();
             if (!content) return;
 
             const btn = document.getElementById('comment-submit');
             btn.disabled = true;
+            btn.textContent = '发送中...';
 
             const res = await API.addComment(postId, content);
             if (res.success) {
-                input.value = '';
-                loadPost();
+                commentInput.value = '';
+                closeCommentModal();
+                loadPost(); // 刷新评论列表和计数
             }
+            
             btn.disabled = false;
+            btn.textContent = '发送';
         });
 
         window.addEventListener('load', async () => {
