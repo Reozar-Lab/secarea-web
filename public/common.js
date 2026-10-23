@@ -1,3 +1,12 @@
+/**
+ * Secarea 全站 API 封装
+ *
+ * 命名说明：
+ *   - /forum/ 路径现对应 UI 名称「发现」，承载原「龙港（贴吧）」+「创作」功能。
+ *   - 后端 API 路径保持 /api/forum/* 不变，仅在数据语义层扩展 category 字段。
+ *   - category 取值建议：'discussion'（讨论/贴吧）、'creation'（创作）、null（全部）。
+ */
+
 const API_BASE = '/api/auth';
 
 const toastContainer = document.createElement('div');
@@ -101,10 +110,20 @@ const API = {
     return await res.json();
   },
 
-  // ================= 龙港（Forum）接口 =================
-  async getPosts(page = 1, limit = 20) {
+  // ================= 发现（原龙港 + 创作）接口 =================
+  // 后端路径沿用 /api/forum/*，仅语义扩展 category 字段。
+
+  /**
+   * 获取信息流
+   * @param {number} page    页码（默认 1）
+   * @param {number} limit   每页条数（默认 20）
+   * @param {string|null} category  分类过滤：'discussion' | 'creation' | null（全部）
+   */
+  async getPosts(page = 1, limit = 20, category = null) {
     try {
-      const res = await fetch(`/api/forum/posts?page=${page}&limit=${limit}`);
+      let qs = `page=${page}&limit=${limit}`;
+      if (category) qs += `&category=${encodeURIComponent(category)}`;
+      const res = await fetch(`/api/forum/posts?${qs}`);
       if (!res.ok) return { posts: [], total: 0, hasMore: false };
       return await res.json();
     } catch (e) {
@@ -112,12 +131,20 @@ const API = {
     }
   },
 
-  async createPost(content, imageUrl = null) {
+  /**
+   * 发布内容
+   * @param {string} content  正文
+   * @param {string|null} imageUrl  图片链接
+   * @param {string|null} category  分类：'discussion' | 'creation' | null
+   */
+  async createPost(content, imageUrl = null, category = null) {
     try {
+      const body = { content, imageUrl };
+      if (category) body.category = category;
       const res = await fetch(`/api/forum/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, imageUrl })
+        body: JSON.stringify(body)
       });
       const data = await res.json();
       if (data.error) showToast(data.error, 'error');
