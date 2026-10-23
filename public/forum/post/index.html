@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>帖子详情 · 匿境</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../../style.css">
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { display: none; }
+        html, body { -webkit-text-size-adjust: 100% !important; text-size-adjust: 100% !important; }
+        .forum-avatar {
+            width: 40px !important; height: 40px !important; flex-shrink: 0 !important;
+            display: flex !important; align-items: center !important; justify-content: center !important;
+            border-radius: 50% !important; font-family: 'Times New Roman', serif !important; font-size: 17px !important;
+            background-color: #e5e5ea !important; color: #000000 !important; border: 1px solid #d1d5db !important;
+        }
+        html.dark .forum-avatar { background-color: #1c1c1e !important; color: #f5d78d !important; border: 1px solid #3f3f46 !important; }
+        .forum-author-name { color: #000000 !important; font-size: 13px !important; font-weight: bold !important; text-decoration: none !important; }
+        html.dark .forum-author-name { color: #ffffff !important; }
+        .forum-post-text { color: #111111 !important; font-size: 14px !important; line-height: 1.6 !important; margin: 0 !important; padding: 0 !important; }
+        html.dark .forum-post-text { color: #eeeeee !important; }
+    </style>
+</head>
+<body class="page-ios min-h-screen flex flex-col relative pb-20">
+
+    <!-- 顶部导航 -->
+    <div class="fixed top-14 left-0 right-0 z-30 bg-white/90 dark:bg-[#1c1c1e]/90 backdrop-blur-lg border-b ios-border h-12 flex items-center px-4">
+        <button onclick="window.history.back()" class="flex items-center gap-1 text-[#c89f5d] text-sm font-bold">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            返回
+        </button>
+        <h1 class="absolute left-1/2 -translate-x-1/2 text-sm font-bold ios-text">帖子详情</h1>
+    </div>
+
+    <main class="flex-grow w-full max-w-lg mx-auto pt-28">
+        <div id="post-container" class="border-b ios-border p-4">
+            <div class="text-center py-10 text-gray-500">加载中...</div>
+        </div>
+
+        <div class="p-4">
+            <h3 class="text-sm font-bold ios-text mb-4">评论 <span id="comment-count" class="text-gray-400 font-normal">0</span></h3>
+            <div id="comment-list" class="space-y-4">
+                <!-- 评论渲染区 -->
+            </div>
+            <div id="no-comments" class="hidden text-center text-xs text-gray-400 py-6">暂无评论，快来抢沙发吧！</div>
+        </div>
+    </main>
+
+    <!-- 底部评论输入框 -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-md border-t ios-border p-3 z-40">
+        <div class="max-w-lg mx-auto flex gap-2">
+            <input type="text" id="comment-input" placeholder="发布你的评论..." class="flex-1 bg-gray-100 dark:bg-[#2c2c2e] text-sm px-4 py-2.5 rounded-full outline-none ios-text">
+            <button id="comment-submit" class="px-5 bg-[#111111] text-[#f5d78d] text-sm font-bold rounded-full">发送</button>
+        </div>
+    </div>
+
+    <script src="../../common.js"></script>
+    <script src="../../layout.js"></script>
+    <script>
+        let postId = null;
+        let currentUser = null;
+
+        function getQueryParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
+        }
+
+        function timeAgo(ts) {
+            const diff = Math.floor((Date.now() - ts) / 1000);
+            if (diff < 60) return '刚刚';
+            if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+            if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+            return Math.floor(diff / 86400) + ' 天前';
+        }
+
+        function roleBadge(role) {
+            if (role === 'root') return '<span class="text-[9px] bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded font-bold uppercase ml-2">ROOT</span>';
+            if (role === 'admin') return '<span class="text-[9px] bg-yellow-500/20 text-yellow-600 px-1.5 py-0.5 rounded font-bold uppercase ml-2">ADMIN</span>';
+            if (role === 'editor') return '<span class="text-[9px] bg-blue-500/20 text-blue-500 px-1.5 py-0.5 rounded font-bold uppercase ml-2">EDITOR</span>';
+            return '';
+        }
+
+        async function loadPost() {
+            const res = await API.getPostDetail(postId);
+            const container = document.getElementById('post-container');
+            
+            if (res.error) {
+                container.innerHTML = `<div class="text-center text-red-500 py-10">${res.error}</div>`;
+                return;
+            }
+
+            const p = res.post;
+            const initial = (p.author_name || '?').charAt(0).toUpperCase();
+
+            container.innerHTML = `
+                <div class="flex items-start gap-3 mb-3">
+                    <a href="/profile/index.html?id=${p.author_id}" class="forum-avatar">${escapeHtml(initial)}</a>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center">
+                            <a href="/profile/index.html?id=${p.author_id}" class="forum-author-name hover:underline">${escapeHtml(p.author_name)}</a>
+                            ${roleBadge(p.author_role)}
+                        </div>
+                        <span class="text-[11px] ios-text opacity-50 block mt-0.5">${timeAgo(p.created_at)}</span>
+                    </div>
+                </div>
+                <div class="forum-post-text whitespace-pre-wrap break-words mt-4">${escapeHtml(p.content)}</div>
+                ${p.image_url ? `<div class="w-full rounded-xl mt-3 overflow-hidden border ios-border"><img src="${escapeHtml(p.image_url)}" class="w-full h-auto"></div>` : ''}
+                
+                <div class="flex items-center gap-6 mt-6 pt-4 border-t ios-border text-[13px] ios-text opacity-50">
+                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> ${p.comments_count || 0}</span>
+                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg> ${p.favorites_count || 0}</span>
+                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg> ${p.likes_count || 0}</span>
+                </div>
+            `;
+
+            document.getElementById('comment-count').textContent = res.comments.length;
+            
+            if (res.comments.length === 0) {
+                document.getElementById('no-comments').classList.remove('hidden');
+            } else {
+                document.getElementById('comment-list').innerHTML = res.comments.map(c => {
+                    const cInit = (c.author_name || '?').charAt(0).toUpperCase();
+                    return `
+                        <div class="flex items-start gap-3">
+                            <a href="/profile/index.html?id=${c.author_id}" class="forum-avatar w-8 h-8 !text-[14px]">${escapeHtml(cInit)}</a>
+                            <div class="flex-1 bg-gray-50 dark:bg-[#2c2c2e] p-3 rounded-2xl rounded-tl-none">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-[12px] font-bold ios-text">${escapeHtml(c.author_name)}</span>
+                                    <span class="text-[10px] text-gray-400">${timeAgo(c.created_at)}</span>
+                                </div>
+                                <div class="text-[13px] ios-text whitespace-pre-wrap">${escapeHtml(c.content)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        document.getElementById('comment-submit').addEventListener('click', async () => {
+            if (!currentUser) return showToast('请先登录', 'error');
+            const input = document.getElementById('comment-input');
+            const content = input.value.trim();
+            if (!content) return;
+
+            const btn = document.getElementById('comment-submit');
+            btn.disabled = true;
+
+            const res = await API.addComment(postId, content);
+            if (res.success) {
+                input.value = '';
+                loadPost();
+            }
+            btn.disabled = false;
+        });
+
+        window.addEventListener('load', async () => {
+            postId = getQueryParam('id');
+            if (!postId) {
+                document.getElementById('post-container').innerHTML = '<div class="text-center py-10">非法访问</div>';
+                return;
+            }
+            const me = await API.getMe();
+            if (me && me.user) currentUser = me.user;
+            loadPost();
+        });
+    </script>
+</body>
+</html>
