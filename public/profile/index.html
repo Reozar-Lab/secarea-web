@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>个人中心 · 匿境 Secarea</title>
+    <title>个人主页 · 匿境 Secarea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../style.css">
     <script>
@@ -11,117 +11,118 @@
             document.documentElement.classList.add('dark');
         }
     </script>
+    <style>
+        ::-webkit-scrollbar { display: none; }
+        html, body { -webkit-text-size-adjust: 100% !important; text-size-adjust: 100% !important; }
+
+        /* Tab 栏防污染 */
+        .forum-tab-bar { background-color: #ffffff !important; border-bottom: 1px solid #e5e5ea !important; }
+        html.dark .forum-tab-bar { background-color: #1c1c1e !important; border-bottom: 1px solid #2c2c2e !important; }
+
+        .forum-tab-btn { color: #888888 !important; font-size: 13px !important; font-weight: bold !important; letter-spacing: 0.1em !important; }
+        html.dark .forum-tab-btn { color: #666666 !important; }
+        .forum-tab-btn.active { color: #c89f5d !important; }
+
+        /* 头像与文字防污染 */
+        .forum-avatar {
+            width: 40px !important; height: 40px !important; flex-shrink: 0 !important;
+            display: flex !important; align-items: center !important; justify-content: center !important;
+            border-radius: 50% !important; font-family: 'Times New Roman', serif !important; font-size: 17px !important;
+            background-color: #e5e5ea !important; color: #000000 !important; border: 1px solid #d1d5db !important;
+        }
+        html.dark .forum-avatar { background-color: #1c1c1e !important; color: #f5d78d !important; border: 1px solid #3f3f46 !important; }
+        
+        /* 大号头像 */
+        .profile-avatar-large { width: 80px !important; height: 80px !important; font-size: 36px !important; }
+
+        .forum-author-name { color: #000000 !important; font-size: 13px !important; font-weight: bold !important; text-decoration: none !important; }
+        html.dark .forum-author-name { color: #ffffff !important; }
+        .forum-post-text { color: #111111 !important; font-size: 13px !important; line-height: 1.6 !important; margin: 0 !important; padding: 0 !important; }
+        html.dark .forum-post-text { color: #eeeeee !important; }
+
+        .forum-divider { border-bottom: 2px solid #e5e7eb !important; }
+        html.dark .forum-divider { border-bottom: 2px solid #3f3f46 !important; }
+    </style>
 </head>
 <body class="page-ios min-h-screen flex flex-col relative">
 
-    <main class="flex-grow flex flex-col items-center w-full pt-20 pb-20 px-4">
-        <div class="w-full max-w-lg flex flex-col" id="profile-container" style="opacity: 0; transition: opacity 0.5s;">
-            
-            <!-- 顶部用户信息区 -->
-            <div class="flex flex-col items-center justify-center px-2 py-8 cursor-pointer group" onclick="openEditProfile()">
-                <div class="relative mb-4 group-hover:opacity-80 transition-opacity">
-                    <div class="cec-avatar w-24 h-24 text-4xl shadow-sm">
-                        <span id="user-avatar-letter">?</span>
-                    </div>
-                    <div class="absolute bottom-0 right-0 w-7 h-7 bg-[#111] dark:bg-white rounded-full border-2 border-white dark:border-[#1c1c1e] flex items-center justify-center">
-                        <svg class="w-3.5 h-3.5 text-white dark:text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                    </div>
+    <!-- 顶部封面 -->
+    <div class="w-full h-32 bg-gradient-to-r from-[#1a1a1a] to-[#333333] relative pt-14">
+        <button onclick="window.history.length > 1 ? window.history.back() : window.location.href='/'" class="absolute left-4 top-16 text-white opacity-80 hover:opacity-100 p-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+    </div>
+
+    <main class="flex-grow w-full max-w-lg mx-auto pb-12 relative">
+        
+        <div id="profile-container" style="opacity: 0; transition: opacity 0.5s;">
+            <!-- 个人信息卡片 -->
+            <div class="px-4 relative">
+                <!-- 头像 -->
+                <div class="absolute -top-12 left-4 rounded-full border-4 border-white dark:border-[#1c1c1e] bg-white dark:bg-[#1c1c1e]">
+                    <div id="profile-avatar" class="forum-avatar profile-avatar-large shadow-md">?</div>
                 </div>
                 
-                <div class="flex items-center gap-2 mb-1">
-                    <h1 class="text-2xl font-bold tracking-wide cec-text-dark" id="user-name">加载中...</h1>
-                    <span class="hidden px-2 py-0.5 rounded text-[10px] font-sans font-bold" id="user-role">member</span>
+                <!-- 操作按钮（右侧） -->
+                <div class="flex justify-end pt-3 pb-4 h-14 gap-2" id="action-buttons">
+                    <!-- 动态渲染：自己显示“管理/退出”，别人显示“关注” -->
                 </div>
-                
-                <!-- 移除了个性签名，保留ID -->
-                <p class="text-xs font-sans ios-text opacity-40 mt-2">ID: <span id="user-id">---</span></p>
+
+                <!-- 基本信息 -->
+                <div class="mt-2">
+                    <div class="flex items-center gap-2 mb-1">
+                        <h1 id="profile-name" class="text-xl font-bold ios-text">加载中...</h1>
+                        <span id="profile-role" class="hidden px-2 py-0.5 rounded text-[10px] font-sans font-bold"></span>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-3">ID: <span id="profile-id">---</span> · 加入于 <span id="profile-date"></span></p>
+                    
+                    <!-- 数据统计 -->
+                    <div class="flex items-center gap-5 text-sm mb-4">
+                        <div class="flex flex-col"><span id="stat-following" class="font-bold ios-text">0</span><span class="text-[11px] text-gray-500">关注</span></div>
+                        <div class="flex flex-col"><span id="stat-followers" class="font-bold ios-text">0</span><span class="text-[11px] text-gray-500">粉丝</span></div>
+                        <div class="flex flex-col"><span id="stat-posts" class="font-bold ios-text">0</span><span class="text-[11px] text-gray-500">发表</span></div>
+                        <div class="flex flex-col"><span id="stat-likes" class="font-bold ios-text">0</span><span class="text-[11px] text-gray-500">获赞</span></div>
+                    </div>
+                </div>
             </div>
 
-            <!-- 功能列表 -->
-            <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm mb-6 ios-border border">
-                <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 ios-border border-b transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center text-white shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                        </div>
-                        <span class="text-[15px] font-medium ios-text">我的创作</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm ios-text opacity-50 font-roman">0 篇</span>
-                        <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    </div>
-                </a>
-                <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 ios-border border-b transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="w-7 h-7 rounded-lg bg-yellow-500 flex items-center justify-center text-white shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-                        </div>
-                        <span class="text-[15px] font-medium ios-text">我的收藏</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm ios-text opacity-50 font-roman">0 项</span>
-                        <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    </div>
-                </a>
-                <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="w-7 h-7 rounded-lg bg-green-500 flex items-center justify-center text-white shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                        </div>
-                        <span class="text-[15px] font-medium ios-text">参与贡献</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm ios-text opacity-50 font-roman">0 次</span>
-                        <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    </div>
-                </a>
-            </div>
-
-            <!-- 管理员专属面板 (只有 root 和 admin 会显示) -->
-            <div id="admin-panel" class="hidden w-full ios-card rounded-xl overflow-hidden shadow-sm mb-6 ios-border border">
-                <a href="/admin/" class="ios-list-item flex items-center justify-between px-4 py-3.5 transition-colors">
+            <!-- 管理员专属入口 -->
+            <div id="admin-panel" class="hidden px-4 mb-4">
+                <a href="/admin/" class="w-full ios-card rounded-xl overflow-hidden shadow-sm flex items-center justify-between px-4 py-3 border border-[#f5d78d]/30">
                     <div class="flex items-center gap-3">
                         <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-[#e8c88c] to-[#c89f5d] flex items-center justify-center text-black shrink-0 shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                         </div>
-                        <span class="text-[15px] font-bold text-[#c89f5d]">CEC 管理中枢</span>
+                        <span class="text-[14px] font-bold text-[#c89f5d]">CEC 管理中枢</span>
                     </div>
-                    <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    <svg class="w-5 h-5 text-[#c89f5d] opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </a>
             </div>
 
-            <!-- 设置与安全 -->
-            <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm mb-6 ios-border border">
-                <a href="#" id="entry-security" class="ios-list-item flex items-center justify-between px-4 py-3.5 ios-border border-b transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="w-7 h-7 rounded-lg bg-gray-400 flex items-center justify-center text-white shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        </div>
-                        <span class="text-[15px] font-medium ios-text">账号安全</span>
-                    </div>
-                    <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </a>
-                <a href="#" class="ios-list-item flex items-center justify-between px-4 py-3.5 transition-colors">
-                    <div class="flex items-center gap-3">
-                        <div class="w-7 h-7 rounded-lg bg-gray-400 flex items-center justify-center text-white shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        </div>
-                        <span class="text-[15px] font-medium ios-text">偏好设置</span>
-                    </div>
-                    <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                </a>
+            <!-- Tab 切换 -->
+            <div class="w-full mt-2 forum-tab-bar">
+                <div class="flex">
+                    <button id="tab-posts" class="forum-tab-btn active flex-1 py-3 relative">
+                        发表
+                        <span class="tab-line absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#c89f5d] rounded-full"></span>
+                    </button>
+                    <button id="tab-favorites" class="forum-tab-btn hidden flex-1 py-3 relative">
+                        收藏
+                        <span class="tab-line hidden absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#c89f5d] rounded-full"></span>
+                    </button>
+                </div>
             </div>
 
-            <!-- 退出 -->
-            <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm ios-border border">
-                <button id="profile-logout-btn" class="w-full flex items-center justify-center px-4 py-3.5 text-red-500 font-medium text-[15px] active:bg-gray-50 dark:active:bg-gray-800 transition-colors">
-                    退出登录
-                </button>
+            <!-- 帖子列表 -->
+            <div id="feed" class="w-full">
+                <div class="p-8 text-center">
+                    <div class="inline-block w-6 h-6 border-2 border-[#c89f5d]/30 border-t-[#c89f5d] rounded-full animate-spin"></div>
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- 弹窗系统 -->
+    <!-- 弹窗系统 (保留你原有的) -->
     <div id="action-modal" class="sys-modal-overlay fixed inset-0 z-[9999] hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
         <div id="action-panel" class="sys-modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto flex flex-col">
             <!-- 内容由 JS 动态注入 -->
@@ -131,18 +132,42 @@
     <script src="../common.js"></script>
     <script src="../layout.js"></script>
     <script>
-        const container = document.getElementById('profile-container');
-        const avatarLetter = document.getElementById('user-avatar-letter');
-        const nameEl = document.getElementById('user-name');
-        const roleEl = document.getElementById('user-role');
-        const idEl = document.getElementById('user-id');
-        const adminPanel = document.getElementById('admin-panel');
-        
+        let targetUserId = null;
         let currentUser = null;
+        let isSelf = false;
+        let currentTab = 'posts';
 
+        const container = document.getElementById('profile-container');
         const actionModal = document.getElementById('action-modal');
         const actionPanel = document.getElementById('action-panel');
 
+        function getQueryParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
+        }
+
+        function timeAgo(ts) {
+            if (!ts) return '刚刚';
+            const diff = Math.floor((Date.now() - ts) / 1000);
+            if (diff < 60) return '刚刚';
+            if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+            if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+            return new Date(ts).toLocaleDateString('zh-CN');
+        }
+
+        function roleBadge(role) {
+            if (role === 'root') return '<span class="text-[9px] bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded font-bold uppercase">ROOT</span>';
+            if (role === 'admin') return '<span class="text-[9px] bg-yellow-500/20 text-yellow-600 px-1.5 py-0.5 rounded font-bold uppercase">ADMIN</span>';
+            if (role === 'editor') return '<span class="text-[9px] bg-blue-500/20 text-blue-500 px-1.5 py-0.5 rounded font-bold uppercase">EDITOR</span>';
+            return '';
+        }
+
+        // ================= 弹窗控制逻辑 (保留原有) =================
         function openModal(htmlContent) {
             actionPanel.innerHTML = htmlContent;
             actionModal.classList.remove('hidden');
@@ -160,89 +185,11 @@
 
         actionModal.addEventListener('click', (e) => { if (e.target === actionModal) closeModal(); });
 
-        async function initProfile() {
-            try {
-                const data = await API.getMe();
-                if (!data || !data.user) {
-                    window.location.href = '/login/';
-                    return;
-                }
-                currentUser = data.user;
-                nameEl.textContent = currentUser.name;
-                idEl.textContent = currentUser.id.substring(0, 8).toUpperCase();
-                avatarLetter.textContent = currentUser.name.charAt(0).toUpperCase();
-                
-                // ===== 角色徽章渲染逻辑 =====
-                if (currentUser.role) {
-                    roleEl.textContent = currentUser.role.toUpperCase();
-                    roleEl.classList.remove('hidden');
-                    
-                    if (currentUser.role === 'root') {
-                        roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-red-500/20 text-red-500 border border-red-500/30';
-                    } else if (currentUser.role === 'admin') {
-                        roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30';
-                    } else if (currentUser.role === 'editor') {
-                        roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30';
-                    } else {
-                        roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-gray-500/20 text-gray-500 border border-gray-500/30';
-                    }
-
-                    if (currentUser.role === 'root' || currentUser.role === 'admin') {
-                        adminPanel.classList.remove('hidden');
-                    }
-                }
-
-                container.style.opacity = 1;
-            } catch (error) {
-                window.location.href = '/login/'; 
-            }
-        }
-
-        window.openEditProfile = function() {
-            if (!currentUser) return;
+        // 打开设置面板
+        window.openSettings = function() {
             openModal(`
                 <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
-                    <h2 class="text-lg font-bold cec-text-dark">编辑个人资料</h2>
-                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-                <div class="p-4 space-y-4">
-                    <div class="flex flex-col items-center mb-4">
-                        <div class="cec-avatar w-20 h-20 text-3xl mb-2 shadow-sm">
-                            ${currentUser.name.charAt(0).toUpperCase()}
-                        </div>
-                        <button class="text-xs text-[#c89f5d] font-medium border border-[#c89f5d]/30 px-3 py-1 rounded-full bg-[#f5d78d]/10 hover:bg-[#f5d78d]/20 transition">上传新头像 (待开发)</button>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-xs text-gray-500 mb-1 ml-1">用户名</label>
-                        <input type="text" id="edit-name" value="${currentUser.name}" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
-                    </div>
-                    
-                    <button onclick="saveProfile()" class="w-full py-3 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition mt-2">保存修改</button>
-                </div>
-            `);
-        };
-
-        window.saveProfile = async function() {
-            const newName = document.getElementById('edit-name').value.trim();
-            if(!newName) return showToast("用户名不能为空", "error");
-            
-            currentUser.name = newName;
-            
-            nameEl.textContent = newName;
-            avatarLetter.textContent = newName.charAt(0).toUpperCase();
-            
-            showToast("资料修改成功 (前端演示)", "success");
-            closeModal();
-        };
-
-        document.getElementById('entry-security').addEventListener('click', (e) => {
-            e.preventDefault();
-            openModal(`
-                <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
-                    <h2 class="text-lg font-bold cec-text-dark">账号安全</h2>
+                    <h2 class="text-lg font-bold cec-text-dark">账号与安全</h2>
                     <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -251,20 +198,27 @@
                     <div class="sys-modal-group">
                         <button onclick="openChangePassword()" class="sys-modal-btn w-full p-4 text-left font-medium">修改密码</button>
                         <button onclick="openChangeEmail()" class="sys-modal-btn w-full p-4 text-left font-medium">更改注册邮箱</button>
-                        <button onclick="showToast('第三方绑定开发中', 'info')" class="sys-modal-btn w-full p-4 text-left font-medium">第三方账号绑定</button>
                     </div>
                     <div class="sys-modal-group">
                         <button onclick="openDeleteAccount()" class="sys-modal-btn w-full p-4 text-center text-red-500 font-bold">永久注销账号</button>
                     </div>
+                    <div class="sys-modal-group mt-4">
+                        <button onclick="handleLogout()" class="sys-modal-btn w-full p-4 text-center text-gray-700 dark:text-gray-300 font-bold">断开连接 (退出登录)</button>
+                    </div>
                 </div>
             `);
-        });
+        };
+
+        window.handleLogout = async function() {
+            if (!confirm("确定要断开内界连接吗？")) return;
+            try { await API.logout(); window.location.href = '/login/'; } catch (e) { alert("退出失败"); }
+        };
 
         window.openChangePassword = function() {
             openModal(`
                 <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
                     <div class="flex items-center gap-2">
-                        <button onclick="document.getElementById('entry-security').click()" class="text-gray-500 hover:text-black dark:hover:text-white">
+                        <button onclick="openSettings()" class="text-gray-500 hover:text-black dark:hover:text-white">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                         </button>
                         <h2 class="text-lg font-bold cec-text-dark">修改密码</h2>
@@ -288,10 +242,7 @@
                 const res = await API.changePassword(oldPwd, newPwd);
                 e.target.textContent = '确认更新';
                 if (res.error) showToast(res.error, 'error');
-                else {
-                    showToast("密码修改成功", "success");
-                    closeModal();
-                }
+                else { showToast("密码修改成功", "success"); closeModal(); }
             });
         };
 
@@ -299,7 +250,7 @@
             openModal(`
                 <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
                     <div class="flex items-center gap-2">
-                        <button onclick="document.getElementById('entry-security').click()" class="text-gray-500 hover:text-black dark:hover:text-white">
+                        <button onclick="openSettings()" class="text-gray-500 hover:text-black dark:hover:text-white">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                         </button>
                         <h2 class="text-lg font-bold cec-text-dark">更改邮箱</h2>
@@ -349,10 +300,7 @@
                 const res = await API.changeEmail(newEmail, otp);
                 e.target.textContent = '确认更改';
                 if (res.error) showToast(res.error, 'error');
-                else {
-                    showToast("邮箱更换成功", "success");
-                    setTimeout(() => window.location.reload(), 1500);
-                }
+                else { showToast("邮箱更换成功", "success"); setTimeout(() => window.location.reload(), 1500); }
             });
         };
 
@@ -360,7 +308,7 @@
             openModal(`
                 <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
                     <div class="flex items-center gap-2">
-                        <button onclick="document.getElementById('entry-security').click()" class="text-gray-500 hover:text-black dark:hover:text-white">
+                        <button onclick="openSettings()" class="text-gray-500 hover:text-black dark:hover:text-white">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                         </button>
                         <h2 class="text-lg font-bold text-red-500">注销账号</h2>
@@ -393,12 +341,149 @@
             });
         };
 
-        document.getElementById('profile-logout-btn').addEventListener('click', async () => {
-            if (!confirm("确定要断开内界连接吗？")) return;
-            try { await API.logout(); window.location.href = '/login/'; } catch (e) { alert("退出失败"); }
+        // ================= 主页与信息流逻辑 =================
+        async function loadProfile() {
+            const data = await API.getUserProfile(targetUserId);
+            if (data.error) {
+                document.getElementById('profile-name').textContent = data.error;
+                return;
+            }
+            
+            const u = data.user;
+            isSelf = currentUser && currentUser.id === u.id;
+
+            // 基本信息渲染
+            document.getElementById('profile-avatar').textContent = u.name.charAt(0).toUpperCase();
+            document.getElementById('profile-name').textContent = u.name;
+            document.getElementById('profile-id').textContent = u.id.substring(0, 8).toUpperCase();
+            document.getElementById('profile-date').textContent = new Date(u.created_at || Date.now()).toLocaleDateString('zh-CN');
+            
+            const roleEl = document.getElementById('profile-role');
+            if (u.role && u.role !== 'user') {
+                roleEl.textContent = u.role.toUpperCase();
+                roleEl.classList.remove('hidden');
+                if (u.role === 'root') roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-red-500/20 text-red-500 border border-red-500/30';
+                else if (u.role === 'admin') roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30';
+                else if (u.role === 'editor') roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30';
+            }
+
+            // 统计数据
+            document.getElementById('stat-following').textContent = u.following_count || 0;
+            document.getElementById('stat-followers').textContent = u.follower_count || 0;
+            document.getElementById('stat-posts').textContent = u.post_count || 0;
+            document.getElementById('stat-likes').textContent = u.total_likes || 0;
+
+            // 渲染操作按钮
+            const btnContainer = document.getElementById('action-buttons');
+            if (isSelf) {
+                // 自己：显示设置与退出
+                btnContainer.innerHTML = `
+                    <button onclick="openSettings()" class="px-4 py-1.5 border ios-border rounded-full text-sm font-bold ios-text hover:bg-black/5 dark:hover:bg-white/5 transition flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        设置
+                    </button>
+                `;
+                // 管理员入口显示
+                if (u.role === 'root' || u.role === 'admin') {
+                    document.getElementById('admin-panel').classList.remove('hidden');
+                }
+                // 如果是自己，显示收藏 Tab
+                document.getElementById('tab-favorites').classList.remove('hidden');
+            } else {
+                // 别人：显示关注
+                btnContainer.innerHTML = `
+                    <button id="follow-btn" class="px-6 py-1.5 rounded-full text-sm font-bold transition ${u.isFollowing ? 'border ios-border ios-text hover:bg-red-500/10 hover:text-red-500' : 'bg-[#111111] text-[#f5d78d] hover:bg-black'}">
+                        ${u.isFollowing ? '已关注' : '关注'}
+                    </button>
+                `;
+                document.getElementById('follow-btn').addEventListener('click', async (e) => {
+                    const btn = e.target;
+                    btn.disabled = true;
+                    const res = await API.toggleFollow(targetUserId);
+                    if (res.success) loadProfile();
+                    else { showToast(res.error, 'error'); btn.disabled = false; }
+                });
+            }
+
+            container.style.opacity = 1;
+            loadFeed();
+        }
+
+        async function loadFeed() {
+            const feed = document.getElementById('feed');
+            feed.innerHTML = '<div class="p-8 text-center"><div class="inline-block w-6 h-6 border-2 border-[#c89f5d]/30 border-t-[#c89f5d] rounded-full animate-spin"></div></div>';
+            
+            if (currentTab === 'favorites') {
+                feed.innerHTML = '<div class="p-10 text-center text-xs text-gray-400">收藏功能将在后续版本开放</div>';
+                return;
+            }
+
+            const res = await API.getPosts(null, 'discover', 20, targetUserId);
+            if (res.error || !res.posts || res.posts.length === 0) {
+                feed.innerHTML = '<div class="p-10 text-center text-xs text-gray-400">这里空空如也</div>';
+                return;
+            }
+
+            feed.innerHTML = res.posts.map(post => {
+                const initial = (post.author_name || '?').charAt(0).toUpperCase();
+                const preview = post.content.length > 200 ? post.content.slice(0, 200) + '...' : post.content;
+                return `
+                    <article class="forum-divider" data-post-id="${post.id}">
+                        <div class="p-4">
+                            <div class="flex items-start gap-3 mb-2.5">
+                                <a href="/profile/index.html?id=${post.author_id}" class="forum-avatar">${escapeHtml(initial)}</a>
+                                <div class="flex-1 min-w-0 pt-0.5">
+                                    <div class="flex items-center gap-2">
+                                        <a href="/profile/index.html?id=${post.author_id}" class="forum-author-name hover:underline truncate">${escapeHtml(post.author_name)}</a>
+                                        ${roleBadge(post.author_role)}
+                                    </div>
+                                    <span class="text-[11px] ios-text opacity-50 block mt-0.5">${timeAgo(post.created_at)}</span>
+                                </div>
+                            </div>
+                            <a href="/forum/post/index.html?id=${post.id}" class="block w-full">
+                                <div class="forum-post-text whitespace-pre-wrap break-words">${escapeHtml(preview)}</div>
+                                ${post.image_url ? `<div class="w-full rounded-xl mt-2.5 overflow-hidden border ios-border"><img src="${escapeHtml(post.image_url)}" class="w-full h-auto"></div>` : ''}
+                            </a>
+                            <div class="flex items-center justify-end gap-6 mt-3 text-[12.5px] ios-text opacity-50">
+                                <span>${post.comments_count || 0} 评论</span>
+                                <span>${post.likes_count || 0} 赞</span>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        // Tab 切换
+        document.getElementById('tab-posts').addEventListener('click', () => {
+            currentTab = 'posts';
+            document.getElementById('tab-posts').classList.add('active');
+            document.getElementById('tab-posts').querySelector('.tab-line').classList.remove('hidden');
+            document.getElementById('tab-favorites').classList.remove('active');
+            document.getElementById('tab-favorites').querySelector('.tab-line').classList.add('hidden');
+            loadFeed();
+        });
+        document.getElementById('tab-favorites').addEventListener('click', () => {
+            currentTab = 'favorites';
+            document.getElementById('tab-favorites').classList.add('active');
+            document.getElementById('tab-favorites').querySelector('.tab-line').classList.remove('hidden');
+            document.getElementById('tab-posts').classList.remove('active');
+            document.getElementById('tab-posts').querySelector('.tab-line').classList.add('hidden');
+            loadFeed();
         });
 
-        window.addEventListener('load', initProfile);
+        window.addEventListener('load', async () => {
+            const me = await API.getMe();
+            if (me && me.user) currentUser = me.user;
+            
+            targetUserId = getQueryParam('id');
+            if (!targetUserId) {
+                if (currentUser) targetUserId = currentUser.id;
+                else { window.location.href = '/login/'; return; }
+            }
+            
+            loadProfile();
+        });
     </script>
 </body>
 </html>
