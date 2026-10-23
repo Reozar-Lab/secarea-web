@@ -15,7 +15,6 @@
         ::-webkit-scrollbar { display: none; }
         html, body { -webkit-text-size-adjust: 100% !important; text-size-adjust: 100% !important; }
         
-        /* 头像 */
         .forum-avatar {
             width: 40px !important; height: 40px !important; flex-shrink: 0 !important;
             display: flex !important; align-items: center !important; justify-content: center !important;
@@ -24,24 +23,21 @@
         }
         html.dark .forum-avatar { background-color: #1c1c1e !important; color: #f5d78d !important; border: 1px solid #3f3f46 !important; }
         
-        /* 作者名、正文 */
         .forum-author-name { color: #000000 !important; font-size: 13px !important; font-weight: bold !important; text-decoration: none !important; }
         html.dark .forum-author-name { color: #ffffff !important; }
         .forum-post-text { color: #111111 !important; font-size: 14px !important; line-height: 1.6 !important; margin: 0 !important; padding: 0 !important; }
         html.dark .forum-post-text { color: #eeeeee !important; }
 
-        /* 强行锁定评论区的亮暗底色 */
         .comment-bubble { background-color: #f2f2f7 !important; }
         html.dark .comment-bubble { background-color: #2c2c2e !important; }
 
-        /* 强行锁定顶部导航栏，保证明亮模式纯白 */
         .forum-top-nav { background-color: #ffffff !important; border-bottom: 1px solid #e5e5ea !important; }
         html.dark .forum-top-nav { background-color: #1c1c1e !important; border-bottom: 1px solid #2c2c2e !important; }
     </style>
 </head>
 <body class="page-ios min-h-screen flex flex-col relative pb-10">
 
-    <!-- 顶部导航 (已修复明亮模式黑底问题) -->
+    <!-- 顶部导航 -->
     <div class="fixed top-14 left-0 right-0 z-30 forum-top-nav h-12 flex items-center px-4">
         <button onclick="window.history.back()" class="flex items-center gap-1 text-[#c89f5d] text-sm font-bold">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
@@ -72,7 +68,7 @@
         </div>
     </main>
 
-    <!-- 底部评论弹窗 (完全贴合 Login 的设计语言) -->
+    <!-- 底部评论弹窗 -->
     <div id="comment-modal" class="sys-modal-overlay fixed inset-0 z-[9999] hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
         <div id="comment-panel" class="sys-modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 flex flex-col">
             <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
@@ -159,13 +155,19 @@
             } else {
                 document.getElementById('comment-list').innerHTML = res.comments.map(c => {
                     const cInit = (c.author_name || '?').charAt(0).toUpperCase();
+                    // 判断当前用户是否可以删除该评论
+                    const canDelete = currentUser && (currentUser.id === c.author_id || currentUser.role === 'admin' || currentUser.role === 'root');
+                    
                     return `
                         <div class="flex items-start gap-3">
                             <a href="/profile/index.html?id=${c.author_id}" class="forum-avatar w-8 h-8 !text-[14px]">${escapeHtml(cInit)}</a>
                             <div class="flex-1 comment-bubble p-3 rounded-2xl rounded-tl-none">
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="text-[12px] font-bold ios-text">${escapeHtml(c.author_name)}</span>
-                                    <span class="text-[10px] text-gray-400">${timeAgo(c.created_at)}</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] text-gray-400">${timeAgo(c.created_at)}</span>
+                                        ${canDelete ? `<button onclick="deleteComment('${c.id}')" class="text-[10px] text-red-400 hover:text-red-500 transition">删除</button>` : ''}
+                                    </div>
                                 </div>
                                 <div class="text-[13px] ios-text whitespace-pre-wrap">${escapeHtml(c.content)}</div>
                             </div>
@@ -174,6 +176,17 @@
                 }).join('');
             }
         }
+
+        // ========== 删评逻辑 ==========
+        window.deleteComment = async function(commentId) {
+            if (!confirm("确定删除这条评论吗？")) return;
+            
+            const res = await API.deleteComment(commentId);
+            if (res.success) {
+                showToast("评论已删除", "success");
+                loadPost(); // 刷新评论列表
+            }
+        };
 
         // ========== 弹窗逻辑 ==========
         const commentModal = document.getElementById('comment-modal');
