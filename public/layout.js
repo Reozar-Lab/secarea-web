@@ -1,5 +1,8 @@
 const currentPath = window.location.pathname;
 const hideFooterPages = ['/login/', '/register/', '/profile/', '/admin/', '/forum/'];
+const drawerPages = ['/forum/', '/wiki/'];
+const isDrawerPage = drawerPages.some(p => currentPath.includes(p));
+const isForumPage = currentPath.includes('/forum/');
 
 const loadingHTML = `
 <div id="loading-screen" class="fixed inset-0 z-[9999] bg-[#252525] flex items-center justify-center transition-opacity duration-500">
@@ -34,11 +37,10 @@ const navHTML = `
         <div class="flex flex-col py-3 px-2 gap-1 font-sans">
             <a href="/login/index.html" id="nav-login-btn" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">登录</a>
             <a href="#" id="nav-logout-btn" class="hidden px-4 py-2 text-sm font-medium rounded-lg text-red-400 hover:bg-red-500/10 transition-colors">退出登录</a>
-            <a href="/admin/" id="nav-admin-btn" class="hidden px-4 py-2 text-sm font-bold rounded-lg text-black bg-gradient-to-r from-[#e8c88c] to-[#c89f5d] hover:opacity-90 transition-colors">⚡ 管理中枢</a>
+            <a href="/admin/" id="nav-admin-btn" class="hidden px-4 py-2 text-sm font-bold rounded-lg text-black bg-gradient-to-r from-[#e8c88c] to-[#c89f5d] hover:opacity-90 transition-colors">管理中枢</a>
             <div class="h-px bg-white/10 my-1 mx-2"></div>
-            <a href="/wiki/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">WIKI</a>
-            <a href="/creation/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">创作</a>
-            <a href="/forum/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">贴吧</a>
+            <a href="/wiki/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">Wiki</a>
+            <a href="/forum/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">发现</a>
             <a href="/about/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">关于</a>
             <a href="/join/" class="block px-4 py-2 text-sm font-medium rounded-lg text-[#f5d78d] hover:bg-white/10 transition-colors">加入我们</a>
         </div>
@@ -62,8 +64,80 @@ const footerHTML = `
 </footer>
 `;
 
+// 侧边栏（从右侧滑出）——仅在 forum / wiki 页面注入
+const sideDrawerHTML = `
+<div id="side-drawer-overlay" class="fixed inset-0 bg-black/40 z-[60] backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
+<aside id="side-drawer" class="fixed top-0 bottom-0 right-0 w-64 ios-card z-[70] shadow-2xl flex flex-col border-l ios-border overflow-hidden translate-x-full transition-transform duration-300">
+
+    <div class="p-4 border-b ios-border">
+        <div class="flex items-center justify-between mb-3">
+            <div class="cec-avatar w-12 h-12 text-xl shadow-sm" id="side-drawer-avatar">?</div>
+            <button id="side-drawer-close" class="ios-text opacity-40 hover:opacity-100 transition p-1.5 bg-black/5 dark:bg-white/5 rounded-full">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <h2 class="text-base font-bold cec-text-dark w-full truncate" id="side-drawer-name">加载中...</h2>
+        <p class="text-xs ios-text opacity-50 mt-1 w-full truncate" id="side-drawer-email">---</p>
+        <div class="flex gap-4 mt-3 text-sm">
+            <div class="flex flex-col"><span class="font-bold cec-text-dark" id="side-drawer-following">0</span><span class="text-xs ios-text opacity-50">关注</span></div>
+            <div class="flex flex-col"><span class="font-bold cec-text-dark" id="side-drawer-followers">0</span><span class="text-xs ios-text opacity-50">追随者</span></div>
+        </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-3 space-y-1">
+        <a href="/profile/index.html" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
+            <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            <span class="ios-text font-medium text-sm truncate">个人中心</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
+            <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+            <span class="ios-text font-medium text-sm truncate">我的收藏</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
+            <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span class="ios-text font-medium text-sm truncate">偏好设置</span>
+        </a>
+        <a href="/admin/" id="side-drawer-admin-link" class="hidden items-center gap-3 p-2.5 rounded-xl bg-[#f5d78d]/10 hover:bg-[#f5d78d]/20 transition">
+            <svg class="w-5 h-5 text-[#c89f5d] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+            <span class="text-[#c89f5d] font-bold text-sm truncate">管理中枢</span>
+        </a>
+
+        <div class="h-px bg-black/5 dark:bg-white/10 my-2 mx-1"></div>
+
+        <a href="/forum/index.html" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
+            <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="ios-text font-medium text-sm truncate">发现</span>
+        </a>
+        <a href="/wiki/index.html" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
+            <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            <span class="ios-text font-medium text-sm truncate">Wiki</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
+            <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            <span class="ios-text font-medium text-sm truncate">通讯</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
+            <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <span class="ios-text font-medium text-sm truncate">检索</span>
+        </a>
+    </div>
+
+    <div id="side-drawer-footer" class="p-3 border-t ios-border hidden">
+        <button id="side-drawer-publish-btn" class="w-full py-2.5 bg-[#111111] text-[#f5d78d] rounded-xl font-bold hover:bg-black transition-colors shadow-md flex items-center justify-center gap-2 active:scale-95">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span class="text-sm">发布新内容</span>
+        </button>
+    </div>
+</aside>
+`;
+
 document.body.insertAdjacentHTML('afterbegin', loadingHTML);
 document.body.insertAdjacentHTML('afterbegin', navHTML);
+
+if (isDrawerPage) {
+    document.body.insertAdjacentHTML('beforeend', sideDrawerHTML);
+}
+
 if (!hideFooterPages.some(path => currentPath.includes(path))) {
     document.body.insertAdjacentHTML('beforeend', footerHTML);
 }
@@ -87,43 +161,83 @@ function initLayout() {
     const loginBtn = document.getElementById('nav-login-btn');
     const logoutBtn = document.getElementById('nav-logout-btn');
 
-    // ===== 解决系统栏滑动冲突 =====
-    let ticking = false;
-    let isHeaderScrolled = false;
-
     window.addEventListener('scroll', () => {
-        if (!ticking) {
-            window.requestAnimationFrame(() => {
-                // 阈值调高到 80，忽略系统栏收起时的微小高度变化
-                if (window.scrollY > 80 && !isHeaderScrolled) {
-                    header.classList.add('header-scrolled');
-                    isHeaderScrolled = true;
-                    closeMenu();
-                } else if (window.scrollY <= 80 && isHeaderScrolled) {
-                    header.classList.remove('header-scrolled');
-                    isHeaderScrolled = false;
-                }
-                ticking = false;
-            });
-            ticking = true;
-        }
-    }, { passive: true });
+        if (window.scrollY > 50) { header.classList.add('header-scrolled'); closeMenu(); }
+        else header.classList.remove('header-scrolled');
+    });
 
     function closeMenu() {
         dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
         dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
     }
 
+    function openMenu() {
+        dropdownMenu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
+        dropdownMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
+    }
+
+    // ========== 侧边栏逻辑 ==========
+    const sideDrawer = document.getElementById('side-drawer');
+    const sideDrawerOverlay = document.getElementById('side-drawer-overlay');
+
+    function openSideDrawer() {
+        if (!sideDrawer) return;
+        sideDrawer.classList.remove('translate-x-full');
+        sideDrawer.classList.add('translate-x-0');
+        sideDrawerOverlay.classList.remove('opacity-0', 'pointer-events-none');
+        sideDrawerOverlay.classList.add('opacity-100', 'pointer-events-auto');
+        closeMenu();
+    }
+
+    function closeSideDrawer() {
+        if (!sideDrawer) return;
+        sideDrawer.classList.add('translate-x-full');
+        sideDrawer.classList.remove('translate-x-0');
+        sideDrawerOverlay.classList.add('opacity-0', 'pointer-events-none');
+        sideDrawerOverlay.classList.remove('opacity-100', 'pointer-events-auto');
+    }
+
+    function toggleSideDrawer() {
+        if (!sideDrawer) return;
+        if (sideDrawer.classList.contains('translate-x-full')) openSideDrawer();
+        else closeSideDrawer();
+    }
+
+    window.toggleSideDrawer = toggleSideDrawer;
+
+    if (sideDrawer) {
+        const closeBtn = document.getElementById('side-drawer-close');
+        if (closeBtn) closeBtn.addEventListener('click', closeSideDrawer);
+        sideDrawerOverlay.addEventListener('click', closeSideDrawer);
+
+        // 发布按钮：仅 forum（发现）页面显示
+        if (isForumPage) {
+            const footer = document.getElementById('side-drawer-footer');
+            if (footer) footer.classList.remove('hidden');
+            const publishBtn = document.getElementById('side-drawer-publish-btn');
+            if (publishBtn) {
+                publishBtn.addEventListener('click', () => {
+                    closeSideDrawer();
+                    document.dispatchEvent(new CustomEvent('open-publish'));
+                });
+            }
+        }
+    }
+
+    // ========== 菜单按钮：按页面类型分流 ==========
     menuBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); 
-        if (dropdownMenu.classList.contains('opacity-100')) closeMenu();
-        else {
-            dropdownMenu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
-            dropdownMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
+        e.stopPropagation();
+        if (isDrawerPage) {
+            toggleSideDrawer();
+        } else {
+            if (dropdownMenu.classList.contains('opacity-100')) closeMenu();
+            else openMenu();
         }
     });
-    
-    document.addEventListener('click', (e) => { if (!dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) closeMenu(); });
+
+    document.addEventListener('click', (e) => {
+        if (!dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) closeMenu();
+    });
 
     function updateThemeIcons() {
         if (document.documentElement.classList.contains('dark')) { iconSun.classList.remove('hidden'); iconMoon.classList.add('hidden'); }
@@ -143,10 +257,38 @@ function initLayout() {
                 const user = data.user;
                 if (loginBtn) { loginBtn.textContent = `欢迎, ${user.name}`; loginBtn.href = "/profile/"; }
                 if (logoutBtn) logoutBtn.classList.remove('hidden');
+
                 if (user.role === 'root' || user.role === 'admin') {
                     const adminBtn = document.getElementById('nav-admin-btn');
                     if (adminBtn) adminBtn.classList.remove('hidden');
                 }
+
+                // 填充侧边栏
+                const sdName = document.getElementById('side-drawer-name');
+                const sdEmail = document.getElementById('side-drawer-email');
+                const sdAvatar = document.getElementById('side-drawer-avatar');
+                const sdAdmin = document.getElementById('side-drawer-admin-link');
+                if (sdName) sdName.textContent = user.name;
+                if (sdEmail) sdEmail.textContent = user.email;
+                if (sdAvatar) sdAvatar.textContent = user.name.charAt(0).toUpperCase();
+                if (sdAdmin && (user.role === 'root' || user.role === 'admin')) {
+                    sdAdmin.classList.remove('hidden');
+                    sdAdmin.classList.add('flex');
+                }
+
+                if (typeof API.getUserStats === 'function') {
+                    API.getUserStats().then(stats => {
+                        const f = document.getElementById('side-drawer-following');
+                        const fo = document.getElementById('side-drawer-followers');
+                        if (f) f.textContent = stats.following ?? 0;
+                        if (fo) fo.textContent = stats.followers ?? 0;
+                    }).catch(() => {});
+                }
+            } else {
+                const sdName = document.getElementById('side-drawer-name');
+                const sdEmail = document.getElementById('side-drawer-email');
+                if (sdName) sdName.textContent = '访客';
+                if (sdEmail) sdEmail.textContent = '未登录';
             }
         }).catch(console.log);
     }
