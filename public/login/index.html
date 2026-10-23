@@ -88,7 +88,7 @@
         const loginBtn = document.getElementById('submit-login');
 
         loginBtn.addEventListener('click', async () => {
-            const email = emailInput.value.trim();
+            const email = emailInput.value.trim().toLowerCase();
             const password = passwordInput.value;
             if (!email || !password) return showToast("请填写邮箱和密码", "error");
 
@@ -126,7 +126,7 @@
         let resetTimer = null;
         document.getElementById('btn-reset-code').addEventListener('click', async (e) => {
             if (resetTimer) return;
-            const email = document.getElementById('reset-email').value.trim();
+            const email = document.getElementById('reset-email').value.trim().toLowerCase();
             if (!email) return showToast("请输入邮箱", "error");
 
             const res = await API.sendCode(email);
@@ -146,7 +146,7 @@
         });
 
         document.getElementById('btn-submit-reset').addEventListener('click', async (e) => {
-            const email = document.getElementById('reset-email').value.trim();
+            const email = document.getElementById('reset-email').value.trim().toLowerCase();
             const otp = document.getElementById('reset-otp').value.trim();
             const newPwd = document.getElementById('reset-new-password').value;
             if (!email || !otp || !newPwd) return showToast("请填写完整", "error");
