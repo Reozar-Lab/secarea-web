@@ -17,7 +17,7 @@
     <main class="flex-grow flex flex-col items-center w-full pt-20 pb-20 px-4">
         <div class="w-full max-w-3xl mx-auto flex flex-col">
             
-            <div class="mb-6 flex justify-between items-end">
+            <div class="mb-4 flex justify-between items-end">
                 <div>
                     <h1 class="text-3xl font-serif font-bold cec-text-dark tracking-widest">管理中枢</h1>
                     <p class="text-sm ios-text opacity-60 mt-1">CEC 内部最高权限控制台</p>
@@ -25,15 +25,38 @@
                 <span id="current-admin-role" class="px-3 py-1 rounded bg-[#f5d78d]/20 text-[#c89f5d] border border-[#f5d78d]/30 text-xs font-roman uppercase"></span>
             </div>
 
-            <div class="w-full mb-6 relative">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg class="w-5 h-5 ios-text opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-                <input type="text" id="search-input" placeholder="搜索用户名、邮箱或用户 ID..." class="admin-input w-full pl-11 pr-4 py-3 shadow-sm focus:outline-none focus:border-[#c89f5d]">
+            <!-- 顶部 Tab 切换 -->
+            <div class="w-full mb-6 flex border-b ios-border">
+                <button id="tab-users" class="flex-1 py-3 text-sm font-bold tracking-widest text-[#c89f5d] border-b-2 border-[#c89f5d]">用户管理</button>
+                <button id="tab-reports" class="flex-1 py-3 text-sm font-bold tracking-widest ios-text opacity-50 border-b-2 border-transparent hover:opacity-100 transition">举报管理</button>
             </div>
 
-            <div id="user-list-container" class="w-full flex flex-col gap-3">
-                <!-- JS 动态注入卡片 -->
+            <!-- ================= 用户管理面板 ================= -->
+            <div id="panel-users" class="w-full flex flex-col">
+                <div class="w-full mb-4 relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 ios-text opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input type="text" id="search-input" placeholder="搜索用户名、邮箱或用户 ID..." class="admin-input w-full pl-11 pr-4 py-3 shadow-sm focus:outline-none focus:border-[#c89f5d]">
+                </div>
+                <div id="user-list-container" class="w-full flex flex-col gap-3">
+                    <!-- JS 动态注入用户卡片 -->
+                </div>
+            </div>
+
+            <!-- ================= 举报管理面板 ================= -->
+            <div id="panel-reports" class="w-full flex-col hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <p class="text-xs ios-text opacity-60">仅显示被举报次数达到阈值的帖子。</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold ios-text">触发阈值:</span>
+                        <input type="number" id="report-threshold-input" class="admin-input w-16 px-2 py-1 text-center text-sm" min="1">
+                        <button id="btn-save-threshold" class="px-3 py-1 bg-[#111] text-[#f5d78d] text-xs font-bold rounded hover:bg-black">保存</button>
+                    </div>
+                </div>
+                <div id="report-list-container" class="w-full flex flex-col gap-3">
+                    <!-- JS 动态注入被举报帖子 -->
+                </div>
             </div>
 
         </div>
@@ -45,33 +68,34 @@
         let allUsers = []; 
         let currentAdmin = null;
 
+        // ================= 初始化 =================
         async function initAdmin() {
             try {
                 const me = await API.getMe();
                 if (!me || !me.user) { window.location.href = '/login/'; return; }
-                
                 if (me.user.role !== 'root' && me.user.role !== 'admin') {
                     alert("您没有权限访问此页面"); window.location.href = '/'; return;
                 }
-                
                 currentAdmin = me.user;
                 document.getElementById('current-admin-role').textContent = `权限: ${currentAdmin.role}`;
 
-                const data = await API.getUsers();
-                if (data.error) throw new Error(data.error);
-                
-                allUsers = data.users;
-                renderUsers(allUsers);
-
+                await loadUsers();
             } catch (e) {
                 console.error(e);
                 alert("加载失败: " + e.message);
             }
         }
 
+        // ================= 用户管理逻辑 =================
+        async function loadUsers() {
+            const data = await API.getUsers();
+            if (data.error) throw new Error(data.error);
+            allUsers = data.users;
+            renderUsers(allUsers);
+        }
+
         function renderUsers(users) {
             const container = document.getElementById('user-list-container');
-            
             if (users.length === 0) {
                 container.innerHTML = `<div class="text-center ios-text opacity-50 py-10">没有找到匹配的用户</div>`;
                 return;
@@ -79,28 +103,20 @@
 
             container.innerHTML = users.map(user => {
                 const isBanned = user.is_banned === 1;
-                
                 let roleColor = 'text-gray-500 bg-gray-500/10';
                 if (user.role === 'root') roleColor = 'text-red-500 bg-red-500/10';
                 if (user.role === 'admin') roleColor = 'text-[#c89f5d] bg-[#f5d78d]/10';
                 if (user.role === 'editor') roleColor = 'text-blue-500 bg-blue-500/10';
-
                 const statusColor = isBanned ? 'bg-red-500' : 'bg-green-500';
 
                 let canEdit = false;
-                if (currentAdmin.role === 'root') {
-                    canEdit = (user.id !== currentAdmin.id) && (user.role !== 'root'); 
-                } else if (currentAdmin.role === 'admin') {
-                    canEdit = (user.id !== currentAdmin.id) && (user.role !== 'root') && (user.role !== 'admin');
-                }
+                if (currentAdmin.role === 'root') canEdit = (user.id !== currentAdmin.id) && (user.role !== 'root'); 
+                else if (currentAdmin.role === 'admin') canEdit = (user.id !== currentAdmin.id) && (user.role !== 'root') && (user.role !== 'admin');
 
                 let roleOptions = `<option value="user" ${user.role === 'user' ? 'selected' : ''}>普通用户 (user)</option>`;
-                
                 if (currentAdmin.role === 'root') {
-                    roleOptions += `
-                        <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>
-                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>管理员 (admin)</option>
-                    `;
+                    roleOptions += `<option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>`;
+                    roleOptions += `<option value="admin" ${user.role === 'admin' ? 'selected' : ''}>管理员 (admin)</option>`;
                 } else if (currentAdmin.role === 'admin') {
                     roleOptions += `<option value="editor" ${user.role === 'editor' ? 'selected' : ''}>编者 (editor)</option>`;
                 }
@@ -109,9 +125,7 @@
                 <div class="w-full ios-card rounded-xl overflow-hidden shadow-sm border transition-all">
                     <div class="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors" onclick="toggleAccordion('${user.id}')">
                         <div class="flex items-center gap-3">
-                            <div class="cec-avatar w-10 h-10 text-lg shadow-sm">
-                                ${user.name.charAt(0).toUpperCase()}
-                            </div>
+                            <div class="cec-avatar w-10 h-10 text-lg shadow-sm">${user.name.charAt(0).toUpperCase()}</div>
                             <div class="flex flex-col">
                                 <span class="font-bold text-base ios-text">${user.name}</span>
                                 <span class="text-xs ios-text opacity-50">${user.email}</span>
@@ -123,17 +137,15 @@
                             <svg id="icon-${user.id}" class="w-5 h-5 ios-text opacity-30 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </div>
                     </div>
-
                     <div id="content-${user.id}" class="accordion-content border-t ios-border">
                         <div class="p-4 flex flex-col gap-4">
                             <div class="text-xs ios-text opacity-50 font-sans">
                                 <p class="flex items-center gap-2 flex-wrap">
                                     <span>用户 ID:</span>
                                     <code class="font-mono text-[11px] break-all">${user.id}</code>
-                                    <button onclick="event.stopPropagation(); copyUserId('${user.id}')" class="px-2 py-0.5 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors text-[10px] ios-text">复制</button>
+                                    <button onclick="event.stopPropagation(); navigator.clipboard.writeText('${user.id}'); showToast('已复制', 'success')" class="px-2 py-0.5 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors text-[10px] ios-text">复制</button>
                                 </p>
                             </div>
-                            
                             ${canEdit ? `
                             <div class="flex flex-col sm:flex-row gap-3">
                                 <div class="flex-1">
@@ -142,16 +154,13 @@
                                         ${roleOptions}
                                     </select>
                                 </div>
-                                
                                 <div class="flex-1 flex items-end">
                                     <button onclick="toggleBan('${user.id}', ${user.is_banned})" class="w-full py-2 rounded-lg text-sm font-bold transition-colors ${isBanned ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-red-500 text-white hover:bg-red-600'}">
                                         ${isBanned ? '解除封禁' : '封禁该用户'}
                                     </button>
                                 </div>
                             </div>
-                            ` : `
-                            <div class="text-xs text-red-500 py-2">你无权修改该用户的权限。</div>
-                            `}
+                            ` : `<div class="text-xs text-red-500 py-2">你无权修改该用户的权限。</div>`}
                         </div>
                     </div>
                 </div>
@@ -162,37 +171,12 @@
         function toggleAccordion(userId) {
             const content = document.getElementById(`content-${userId}`);
             const icon = document.getElementById(`icon-${userId}`);
-            
             if (content.classList.contains('open')) {
                 content.classList.remove('open');
                 icon.style.transform = 'rotate(0deg)';
             } else {
                 content.classList.add('open');
                 icon.style.transform = 'rotate(180deg)';
-            }
-        }
-
-        function copyUserId(userId) {
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(userId).then(() => {
-                    showToast('用户 ID 已复制', 'success');
-                }).catch(() => {
-                    showToast('复制失败', 'error');
-                });
-            } else {
-                const ta = document.createElement('textarea');
-                ta.value = userId;
-                ta.style.position = 'fixed';
-                ta.style.opacity = '0';
-                document.body.appendChild(ta);
-                ta.select();
-                try {
-                    document.execCommand('copy');
-                    showToast('用户 ID 已复制', 'success');
-                } catch (e) {
-                    showToast('复制失败', 'error');
-                }
-                document.body.removeChild(ta);
             }
         }
 
@@ -232,6 +216,98 @@
             renderUsers(allUsers);
             showToast(newStatus === 1 ? "用户已封禁" : "用户已解封", "success");
         }
+
+        // ================= Tab 切换 =================
+        document.getElementById('tab-users').addEventListener('click', () => {
+            document.getElementById('tab-users').className = 'flex-1 py-3 text-sm font-bold tracking-widest text-[#c89f5d] border-b-2 border-[#c89f5d]';
+            document.getElementById('tab-reports').className = 'flex-1 py-3 text-sm font-bold tracking-widest ios-text opacity-50 border-b-2 border-transparent hover:opacity-100 transition';
+            document.getElementById('panel-users').classList.remove('hidden');
+            document.getElementById('panel-users').classList.add('flex');
+            document.getElementById('panel-reports').classList.add('hidden');
+            document.getElementById('panel-reports').classList.remove('flex');
+        });
+
+        document.getElementById('tab-reports').addEventListener('click', () => {
+            document.getElementById('tab-reports').className = 'flex-1 py-3 text-sm font-bold tracking-widest text-[#c89f5d] border-b-2 border-[#c89f5d]';
+            document.getElementById('tab-users').className = 'flex-1 py-3 text-sm font-bold tracking-widest ios-text opacity-50 border-b-2 border-transparent hover:opacity-100 transition';
+            document.getElementById('panel-reports').classList.remove('hidden');
+            document.getElementById('panel-reports').classList.add('flex');
+            document.getElementById('panel-users').classList.add('hidden');
+            document.getElementById('panel-users').classList.remove('flex');
+            loadReports();
+        });
+
+        // ================= 举报管理逻辑 =================
+        async function loadReports() {
+            const container = document.getElementById('report-list-container');
+            container.innerHTML = '<div class="text-center py-10 opacity-50">加载中...</div>';
+            
+            const data = await API.getReports();
+            if (data.error) {
+                container.innerHTML = `<div class="text-center text-red-500 py-10">${data.error}</div>`;
+                return;
+            }
+
+            document.getElementById('report-threshold-input').value = data.threshold;
+
+            if (data.posts.length === 0) {
+                container.innerHTML = '<div class="text-center py-10 opacity-50">暂无达到阈值的举报信息</div>';
+                return;
+            }
+
+            container.innerHTML = data.posts.map(post => `
+                <div class="w-full ios-card rounded-xl p-4 shadow-sm border">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold bg-red-500/10 text-red-500 px-2 py-0.5 rounded">被举报 ${post.report_count} 次</span>
+                            <span class="text-xs ios-text opacity-50">作者: ${post.author_name}</span>
+                        </div>
+                        <a href="/forum/post/index.html?id=${post.id}" target="_blank" class="text-xs text-[#c89f5d] hover:underline">查看原帖 ↗</a>
+                    </div>
+                    <p class="text-sm ios-text line-clamp-3 bg-black/5 dark:bg-white/5 p-3 rounded-lg mb-4">${post.content}</p>
+                    <div class="flex gap-2 justify-end">
+                        <button onclick="dismissReport('${post.id}')" class="px-4 py-1.5 border ios-border rounded-lg text-sm font-bold ios-text hover:bg-black/5 dark:hover:bg-white/5 transition">驳回举报 (清零)</button>
+                        <button onclick="deleteReportPost('${post.id}')" class="px-4 py-1.5 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition">确认删除帖子</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function dismissReport(postId) {
+            if (!confirm('确定驳回所有举报吗？该帖子的举报次数将清零，并从列表中移除。')) return;
+            const res = await API.dismissReports(postId);
+            if (res.success) {
+                showToast('已驳回并清零', 'success');
+                loadReports();
+            } else {
+                showToast(res.error, 'error');
+            }
+        }
+
+        async function deleteReportPost(postId) {
+            if (!confirm('确定要删除该帖子吗？此操作不可逆，帖子将从信息流中消失。')) return;
+            const res = await API.adminDeletePost(postId);
+            if (res.success) {
+                showToast('帖子已删除', 'success');
+                loadReports();
+            } else {
+                showToast(res.error, 'error');
+            }
+        }
+
+        // 保存阈值
+        document.getElementById('btn-save-threshold').addEventListener('click', async () => {
+            const val = parseInt(document.getElementById('report-threshold-input').value);
+            if (isNaN(val) || val < 1) return showToast('请输入大于 0 的数字', 'error');
+            
+            const res = await API.updateSetting('report_threshold', val);
+            if (res.success) {
+                showToast('阈值已更新', 'success');
+                loadReports();
+            } else {
+                showToast(res.error, 'error');
+            }
+        });
 
         window.addEventListener('load', initAdmin);
     </script>
