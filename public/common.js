@@ -102,24 +102,21 @@ const API = {
   },
 
   // ================= 发现（Forum）模块 =================
-  
-  // 获取信息流
-  async getPosts(cursor = null, tab = 'discover', limit = 20) {
+  async getPosts(cursor = null, tab = 'discover', limit = 20, authorId = null) {
     try {
       let url = `/api/forum/posts?tab=${tab}&limit=${limit}`;
       if (cursor) url += `&cursor=${cursor}`;
+      if (authorId) url += `&author_id=${authorId}`;
       const res = await fetch(url);
       if (!res.ok) return { posts: [], nextCursor: null };
       return await res.json();
     } catch (e) { return { posts: [], nextCursor: null }; }
   },
 
-  // 发布帖子
   async createPost(content, imageUrl = null, category = 'discussion', tags = []) {
     try {
       const res = await fetch('/api/forum/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, imageUrl, category, tags })
       });
       const data = await res.json();
@@ -128,7 +125,6 @@ const API = {
     } catch (e) { showToast('网络错误', 'error'); return { error: '网络错误' }; }
   },
 
-  // 点赞
   async toggleLike(postId) {
     try {
       const res = await fetch(`/api/forum/posts/${postId}/like`, { method: 'POST' });
@@ -136,7 +132,6 @@ const API = {
     } catch (e) { return { error: '网络错误' }; }
   },
 
-  // 收藏
   async toggleFavorite(postId) {
     try {
       const res = await fetch(`/api/forum/posts/${postId}/favorite`, { method: 'POST' });
@@ -144,7 +139,6 @@ const API = {
     } catch (e) { return { error: '网络错误' }; }
   },
 
-  // 删除帖子
   async deletePost(postId) {
     try {
       const res = await fetch(`/api/forum/posts/${postId}`, { method: 'DELETE' });
@@ -152,7 +146,6 @@ const API = {
     } catch (e) { return { error: '网络错误' }; }
   },
 
-  // 获取单篇帖子详情及评论
   async getPostDetail(postId) {
     try {
       const res = await fetch(`/api/forum/posts/${postId}`);
@@ -160,7 +153,6 @@ const API = {
     } catch (e) { return { error: '网络错误' }; }
   },
 
-  // 发表评论
   async addComment(postId, content) {
     try {
       const res = await fetch(`/api/forum/posts/${postId}/comments`, {
@@ -173,7 +165,15 @@ const API = {
     } catch (e) { return { error: '网络错误' }; }
   },
 
-  // 举报帖子
+  async deleteComment(commentId) {
+    try {
+      const res = await fetch(`/api/forum/comments/${commentId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.error) showToast(data.error, 'error');
+      return data;
+    } catch (e) { return { error: '网络错误' }; }
+  },
+
   async reportPost(postId, reason, detail = '') {
     try {
       const res = await fetch(`/api/forum/posts/${postId}/report`, {
@@ -184,6 +184,21 @@ const API = {
       if (data.error) showToast(data.error, 'error');
       else showToast('举报已提交，感谢您的反馈', 'success');
       return data;
+    } catch (e) { return { error: '网络错误' }; }
+  },
+
+  // ================= 用户主页模块 (新增) =================
+  async getUserProfile(targetId) {
+    try {
+      const res = await fetch(`/api/users/${targetId}/public`);
+      return await res.json();
+    } catch (e) { return { error: '网络错误' }; }
+  },
+
+  async toggleFollow(targetId) {
+    try {
+      const res = await fetch(`/api/users/${targetId}/follow`, { method: 'POST' });
+      return await res.json();
     } catch (e) { return { error: '网络错误' }; }
   }
 };
