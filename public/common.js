@@ -103,7 +103,7 @@ const API = {
 
   // ================= 发现（Forum）模块 =================
   
-  // 获取信息流（游标分页）
+  // 获取信息流
   async getPosts(cursor = null, tab = 'discover', limit = 20) {
     try {
       let url = `/api/forum/posts?tab=${tab}&limit=${limit}`;
@@ -114,7 +114,7 @@ const API = {
     } catch (e) { return { posts: [], nextCursor: null }; }
   },
 
-  // 发帖
+  // 发布帖子
   async createPost(content, imageUrl = null, category = 'discussion', tags = []) {
     try {
       const res = await fetch('/api/forum/posts', {
@@ -128,7 +128,7 @@ const API = {
     } catch (e) { showToast('网络错误', 'error'); return { error: '网络错误' }; }
   },
 
-  // 点赞/取消点赞
+  // 点赞
   async toggleLike(postId) {
     try {
       const res = await fetch(`/api/forum/posts/${postId}/like`, { method: 'POST' });
@@ -136,7 +136,7 @@ const API = {
     } catch (e) { return { error: '网络错误' }; }
   },
 
-  // 收藏/取消收藏
+  // 收藏
   async toggleFavorite(postId) {
     try {
       const res = await fetch(`/api/forum/posts/${postId}/favorite`, { method: 'POST' });
@@ -149,6 +149,41 @@ const API = {
     try {
       const res = await fetch(`/api/forum/posts/${postId}`, { method: 'DELETE' });
       return await res.json();
+    } catch (e) { return { error: '网络错误' }; }
+  },
+
+  // 获取单篇帖子详情及评论
+  async getPostDetail(postId) {
+    try {
+      const res = await fetch(`/api/forum/posts/${postId}`);
+      return await res.json();
+    } catch (e) { return { error: '网络错误' }; }
+  },
+
+  // 发表评论
+  async addComment(postId, content) {
+    try {
+      const res = await fetch(`/api/forum/posts/${postId}/comments`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
+      const data = await res.json();
+      if (data.error) showToast(data.error, 'error');
+      return data;
+    } catch (e) { return { error: '网络错误' }; }
+  },
+
+  // 举报帖子
+  async reportPost(postId, reason, detail = '') {
+    try {
+      const res = await fetch(`/api/forum/posts/${postId}/report`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason, detail })
+      });
+      const data = await res.json();
+      if (data.error) showToast(data.error, 'error');
+      else showToast('举报已提交，感谢您的反馈', 'success');
+      return data;
     } catch (e) { return { error: '网络错误' }; }
   }
 };
