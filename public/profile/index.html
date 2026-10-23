@@ -78,47 +78,7 @@
                     </div>
                 </div>
 
-                <!-- 功能列表 (原版的自定义列表) -->
-                <div id="function-list" class="w-full ios-card rounded-xl overflow-hidden shadow-sm mb-4 ios-border border">
-                    <a href="#" id="list-posts" class="ios-list-item flex items-center justify-between px-4 py-3.5 ios-border border-b transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center text-white shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                            </div>
-                            <span class="text-[15px] font-medium ios-text">我的创作</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm ios-text opacity-50 font-roman" id="list-posts-count">0 篇</span>
-                            <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </div>
-                    </a>
-                    <a href="#" id="list-favorites" class="ios-list-item flex items-center justify-between px-4 py-3.5 ios-border border-b transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="w-7 h-7 rounded-lg bg-yellow-500 flex items-center justify-center text-white shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-                            </div>
-                            <span class="text-[15px] font-medium ios-text">我的收藏</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm ios-text opacity-50 font-roman" id="list-fav-count">0 项</span>
-                            <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </div>
-                    </a>
-                    <a href="#" id="list-contribution" class="ios-list-item flex items-center justify-between px-4 py-3.5 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="w-7 h-7 rounded-lg bg-green-500 flex items-center justify-center text-white shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                            </div>
-                            <span class="text-[15px] font-medium ios-text">参与贡献</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm ios-text opacity-50 font-roman" id="list-contrib-count">0 次</span>
-                            <svg class="w-5 h-5 ios-text opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </div>
-                    </a>
-                </div>
-
-                <!-- 管理员专属入口 -->
+                <!-- 管理员专属入口（只保留这个） -->
                 <div id="admin-panel" class="hidden mb-4">
                     <a href="/admin/" class="w-full ios-card rounded-xl overflow-hidden shadow-sm flex items-center justify-between px-4 py-3 border border-[#f5d78d]/30">
                         <div class="flex items-center gap-3">
@@ -132,7 +92,7 @@
                 </div>
             </div>
 
-            <!-- Tab 切换 -->
+            <!-- Tab 切换（新增“贡献”栏） -->
             <div class="w-full mt-2 forum-tab-bar">
                 <div class="flex">
                     <button id="tab-posts" class="forum-tab-btn active flex-1 py-3 relative">
@@ -143,10 +103,14 @@
                         收藏
                         <span class="tab-line hidden absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#c89f5d] rounded-full"></span>
                     </button>
+                    <button id="tab-contributions" class="forum-tab-btn flex-1 py-3 relative">
+                        贡献
+                        <span class="tab-line hidden absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#c89f5d] rounded-full"></span>
+                    </button>
                 </div>
             </div>
 
-            <!-- 帖子列表 -->
+            <!-- 内容列表 -->
             <div id="feed" class="w-full">
                 <div class="p-8 text-center">
                     <div class="inline-block w-6 h-6 border-2 border-[#c89f5d]/30 border-t-[#c89f5d] rounded-full animate-spin"></div>
@@ -251,12 +215,12 @@
             if (!res.error) {
                 currentUser.name = newName;
                 currentUser.bio = newBio;
-                loadProfile(); // 重新拉取刷新页面
+                loadProfile();
                 closeModal();
             }
         };
 
-        // ================= 账号安全逻辑 (保留) =================
+        // ================= 账号安全逻辑 =================
         window.openSettings = function() {
             openModal(`
                 <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
@@ -283,6 +247,133 @@
         window.handleLogout = async function() {
             if (!confirm("确定要断开内界连接吗？")) return;
             try { await API.logout(); window.location.href = '/login/'; } catch (e) { alert("退出失败"); }
+        };
+
+        window.openChangePassword = function() {
+            openModal(`
+                <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                    <div class="flex items-center gap-2">
+                        <button onclick="openSettings()" class="text-gray-500 hover:text-black dark:hover:text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h2 class="text-lg font-bold cec-text-dark">修改密码</h2>
+                    </div>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <input type="password" id="old-password" placeholder="当前密码" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                    <input type="password" id="new-password" placeholder="新密码" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                    <button id="btn-change-password" class="w-full py-3 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition">确认更新</button>
+                </div>
+            `);
+            document.getElementById('btn-change-password').addEventListener('click', async (e) => {
+                const oldPwd = document.getElementById('old-password').value;
+                const newPwd = document.getElementById('new-password').value;
+                if (!oldPwd || !newPwd) return showToast("请填写完整密码", "error");
+                
+                e.target.textContent = '处理中...';
+                const res = await API.changePassword(oldPwd, newPwd);
+                e.target.textContent = '确认更新';
+                if (res.error) showToast(res.error, 'error');
+                else { showToast("密码修改成功", "success"); closeModal(); }
+            });
+        };
+
+        window.openChangeEmail = function() {
+            openModal(`
+                <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                    <div class="flex items-center gap-2">
+                        <button onclick="openSettings()" class="text-gray-500 hover:text-black dark:hover:text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h2 class="text-lg font-bold cec-text-dark">更改邮箱</h2>
+                    </div>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <div class="flex gap-2">
+                        <input type="email" id="new-email" placeholder="新邮箱地址" class="sys-modal-input flex-1 px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                        <button id="btn-send-code" class="whitespace-nowrap px-4 py-3 bg-gray-200 dark:bg-gray-700 text-black dark:text-white rounded-xl text-sm font-bold">获取验证码</button>
+                    </div>
+                    <input type="text" id="email-otp" placeholder="新邮箱收到的验证码" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                    <button id="btn-change-email" class="w-full py-3 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition">确认更改</button>
+                </div>
+            `);
+            
+            let emailTimer = null;
+            document.getElementById('btn-send-code').addEventListener('click', async (e) => {
+                if (emailTimer) return;
+                const newEmail = document.getElementById('new-email').value.trim();
+                if (!newEmail) return showToast("请输入新邮箱", "error");
+                
+                const res = await API.sendCode(newEmail);
+                if (!res.error) {
+                    let count = 60;
+                    e.target.classList.add('opacity-50');
+                    emailTimer = setInterval(() => {
+                        count--;
+                        e.target.textContent = `${count}s`;
+                        if (count <= 0) {
+                            clearInterval(emailTimer); emailTimer = null;
+                            e.target.classList.remove('opacity-50');
+                            e.target.textContent = '获取验证码';
+                        }
+                    }, 1000);
+                }
+            });
+
+            document.getElementById('btn-change-email').addEventListener('click', async (e) => {
+                const newEmail = document.getElementById('new-email').value.trim();
+                const otp = document.getElementById('email-otp').value.trim();
+                if (!newEmail || !otp) return showToast("请填写完整", "error");
+                
+                e.target.textContent = '处理中...';
+                const res = await API.changeEmail(newEmail, otp);
+                e.target.textContent = '确认更改';
+                if (res.error) showToast(res.error, 'error');
+                else { showToast("邮箱更换成功", "success"); setTimeout(() => window.location.reload(), 1500); }
+            });
+        };
+
+        window.openDeleteAccount = function() {
+            openModal(`
+                <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                    <div class="flex items-center gap-2">
+                        <button onclick="openSettings()" class="text-gray-500 hover:text-black dark:hover:text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <h2 class="text-lg font-bold text-red-500">注销账号</h2>
+                    </div>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-black dark:hover:text-white p-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <p class="text-sm text-red-500 font-bold leading-relaxed">⚠️ 警告：注销账号将永久删除您的所有数据，此操作绝对不可逆！</p>
+                    <p class="text-xs text-gray-500">请在下方输入 "确认注销" 四个字：</p>
+                    <input type="text" id="delete-confirm-text" placeholder="确认注销" class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-red-500 text-red-500 font-bold">
+                    <button id="btn-delete-account" class="w-full py-3 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 transition">永久删除我的账号</button>
+                </div>
+            `);
+            
+            document.getElementById('btn-delete-account').addEventListener('click', async (e) => {
+                const confirmText = document.getElementById('delete-confirm-text').value.trim();
+                if (confirmText !== "确认注销") return showToast("输入不正确，操作已取消", "error");
+
+                e.target.textContent = '正在注销...';
+                const res = await API.deleteAccount();
+                if (res.error) {
+                    showToast(res.error, 'error');
+                    e.target.textContent = '永久删除我的账号';
+                } else {
+                    showToast("账号已注销，即将返回登录页", "success");
+                    setTimeout(() => window.location.href = '/login/', 1500);
+                }
+            });
         };
 
         // ================= 主页与信息流逻辑 =================
@@ -316,11 +407,6 @@
             document.getElementById('stat-followers').textContent = u.follower_count || 0;
             document.getElementById('stat-posts').textContent = u.post_count || 0;
             document.getElementById('stat-likes').textContent = u.total_likes || 0;
-            
-            // 列表功能数据
-            document.getElementById('list-posts-count').textContent = `${u.post_count || 0} 篇`;
-            document.getElementById('list-fav-count').textContent = `${u.favorite_count || 0} 项`;
-            document.getElementById('list-contrib-count').textContent = `${u.contribution_count || 0} 次`;
 
             // 渲染操作按钮
             const btnContainer = document.getElementById('action-buttons');
@@ -363,13 +449,23 @@
             const feed = document.getElementById('feed');
             feed.innerHTML = '<div class="p-8 text-center"><div class="inline-block w-6 h-6 border-2 border-[#c89f5d]/30 border-t-[#c89f5d] rounded-full animate-spin"></div></div>';
             
-            // 收藏 tab 只能看自己的，如果试图看别人的收藏（虽然前端隐藏了），这里拦截一下
             if (currentTab === 'favorites' && !isSelf) {
                 feed.innerHTML = '<div class="p-10 text-center text-xs text-gray-400">隐私保护：无法查看他人的收藏</div>';
                 return;
             }
 
-            // 请求 API，favorites 走专门的流
+            if (currentTab === 'contributions') {
+                // 预留的贡献接口
+                const res = await API.getContributions(targetUserId);
+                if (!res.contributions || res.contributions.length === 0) {
+                    feed.innerHTML = '<div class="p-10 text-center text-xs text-gray-400">暂无参与贡献记录</div>';
+                } else {
+                    // 以后有了真实数据再渲染
+                    feed.innerHTML = '<div class="p-10 text-center text-xs text-gray-400">数据渲染中...</div>';
+                }
+                return;
+            }
+
             let res;
             if (currentTab === 'favorites') {
                 res = await API.getPosts(null, 'favorites'); 
@@ -412,32 +508,26 @@
             }).join('');
         }
 
-        // Tab 切换
-        document.getElementById('tab-posts').addEventListener('click', () => {
-            currentTab = 'posts';
-            document.getElementById('tab-posts').classList.add('active');
-            document.getElementById('tab-posts').querySelector('.tab-line').classList.remove('hidden');
-            document.getElementById('tab-favorites').classList.remove('active');
-            document.getElementById('tab-favorites').querySelector('.tab-line').classList.add('hidden');
+        // Tab 切换逻辑
+        function switchTab(tabName) {
+            currentTab = tabName;
+            ['posts', 'favorites', 'contributions'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const line = btn.querySelector('.tab-line');
+                if (t === tabName) {
+                    btn.classList.add('active');
+                    if (line) line.classList.remove('hidden');
+                } else {
+                    btn.classList.remove('active');
+                    if (line) line.classList.add('hidden');
+                }
+            });
             loadFeed();
-        });
-        
-        document.getElementById('tab-favorites').addEventListener('click', () => {
-            currentTab = 'favorites';
-            document.getElementById('tab-favorites').classList.add('active');
-            document.getElementById('tab-favorites').querySelector('.tab-line').classList.remove('hidden');
-            document.getElementById('tab-posts').classList.remove('active');
-            document.getElementById('tab-posts').querySelector('.tab-line').classList.add('hidden');
-            loadFeed();
-        });
+        }
 
-        // 列表点击交互
-        document.getElementById('list-posts').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('tab-posts').click(); });
-        document.getElementById('list-favorites').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('tab-favorites').click(); });
-        document.getElementById('list-contribution').addEventListener('click', (e) => { 
-            e.preventDefault(); 
-            showToast('Wiki 系统正在接入中，敬请期待！', 'info');
-        });
+        document.getElementById('tab-posts').addEventListener('click', () => switchTab('posts'));
+        document.getElementById('tab-favorites').addEventListener('click', () => switchTab('favorites'));
+        document.getElementById('tab-contributions').addEventListener('click', () => switchTab('contributions'));
 
         window.addEventListener('load', async () => {
             const me = await API.getMe();
