@@ -101,6 +101,64 @@ const API = {
     return await res.json();
   },
 
+  // 举报管理
+  async getReports() {
+    const res = await fetch(`/api/admin/reports`);
+    return await res.json();
+  },
+
+  async dismissReports(postId) {
+    const res = await fetch(`/api/admin/reports/dismiss`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ postId })
+    });
+    return await res.json();
+  },
+
+  async adminDeletePost(postId) {
+    const res = await fetch(`/api/admin/reports/delete-post`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ postId })
+    });
+    return await res.json();
+  },
+
+  async updateSetting(key, value) {
+    const res = await fetch(`/api/admin/settings`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, value })
+    });
+    return await res.json();
+  },
+
+  // ================= 用户主页模块 =================
+  async getUserProfile(targetId) {
+    try {
+      const res = await fetch(`/api/users/${targetId}/public`);
+      return await res.json();
+    } catch (e) { return { error: '网络错误' }; }
+  },
+
+  async toggleFollow(targetId) {
+    try {
+      const res = await fetch(`/api/users/${targetId}/follow`, { method: 'POST' });
+      return await res.json();
+    } catch (e) { return { error: '网络错误' }; }
+  },
+
+  async updateProfile(name, bio) {
+    try {
+      const res = await fetch('/api/users/profile', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, bio })
+      });
+      const data = await res.json();
+      if (data.error) showToast(data.error, 'error');
+      else showToast('资料修改成功', 'success');
+      return data;
+    } catch (e) { return { error: '网络错误' }; }
+  },
+
   // ================= 发现（Forum）模块 =================
   async getPosts(cursor = null, tab = 'discover', limit = 20, authorId = null) {
     try {
@@ -187,18 +245,11 @@ const API = {
     } catch (e) { return { error: '网络错误' }; }
   },
 
-  // ================= 用户主页模块 (新增) =================
-  async getUserProfile(targetId) {
+  async getContributions(userId) {
     try {
-      const res = await fetch(`/api/users/${targetId}/public`);
+      const res = await fetch(`/api/users/${userId}/contributions`);
+      if (!res.ok) return { contributions: [] };
       return await res.json();
-    } catch (e) { return { error: '网络错误' }; }
-  },
-
-  async toggleFollow(targetId) {
-    try {
-      const res = await fetch(`/api/users/${targetId}/follow`, { method: 'POST' });
-      return await res.json();
-    } catch (e) { return { error: '网络错误' }; }
+    } catch (e) { return { contributions: [] }; }
   }
 };
