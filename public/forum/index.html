@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>龙港 · 匿境 Secarea</title>
+    <title>发现 · 匿境 Secarea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../style.css">
     <script>
@@ -13,35 +13,78 @@
     </script>
     <style>
         ::-webkit-scrollbar { display: none; }
+        html, body { -webkit-text-size-adjust: 100% !important; text-size-adjust: 100% !important; }
+
+        .forum-tab-bar { background-color: #ffffff !important; border-bottom: 1px solid #e5e5ea !important; }
+        html.dark .forum-tab-bar { background-color: #1c1c1e !important; border-bottom: 1px solid #2c2c2e !important; }
+
+        .forum-tab-btn { color: #888888 !important; font-size: 13px !important; font-weight: bold !important; letter-spacing: 0.1em !important; }
+        html.dark .forum-tab-btn { color: #666666 !important; }
+        .forum-tab-btn.active { color: #c89f5d !important; }
+
+        .forum-avatar {
+            width: 40px !important; height: 40px !important; flex-shrink: 0 !important;
+            display: flex !important; align-items: center !important; justify-content: center !important;
+            border-radius: 50% !important; font-family: 'Times New Roman', serif !important; font-size: 17px !important;
+            background-color: #e5e5ea !important; color: #000000 !important; border: 1px solid #d1d5db !important;
+        }
+        html.dark .forum-avatar { background-color: #1c1c1e !important; color: #f5d78d !important; border: 1px solid #3f3f46 !important; }
+
+        .forum-author-name { color: #000000 !important; font-size: 13px !important; font-weight: bold !important; text-decoration: none !important; }
+        html.dark .forum-author-name { color: #ffffff !important; }
+
+        .forum-post-text { color: #111111 !important; font-size: 13px !important; line-height: 1.6 !important; margin: 0 !important; padding: 0 !important; }
+        html.dark .forum-post-text { color: #eeeeee !important; }
+
+        .forum-divider { border-bottom: 2px solid #e5e7eb !important; }
+        html.dark .forum-divider { border-bottom: 2px solid #3f3f46 !important; }
+
+        .tag-pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
     </style>
 </head>
 <body class="page-ios min-h-screen flex flex-col relative">
 
-    <main id="feed" class="flex-grow w-full max-w-lg mx-auto pt-20 pb-12 px-3 space-y-3">
-        <div id="feed-loading" class="ios-card rounded-2xl p-8 shadow-sm border ios-border text-center">
+    <div class="w-full pt-14 forum-tab-bar">
+        <div class="max-w-lg mx-auto flex">
+            <button id="tab-discover" class="forum-tab-btn active flex-1 py-3 relative">
+                发现
+                <span class="tab-line absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#c89f5d] rounded-full"></span>
+            </button>
+            <button id="tab-following" class="forum-tab-btn flex-1 py-3 relative">
+                关注
+                <span class="tab-line hidden absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#c89f5d] rounded-full"></span>
+            </button>
+        </div>
+    </div>
+
+    <main id="feed" class="flex-grow w-full max-w-lg mx-auto pb-12">
+        <div id="feed-loading" class="p-8 text-center">
             <div class="inline-block w-6 h-6 border-2 border-[#c89f5d]/30 border-t-[#c89f5d] rounded-full animate-spin"></div>
-            <p class="text-xs ios-text opacity-50 mt-3 tracking-widest">接入龙港通讯网...</p>
+            <p class="text-xs ios-text opacity-50 mt-3 tracking-widest">接入通讯网...</p>
         </div>
     </main>
 
-    <!-- 发布弹窗 -->
+    <div id="more-menu" class="fixed z-[90] hidden">
+        <div class="w-36 rounded-xl overflow-hidden shadow-2xl ios-card py-1 border">
+            <button data-action="delete" class="more-item hidden w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/5 transition">删除</button>
+            <button data-action="report" class="more-item hidden w-full text-left px-4 py-2.5 text-sm ios-text hover:bg-black/5 dark:hover:bg-white/5 transition">举报</button>
+            <button data-action="cancel" class="more-item w-full text-left px-4 py-2.5 text-sm ios-text opacity-60 hover:bg-black/5 dark:hover:bg-white/5 transition">取消</button>
+        </div>
+    </div>
+
     <div id="publish-modal" class="fixed inset-0 z-[80] hidden items-center justify-center sys-modal-overlay">
         <div class="w-[90%] max-w-md rounded-2xl overflow-hidden sys-modal-panel shadow-2xl">
             <div class="px-5 py-3 sys-modal-header flex justify-between items-center">
-                <h3 class="font-serif font-bold tracking-widest cec-text-dark text-sm">发布到龙港</h3>
-                <button id="publish-close" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+                <h3 class="font-serif font-bold tracking-widest cec-text-dark text-sm">发布到发现</h3>
+                <button id="publish-close" class="ios-text opacity-50 hover:opacity-100 text-xl leading-none">&times;</button>
             </div>
             <div class="p-5 flex flex-col gap-3">
-                <textarea id="publish-content" rows="5" maxlength="500" placeholder="在这片灰色地带，你想说些什么？"
-                    class="w-full px-3 py-2.5 rounded-xl sys-modal-input text-sm outline-none resize-none"></textarea>
-                <input type="url" id="publish-image" placeholder="图片链接（可选）"
-                    class="w-full px-3 py-2.5 rounded-xl sys-modal-input text-sm outline-none">
+                <textarea id="publish-content" rows="5" maxlength="5000" placeholder="在这片灰色地带，你想说些什么？" class="w-full px-3 py-2.5 rounded-xl sys-modal-input text-[13px] outline-none resize-none"></textarea>
+                <input type="text" id="publish-tags" placeholder="标签，用空格分隔" class="w-full px-3 py-2.5 rounded-xl sys-modal-input text-[13px] outline-none">
+                <input type="url" id="publish-image" placeholder="图片链接（可选）" class="w-full px-3 py-2.5 rounded-xl sys-modal-input text-[13px] outline-none">
                 <div class="flex justify-between items-center mt-1">
-                    <span id="publish-count" class="text-xs text-gray-400">0 / 500</span>
-                    <button id="publish-submit"
-                        class="px-5 py-2 bg-[#111111] text-[#f5d78d] font-bold rounded-xl hover:bg-[#252525] transition-colors text-sm tracking-widest">
-                        发布
-                    </button>
+                    <span id="publish-count" class="text-xs ios-text opacity-50">0 / 5000</span>
+                    <button id="publish-submit" class="px-5 py-2 bg-[#111111] text-[#f5d78d] font-bold rounded-xl hover:bg-[#252525] transition-colors text-[13px] tracking-widest">发布</button>
                 </div>
             </div>
         </div>
@@ -50,11 +93,14 @@
     <script src="../common.js"></script>
     <script src="../layout.js"></script>
     <script>
+        let currentTab = 'discover';
+        let nextCursor = null;
+        let isLoading = false;
+        let currentUser = null;
+
         function escapeHtml(str) {
             if (!str) return '';
-            return String(str).replace(/[&<>"']/g, s => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-            }[s]));
+            return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
         }
 
         function timeAgo(ts) {
@@ -74,156 +120,274 @@
             return '';
         }
 
-        function renderPost(post) {
-            const initial = (post.authorName || '?').charAt(0).toUpperCase();
-            return `
-                <article class="ios-card rounded-2xl p-4 shadow-sm border ios-border">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="cec-avatar w-10 h-10 text-lg shrink-0">${escapeHtml(initial)}</div>
-                        <div class="flex flex-col min-w-0">
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-sm cec-text-dark truncate">${escapeHtml(post.authorName)}</span>
-                                ${roleBadge(post.authorRole)}
-                            </div>
-                            <span class="text-xs ios-text opacity-50 truncate">@${escapeHtml(post.authorName)} · ${timeAgo(post.createdAt)}</span>
-                        </div>
-                    </div>
-                    <p class="text-sm ios-text leading-relaxed mb-3 whitespace-pre-wrap break-words">${escapeHtml(post.content)}</p>
-                    ${post.imageUrl ? `<div class="w-full bg-gray-200 dark:bg-gray-800 rounded-xl mb-3 overflow-hidden border ios-border"><img src="${escapeHtml(post.imageUrl)}" class="w-full h-auto" alt=""></div>` : ''}
-                    <div class="flex items-center justify-between ios-text opacity-50 text-xs px-2">
-                        <button class="comment-btn flex items-center gap-1 hover:text-[#c89f5d] transition" data-id="${post.id}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                            ${post.replies || 0}
-                        </button>
-                        <button class="repost-btn flex items-center gap-1 hover:text-[#c89f5d] transition" data-id="${post.id}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                            ${post.reposts || 0}
-                        </button>
-                        <button class="like-btn flex items-center gap-1 transition ${post.likedByMe ? 'text-red-500' : 'hover:text-red-500'}" data-id="${post.id}">
-                            <svg class="w-4 h-4" fill="${post.likedByMe ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                            <span class="like-count">${post.likes || 0}</span>
-                        </button>
-                    </div>
-                </article>
-            `;
+        function renderTags(tagsStr) {
+            if (!tagsStr) return '';
+            const tags = tagsStr.split(',').filter(Boolean);
+            if (tags.length === 0) return '';
+            return `<div class="flex flex-wrap gap-1.5 mt-2">${tags.map(t =>
+                `<a href="/forum/tag/${encodeURIComponent(t)}" class="tag-pill bg-[#f5d78d]/20 text-[#c89f5d] hover:bg-[#f5d78d]/30 transition-colors">#${escapeHtml(t)}</a>`
+            ).join('')}</div>`;
         }
 
-        function renderEmpty() {
+        function renderImage(imageUrl) {
+            if (!imageUrl) return '';
+            return `<div class="w-full rounded-xl mt-2.5 overflow-hidden border ios-border">
+                <img src="${escapeHtml(imageUrl)}" class="w-full h-auto" alt="" loading="lazy">
+            </div>`;
+        }
+
+        function renderPost(post) {
+            const initial = (post.author_name || '?').charAt(0).toUpperCase();
+            const preview = post.content.length > 200 ? post.content.slice(0, 200) + '...' : post.content;
+
             return `
-                <div class="ios-card rounded-2xl p-10 shadow-sm border ios-border text-center">
-                    <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-[#f5d78d]/10 flex items-center justify-center">
-                        <svg class="w-7 h-7 text-[#c89f5d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                <article class="forum-divider" data-post-id="${post.id}">
+                    <div class="p-4">
+                        <div class="flex items-start gap-3 mb-2.5">
+                            <a href="/profile/index.html?id=${post.author_id}" class="forum-avatar">${escapeHtml(initial)}</a>
+                            <div class="flex-1 min-w-0 pt-0.5">
+                                <div class="flex items-center gap-2">
+                                    <a href="/profile/index.html?id=${post.author_id}" class="forum-author-name hover:underline truncate">${escapeHtml(post.author_name)}</a>
+                                    ${roleBadge(post.author_role)}
+                                </div>
+                                <span class="text-[11px] ios-text opacity-50 block mt-0.5">${timeAgo(post.created_at)}</span>
+                            </div>
+                            <button class="more-btn shrink-0 p-1.5 -mr-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition" data-post-id="${post.id}" data-author-id="${post.author_id}">
+                                <svg class="w-4 h-4 ios-text opacity-40" fill="currentColor" viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                            </button>
+                        </div>
+                        <a href="/forum/post/${post.id}" class="block w-full">
+                            <div class="forum-post-text whitespace-pre-wrap break-words">${escapeHtml(preview)}</div>
+                            ${renderImage(post.image_url)}
+                            ${renderTags(post.tags)}
+                        </a>
+                        <div class="flex items-center justify-end gap-6 mt-3 text-[12.5px] ios-text opacity-50">
+                            <button class="comment-btn flex items-center gap-1.5 hover:text-[#c89f5d] hover:opacity-100 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                                <span>0</span>
+                            </button>
+                            <button class="favorite-btn flex items-center gap-1.5 transition ${post.favoritedByMe ? 'text-[#c89f5d] opacity-100' : 'hover:text-[#c89f5d] hover:opacity-100'}" data-post-id="${post.id}">
+                                <svg class="w-4 h-4" fill="${post.favoritedByMe ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                                <span class="fav-count">${post.favorites_count || 0}</span>
+                            </button>
+                            <button class="like-btn flex items-center gap-1.5 transition ${post.likedByMe ? 'text-red-500 opacity-100' : 'hover:text-red-500 hover:opacity-100'}" data-post-id="${post.id}">
+                                <svg class="w-4 h-4" fill="${post.likedByMe ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                <span class="like-count">${post.likes_count || 0}</span>
+                            </button>
+                        </div>
                     </div>
-                    <p class="text-sm cec-text-dark font-bold tracking-widest mb-1">通讯网静默中</p>
-                    <p class="text-xs ios-text opacity-50">还没有任何记录，成为第一个发帖的人。</p>
-                </div>
+                </article>
             `;
         }
 
         async function loadFeed() {
             const feed = document.getElementById('feed');
             const loading = document.getElementById('feed-loading');
+            if (isLoading) return;
+            isLoading = true;
+
             try {
-                const data = await API.getPosts(1, 20);
+                const data = await API.getPosts(nextCursor, currentTab);
                 if (loading) loading.remove();
-                if (data && data.posts && data.posts.length > 0) {
-                    feed.innerHTML = data.posts.map(renderPost).join('');
+                
+                if (data.error) {
+                    feed.innerHTML = `<div class="p-10 text-center text-red-500 text-sm">${data.error}</div>`;
+                    return;
+                }
+
+                if (data.posts && data.posts.length > 0) {
+                    nextCursor = data.nextCursor;
+                    const html = data.posts.map(renderPost).join('');
+                    if (document.getElementById('feed-loading')) feed.innerHTML = html;
+                    else feed.insertAdjacentHTML('beforeend', html);
                     bindPostActions();
-                } else {
-                    feed.innerHTML = renderEmpty();
+                } else if (!nextCursor) {
+                    feed.innerHTML = `<div class="p-10 text-center"><p class="text-sm cec-text-dark font-bold">还没有任何记录。</p></div>`;
                 }
             } catch (e) {
                 if (loading) loading.remove();
-                feed.innerHTML = renderEmpty();
+            } finally {
+                isLoading = false;
             }
         }
 
         function bindPostActions() {
             document.querySelectorAll('.like-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const id = btn.dataset.id;
+                btn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    if (!currentUser) return showToast('请先登录', 'error');
+                    const id = btn.dataset.postId;
                     const countEl = btn.querySelector('.like-count');
                     const wasLiked = btn.classList.contains('text-red-500');
+                    
+                    // 乐观更新
                     if (wasLiked) {
-                        btn.classList.remove('text-red-500');
+                        btn.classList.remove('text-red-500', 'opacity-100');
+                        btn.querySelector('svg').setAttribute('fill', 'none');
                         countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
                     } else {
-                        btn.classList.add('text-red-500');
+                        btn.classList.add('text-red-500', 'opacity-100');
+                        btn.querySelector('svg').setAttribute('fill', 'currentColor');
                         countEl.textContent = parseInt(countEl.textContent) + 1;
                     }
-                    try { await API.likePost(id); } catch (e) {}
+                    
+                    const res = await API.toggleLike(id);
+                    if (res.error) {
+                        showToast(res.error, 'error');
+                        // 回滚（略，简单场景下刷新页面即可）
+                    }
                 });
             });
 
-            document.querySelectorAll('.repost-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (typeof showToast !== 'undefined') showToast('转发功能即将上线', 'info');
+            document.querySelectorAll('.favorite-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    if (!currentUser) return showToast('请先登录', 'error');
+                    const id = btn.dataset.postId;
+                    const countEl = btn.querySelector('.fav-count');
+                    const wasFav = btn.classList.contains('text-[#c89f5d]');
+                    
+                    if (wasFav) {
+                        btn.classList.remove('text-[#c89f5d]', 'opacity-100');
+                        btn.querySelector('svg').setAttribute('fill', 'none');
+                        countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
+                    } else {
+                        btn.classList.add('text-[#c89f5d]', 'opacity-100');
+                        btn.querySelector('svg').setAttribute('fill', 'currentColor');
+                        countEl.textContent = parseInt(countEl.textContent) + 1;
+                    }
+                    
+                    const res = await API.toggleFavorite(id);
+                    if (res.error) showToast(res.error, 'error');
                 });
             });
 
-            document.querySelectorAll('.comment-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (typeof showToast !== 'undefined') showToast('评论功能即将上线', 'info');
+            document.querySelectorAll('.more-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openMoreMenu(btn, btn.dataset.postId, btn.dataset.authorId);
                 });
             });
         }
 
-        // ========== 发布弹窗 ==========
-        const publishModal = document.getElementById('publish-modal');
-        const publishContent = document.getElementById('publish-content');
-        const publishImage = document.getElementById('publish-image');
-        const publishCount = document.getElementById('publish-count');
+        // 更多菜单逻辑
+        const moreMenu = document.getElementById('more-menu');
+        let currentMorePostId = null;
 
-        function openPublish() {
-            API.getMe().then(data => {
-                if (!data || !data.user) {
-                    if (typeof showToast !== 'undefined') showToast('请先登录', 'error');
-                    setTimeout(() => { window.location.href = '/login/'; }, 600);
-                    return;
+        async function openMoreMenu(anchorBtn, postId, authorId) {
+            currentMorePostId = postId;
+            const isOwner = currentUser && currentUser.id === authorId;
+            const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'root');
+
+            const rect = anchorBtn.getBoundingClientRect();
+            moreMenu.style.top = `${rect.bottom + 6}px`;
+            moreMenu.style.right = `${window.innerWidth - rect.right}px`;
+            moreMenu.classList.remove('hidden');
+
+            moreMenu.querySelectorAll('.more-item').forEach(item => {
+                item.classList.add('hidden');
+                const action = item.dataset.action;
+                if (action === 'delete' && (isOwner || isAdmin)) item.classList.remove('hidden');
+                if (action === 'report' && !isOwner) item.classList.remove('hidden');
+                if (action === 'cancel') item.classList.remove('hidden');
+            });
+        }
+
+        moreMenu.addEventListener('click', async (e) => {
+            const item = e.target.closest('.more-item');
+            if (!item) return;
+            const action = item.dataset.action;
+            moreMenu.classList.add('hidden');
+            
+            if (action === 'delete') {
+                if (confirm('确定删除这条帖子吗？')) {
+                    const res = await API.deletePost(currentMorePostId);
+                    if (res.success) {
+                        showToast('帖子已删除', 'success');
+                        document.querySelector(`article[data-post-id="${currentMorePostId}"]`)?.remove();
+                    }
                 }
-                publishModal.classList.remove('hidden');
-                publishModal.classList.add('flex');
-                setTimeout(() => publishContent.focus(), 100);
-            });
-        }
-
-        function closePublish() {
-            publishModal.classList.add('hidden');
-            publishModal.classList.remove('flex');
-        }
-
-        // 监听侧边栏派发的发布事件
-        document.addEventListener('open-publish', openPublish);
-
-        publishContent.addEventListener('input', () => {
-            publishCount.textContent = `${publishContent.value.length} / 500`;
+            } else if (action === 'report') {
+                showToast('举报功能正在建设中', 'info');
+            }
         });
 
-        document.getElementById('publish-close').addEventListener('click', closePublish);
-        publishModal.addEventListener('click', (e) => { if (e.target === publishModal) closePublish(); });
+        document.addEventListener('click', (e) => {
+            if (!moreMenu.contains(e.target) && !e.target.closest('.more-btn')) moreMenu.classList.add('hidden');
+        });
+
+        // Tab 切换
+        function setTab(tab) {
+            currentTab = tab;
+            nextCursor = null;
+            isLoading = false;
+            const dTab = document.getElementById('tab-discover');
+            const fTab = document.getElementById('tab-following');
+            const dLine = dTab.querySelector('.tab-line');
+            const fLine = fTab.querySelector('.tab-line');
+            
+            if (tab === 'discover') {
+                dTab.classList.add('active'); fTab.classList.remove('active');
+                dLine.classList.remove('hidden'); fLine.classList.add('hidden');
+            } else {
+                fTab.classList.add('active'); dTab.classList.remove('active');
+                fLine.classList.remove('hidden'); dLine.classList.add('hidden');
+            }
+            document.getElementById('feed').innerHTML = '<div id="feed-loading" class="p-8 text-center"><div class="inline-block w-6 h-6 border-2 border-[#c89f5d]/30 border-t-[#c89f5d] rounded-full animate-spin"></div></div>';
+            loadFeed();
+        }
+        document.getElementById('tab-discover').addEventListener('click', () => setTab('discover'));
+        document.getElementById('tab-following').addEventListener('click', () => setTab('following'));
+
+        // 发布逻辑
+        const publishModal = document.getElementById('publish-modal');
+        const publishContent = document.getElementById('publish-content');
+        const publishTags = document.getElementById('publish-tags');
+        const publishImage = document.getElementById('publish-image');
+        
+        document.addEventListener('open-publish', () => {
+            if (!currentUser) return showToast('请先登录', 'error');
+            publishModal.classList.remove('hidden');
+            publishModal.classList.add('flex');
+        });
+        
+        document.getElementById('publish-close').addEventListener('click', () => {
+            publishModal.classList.add('hidden');
+            publishModal.classList.remove('flex');
+        });
+
+        publishContent.addEventListener('input', () => {
+            document.getElementById('publish-count').textContent = `${publishContent.value.length} / 5000`;
+        });
 
         document.getElementById('publish-submit').addEventListener('click', async () => {
             const content = publishContent.value.trim();
-            const imageUrl = publishImage.value.trim() || null;
-            if (!content) { if (typeof showToast !== 'undefined') showToast('内容不能为空', 'error'); return; }
+            if (!content) return showToast('内容不能为空', 'error');
+            
+            const tags = publishTags.value.trim() ? publishTags.value.trim().split(/\s+/) : [];
             const btn = document.getElementById('publish-submit');
             btn.disabled = true; btn.textContent = '发布中...';
-            try {
-                const data = await API.createPost(content, imageUrl);
-                if (data.success) {
-                    publishContent.value = '';
-                    publishImage.value = '';
-                    publishCount.textContent = '0 / 500';
-                    closePublish();
-                    if (typeof showToast !== 'undefined') showToast('已发布到龙港', 'success');
-                    loadFeed();
-                }
-            } finally {
+
+            const res = await API.createPost(content, publishImage.value.trim() || null, 'discussion', tags);
+            
+            if (res.success) {
+                showToast('发布成功', 'success');
+                publishModal.classList.add('hidden');
+                publishContent.value = '';
+                publishTags.value = '';
+                publishImage.value = '';
+                setTab('discover'); // 刷新回发现页
+            } else {
                 btn.disabled = false; btn.textContent = '发布';
             }
         });
 
-        window.addEventListener('load', loadFeed);
+        window.addEventListener('load', async () => {
+            const data = await API.getMe();
+            if (data && data.user) currentUser = data.user;
+            loadFeed();
+        });
     </script>
 </body>
 </html>
