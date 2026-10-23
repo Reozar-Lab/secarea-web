@@ -64,6 +64,7 @@
         </div>
     </main>
 
+    <!-- 更多操作菜单 -->
     <div id="more-menu" class="fixed z-[90] hidden">
         <div class="w-36 rounded-xl overflow-hidden shadow-2xl ios-card py-1 border">
             <button data-action="delete" class="more-item hidden w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/5 transition">删除</button>
@@ -72,6 +73,7 @@
         </div>
     </div>
 
+    <!-- 发布弹窗 -->
     <div id="publish-modal" class="fixed inset-0 z-[80] hidden items-center justify-center sys-modal-overlay">
         <div class="w-[90%] max-w-md rounded-2xl overflow-hidden sys-modal-panel shadow-2xl">
             <div class="px-5 py-3 sys-modal-header flex justify-between items-center">
@@ -156,16 +158,17 @@
                                 <svg class="w-4 h-4 ios-text opacity-40" fill="currentColor" viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                             </button>
                         </div>
-                        <a href="/forum/post/${post.id}" class="block w-full">
+                        <a href="/forum/post/index.html?id=${post.id}" class="block w-full">
                             <div class="forum-post-text whitespace-pre-wrap break-words">${escapeHtml(preview)}</div>
                             ${renderImage(post.image_url)}
                             ${renderTags(post.tags)}
                         </a>
                         <div class="flex items-center justify-end gap-6 mt-3 text-[12.5px] ios-text opacity-50">
-                            <button class="comment-btn flex items-center gap-1.5 hover:text-[#c89f5d] hover:opacity-100 transition">
+                            <!-- 评论按钮跳转到详情页 -->
+                            <a href="/forum/post/index.html?id=${post.id}" class="flex items-center gap-1.5 hover:text-[#c89f5d] hover:opacity-100 transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                                <span>0</span>
-                            </button>
+                                <span>${post.comments_count || 0}</span>
+                            </a>
                             <button class="favorite-btn flex items-center gap-1.5 transition ${post.favoritedByMe ? 'text-[#c89f5d] opacity-100' : 'hover:text-[#c89f5d] hover:opacity-100'}" data-post-id="${post.id}">
                                 <svg class="w-4 h-4" fill="${post.favoritedByMe ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
                                 <span class="fav-count">${post.favorites_count || 0}</span>
@@ -220,7 +223,6 @@
                     const countEl = btn.querySelector('.like-count');
                     const wasLiked = btn.classList.contains('text-red-500');
                     
-                    // 乐观更新
                     if (wasLiked) {
                         btn.classList.remove('text-red-500', 'opacity-100');
                         btn.querySelector('svg').setAttribute('fill', 'none');
@@ -232,10 +234,7 @@
                     }
                     
                     const res = await API.toggleLike(id);
-                    if (res.error) {
-                        showToast(res.error, 'error');
-                        // 回滚（略，简单场景下刷新页面即可）
-                    }
+                    if (res.error) showToast(res.error, 'error');
                 });
             });
 
@@ -271,7 +270,6 @@
             });
         }
 
-        // 更多菜单逻辑
         const moreMenu = document.getElementById('more-menu');
         let currentMorePostId = null;
 
@@ -309,7 +307,10 @@
                     }
                 }
             } else if (action === 'report') {
-                showToast('举报功能正在建设中', 'info');
+                const reason = prompt("请输入举报理由（如：垃圾广告、人身攻击、违规内容等）：");
+                if (reason) {
+                    API.reportPost(currentMorePostId, reason);
+                }
             }
         });
 
@@ -317,7 +318,6 @@
             if (!moreMenu.contains(e.target) && !e.target.closest('.more-btn')) moreMenu.classList.add('hidden');
         });
 
-        // Tab 切换
         function setTab(tab) {
             currentTab = tab;
             nextCursor = null;
@@ -340,7 +340,6 @@
         document.getElementById('tab-discover').addEventListener('click', () => setTab('discover'));
         document.getElementById('tab-following').addEventListener('click', () => setTab('following'));
 
-        // 发布逻辑
         const publishModal = document.getElementById('publish-modal');
         const publishContent = document.getElementById('publish-content');
         const publishTags = document.getElementById('publish-tags');
@@ -377,7 +376,7 @@
                 publishContent.value = '';
                 publishTags.value = '';
                 publishImage.value = '';
-                setTab('discover'); // 刷新回发现页
+                setTab('discover');
             } else {
                 btn.disabled = false; btn.textContent = '发布';
             }
