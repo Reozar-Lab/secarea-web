@@ -31,13 +31,11 @@ export default {
         await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
         await env.DB.prepare("INSERT INTO otp_codes (email, code, expires_at) VALUES (?, ?, ?)").bind(email, otp, Date.now() + 10*60*1000).run();
         
-        // 临时发信
         await new Promise(r => setTimeout(r, 1000)); 
-        const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        await fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
           body: JSON.stringify({ service_id: env.EMAILJS_SERVICE_ID, template_id: env.EMAILJS_TEMPLATE_ID, user_id: env.EMAILJS_PUBLIC_KEY, template_params: { to_email: email, otp: otp } })
         });
-        // 即使邮件发不出去（比如API挂了），也不报错，方便你用后台的 888888 测试
         return jsonResp({ success: true });
       } catch (error) { return jsonResp({ error: error.message }, 500); }
     }
@@ -77,32 +75,22 @@ export default {
       } catch (error) { return jsonResp({ error: "登录失败" }, 500); }
     }
 
-    // ================= 3.5 忘记密码重置 (就是这段！) =================
     if (url.pathname === '/api/auth/reset-password' && method === 'POST') {
       try {
         const { email, otp, newPassword } = await request.json();
-        
-        // 1. 验证验证码
         const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(email, otp).first();
         if (!record || record.expires_at < Date.now()) return jsonResp({ error: "验证码错误或已过期" }, 400);
-        
-        // 2. 查用户
         const user = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
         if (!user) return jsonResp({ error: "该邮箱未注册" }, 404);
 
-        // 3. 加密新密码
         const msgBuffer = new TextEncoder().encode(newPassword + env.BETTER_AUTH_SECRET);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
         const hashedPassword = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 
-        // 4. 更新密码并删除验证码
         await env.DB.prepare("UPDATE users SET password = ? WHERE id = ?").bind(hashedPassword, user.id).run();
         await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
-        
         return jsonResp({ success: true, message: "密码重置成功" });
-      } catch (error) { 
-        return jsonResp({ error: "重置失败: " + error.message }, 500); 
-      }
+      } catch (error) { return jsonResp({ error: "重置失败" }, 500); }
     }
 
     if (url.pathname === '/api/auth/logout' && method === 'POST') {
@@ -126,7 +114,6 @@ export default {
       return jsonResp({ users: results });
     }
     
-    // 更新用户信息 (角色、封禁)
     if (url.pathname === '/api/admin/update-user' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
@@ -146,29 +133,21 @@ export default {
       const limit = parseInt(url.searchParams.get('limit')) || 20;
 
       try {
-        let sql = `
-          SELECT p.*, u.name as author_name, u.role as author_role 
-          FROM posts p 
-          JOIN users u ON p.author_id = u.id 
-          WHERE p.is_deleted = 0
-        `;
+        let sql = `SELECT p.*, u.name as author_name, u.role as author_role FROM posts p JOIN users u ON p.author_id = u.id WHERE p.is_deleted = 0`;
         const bindings = [];
 
         if (tab === 'following' && currentUser) {
           sql += ` AND p.author_id IN (SELECT following_id FROM follows WHERE follower_id = ?)`;
           bindings.push(currentUser.id);
         }
-
         if (cursor) {
           sql += ` AND p.created_at < ?`;
           bindings.push(parseInt(cursor));
         }
-
         sql += ` ORDER BY p.created_at DESC LIMIT ?`;
         bindings.push(limit + 1); 
 
         const { results } = await env.DB.prepare(sql).bind(...bindings).all();
-        
         let posts = results;
         let nextCursor = null;
         if (posts.length > limit) {
@@ -189,7 +168,6 @@ export default {
             p.favoritedByMe = favedSet.has(p.id);
           });
         }
-
         return jsonResp({ posts, nextCursor });
       } catch (e) { return jsonResp({ error: e.message }, 500); }
     }
@@ -266,6 +244,78 @@ export default {
         await env.DB.prepare("INSERT INTO favorites (user_id, post_id, created_at) VALUES (?, ?, ?)").bind(currentUser.id, postId, Date.now()).run();
         await env.DB.prepare("UPDATE posts SET favorites_count = favorites_count + 1 WHERE id = ?").bind(postId).run();
         return jsonResp({ success: true, favorited: true });
+      }
+    }
+
+    // 3.6 获取单篇帖子详情 + 评论列表
+    if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+$/) && method === 'GET') {
+      const postId = url.pathname.split('/')[4];
+      const currentUser = await getCurrentUser(request, env);
+
+      const post = await env.DB.prepare(`
+        SELECT p.*, u.name as author_name, u.role as author_role 
+        FROM posts p JOIN users u ON p.author_id = u.id 
+        WHERE p.id = ? AND p.is_deleted = 0
+      `).bind(postId).first();
+
+      if (!post) return jsonResp({ error: "帖子不存在或已删除" }, 404);
+
+      if (currentUser) {
+        const liked = await env.DB.prepare("SELECT 1 FROM likes WHERE user_id = ? AND post_id = ?").bind(currentUser.id, postId).first();
+        const faved = await env.DB.prepare("SELECT 1 FROM favorites WHERE user_id = ? AND post_id = ?").bind(currentUser.id, postId).first();
+        post.likedByMe = !!liked;
+        post.favoritedByMe = !!faved;
+      }
+
+      const { results: comments } = await env.DB.prepare(`
+        SELECT c.*, u.name as author_name, u.role as author_role 
+        FROM comments c JOIN users u ON c.author_id = u.id 
+        WHERE c.post_id = ? AND c.is_deleted = 0 
+        ORDER BY c.created_at ASC
+      `).bind(postId).all();
+
+      return jsonResp({ post, comments });
+    }
+
+    // 3.7 发表评论
+    if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+\/comments$/) && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+      if (currentUser.is_banned === 1) return jsonResp({ error: "账号已被封禁" }, 403);
+
+      const postId = url.pathname.split('/')[4];
+      const { content } = await request.json();
+      if (!content) return jsonResp({ error: "评论不能为空" }, 400);
+
+      const commentId = crypto.randomUUID();
+      await env.DB.prepare(`
+        INSERT INTO comments (id, post_id, author_id, content, created_at)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(commentId, postId, currentUser.id, content, Date.now()).run();
+
+      await env.DB.prepare("UPDATE posts SET comments_count = comments_count + 1 WHERE id = ?").bind(postId).run();
+      return jsonResp({ success: true, commentId });
+    }
+
+    // 3.8 举报帖子
+    if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+\/report$/) && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+      
+      const postId = url.pathname.split('/')[4];
+      const { reason, detail } = await request.json();
+      
+      try {
+        await env.DB.prepare(`
+          INSERT INTO reports (id, post_id, reporter_id, reason, detail, created_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(crypto.randomUUID(), postId, currentUser.id, reason, detail || null, Date.now()).run();
+        
+        await env.DB.prepare("UPDATE posts SET report_count = report_count + 1 WHERE id = ?").bind(postId).run();
+        return jsonResp({ success: true });
+      } catch (e) {
+        if (e.message.includes("UNIQUE")) return jsonResp({ error: "您已经举报过该帖子了" }, 400);
+        return jsonResp({ error: "举报失败" }, 500);
       }
     }
 
