@@ -141,13 +141,76 @@
                 <div class="forum-post-text whitespace-pre-wrap break-words mt-4">${escapeHtml(p.content)}</div>
                 ${p.image_url ? `<div class="w-full rounded-xl mt-3 overflow-hidden border ios-border"><img src="${escapeHtml(p.image_url)}" class="w-full h-auto"></div>` : ''}
                 
-                <div class="flex items-center gap-6 mt-6 pt-4 border-t ios-border text-[13px] ios-text opacity-50">
-                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg> ${p.comments_count || 0}</span>
-                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg> ${p.favorites_count || 0}</span>
-                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg> ${p.likes_count || 0}</span>
+                <!-- 详情页交互区：加入点赞、收藏、评论按钮 -->
+                <div class="flex items-center justify-end gap-6 mt-6 pt-4 border-t ios-border text-[13px] ios-text opacity-50">
+                    <button id="btn-detail-comment" class="flex items-center gap-1.5 hover:text-[#c89f5d] hover:opacity-100 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                        <span>${p.comments_count || 0}</span>
+                    </button>
+                    
+                    <button id="btn-detail-favorite" class="flex items-center gap-1.5 transition ${p.favoritedByMe ? 'text-[#c89f5d] opacity-100' : 'hover:text-[#c89f5d] hover:opacity-100'}">
+                        <svg class="w-4 h-4" fill="${p.favoritedByMe ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                        <span id="detail-fav-count">${p.favorites_count || 0}</span>
+                    </button>
+                    
+                    <button id="btn-detail-like" class="flex items-center gap-1.5 transition ${p.likedByMe ? 'text-red-500 opacity-100' : 'hover:text-red-500 hover:opacity-100'}">
+                        <svg class="w-4 h-4" fill="${p.likedByMe ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                        <span id="detail-like-count">${p.likes_count || 0}</span>
+                    </button>
                 </div>
             `;
 
+            // 绑定详情页的交互事件
+            document.getElementById('btn-detail-comment').addEventListener('click', () => {
+                document.getElementById('open-comment-modal').click();
+            });
+
+            document.getElementById('btn-detail-like').addEventListener('click', async (e) => {
+                e.preventDefault();
+                if (!currentUser) return showToast('请先登录', 'error');
+                const btn = document.getElementById('btn-detail-like');
+                const countEl = document.getElementById('detail-like-count');
+                const wasLiked = btn.classList.contains('text-red-500');
+                
+                // 乐观更新
+                if (wasLiked) {
+                    btn.classList.remove('text-red-500', 'opacity-100');
+                    btn.querySelector('svg').setAttribute('fill', 'none');
+                    countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
+                } else {
+                    btn.classList.add('text-red-500', 'opacity-100');
+                    btn.querySelector('svg').setAttribute('fill', 'currentColor');
+                    countEl.textContent = parseInt(countEl.textContent) + 1;
+                }
+                
+                const resApi = await API.toggleLike(postId);
+                if (resApi.error) showToast(resApi.error, 'error');
+            });
+
+            document.getElementById('btn-detail-favorite').addEventListener('click', async (e) => {
+                e.preventDefault();
+                if (!currentUser) return showToast('请先登录', 'error');
+                const btn = document.getElementById('btn-detail-favorite');
+                const countEl = document.getElementById('detail-fav-count');
+                const wasFav = btn.classList.contains('text-[#c89f5d]');
+                
+                // 乐观更新
+                if (wasFav) {
+                    btn.classList.remove('text-[#c89f5d]', 'opacity-100');
+                    btn.querySelector('svg').setAttribute('fill', 'none');
+                    countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
+                } else {
+                    btn.classList.add('text-[#c89f5d]', 'opacity-100');
+                    btn.querySelector('svg').setAttribute('fill', 'currentColor');
+                    countEl.textContent = parseInt(countEl.textContent) + 1;
+                }
+                
+                const resApi = await API.toggleFavorite(postId);
+                if (resApi.error) showToast(resApi.error, 'error');
+            });
+
+
+            // 渲染评论列表
             document.getElementById('comment-count').textContent = res.comments.length;
             
             if (res.comments.length === 0) {
@@ -155,7 +218,6 @@
             } else {
                 document.getElementById('comment-list').innerHTML = res.comments.map(c => {
                     const cInit = (c.author_name || '?').charAt(0).toUpperCase();
-                    // 判断当前用户是否可以删除该评论
                     const canDelete = currentUser && (currentUser.id === c.author_id || currentUser.role === 'admin' || currentUser.role === 'root');
                     
                     return `
