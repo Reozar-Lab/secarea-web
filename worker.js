@@ -9,7 +9,7 @@ export default {
       const match = cookieHeader.match(/session=([^;]+)/);
       if (!match) return null;
       const session = await env.DB.prepare(`
-          SELECT u.id, u.name, u.email, u.role, u.is_banned 
+          SELECT u.id, u.name, u.email, u.role, u.is_banned, u.bio 
           FROM sessions s JOIN users u ON s.user_id = u.id 
           WHERE s.token = ? AND s.expires_at > ?
       `).bind(match[1], Date.now()).first();
@@ -22,7 +22,6 @@ export default {
 
     // ================= 1. 认证模块 =================
     if (url.pathname === '/api/auth/send-code' && method === 'POST') {
-      // ...(原代码不变)...
       try {
         const { email } = await request.json();
         if (!email) return jsonResp({ error: "邮箱不能为空" }, 400);
@@ -34,7 +33,6 @@ export default {
     }
 
     if (url.pathname === '/api/auth/register' && method === 'POST') {
-      // ...(原代码不变)...
       try {
         const { name, email, password, otp } = await request.json();
         const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(email, otp).first();
@@ -53,7 +51,6 @@ export default {
     }
 
     if (url.pathname === '/api/auth/login' && method === 'POST') {
-      // ...(原代码不变)...
       try {
         const { email, password } = await request.json();
         const user = await env.DB.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
@@ -71,7 +68,6 @@ export default {
     }
 
     if (url.pathname === '/api/auth/reset-password' && method === 'POST') {
-      // ...(原代码不变)...
       try {
         const { email, otp, newPassword } = await request.json();
         const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(email, otp).first();
@@ -104,7 +100,6 @@ export default {
 
     // ================= 2. 管理模块 =================
     if (url.pathname === '/api/admin/users' && method === 'GET') {
-      // ...(原代码不变)...
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
       const { results } = await env.DB.prepare("SELECT id, name, email, role, is_banned FROM users ORDER BY created_at DESC").all();
@@ -112,7 +107,6 @@ export default {
     }
     
     if (url.pathname === '/api/admin/update-user' && method === 'POST') {
-      // ...(原代码不变)...
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
       const { targetUserId, newRole, newBanStatus } = await request.json();
@@ -122,27 +116,89 @@ export default {
       return jsonResp({ success: true });
     }
 
-    // ================= 3. 用户主页 API (新增) =================
+    // --- 举报管理模块 (新增) ---
+    if (url.pathname === '/api/admin/reports' && method === 'GET') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
+
+      // 读取设置的阈值
+      const settingRow = await env.DB.prepare("SELECT value FROM settings WHERE key = 'report_threshold'").first();
+      const threshold = settingRow ? parseInt(settingRow.value) : 10;
+
+      // 获取超过阈值的帖子
+      const { results: posts } = await env.DB.prepare(`
+        SELECT p.id, p.content, p.preview, p.report_count, p.author_id, u.name as author_name
+        FROM posts p JOIN users u ON p.author_id = u.id
+        WHERE p.is_deleted = 0 AND p.report_count >= ?
+        ORDER BY p.report_count DESC
+      `).bind(threshold).all();
+
+      return jsonResp({ posts, threshold });
+    }
+
+    if (url.pathname === '/api/admin/reports/dismiss' && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
+      const { postId } = await request.json();
+
+      // 将 pending 标记为 dismissed，并把帖子的 report_count 归零
+      await env.DB.prepare("UPDATE reports SET status = 'dismissed' WHERE post_id = ? AND status = 'pending'").bind(postId).run();
+      await env.DB.prepare("UPDATE posts SET report_count = 0 WHERE id = ?").bind(postId).run();
+      return jsonResp({ success: true });
+    }
+
+    if (url.pathname === '/api/admin/reports/delete-post' && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
+      const { postId } = await request.json();
+
+      // 软删除帖子，并处理所有举报为已解决
+      await env.DB.prepare("UPDATE posts SET is_deleted = 1, deleted_by = ? WHERE id = ?").bind(currentUser.id, postId).run();
+      await env.DB.prepare("UPDATE reports SET status = 'resolved', resolved_by = ? WHERE post_id = ? AND status = 'pending'").bind(currentUser.id, postId).run();
+      return jsonResp({ success: true });
+    }
+
+    if (url.pathname === '/api/admin/settings' && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
+      const { key, value } = await request.json();
+
+      await env.DB.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").bind(key, String(value)).run();
+      return jsonResp({ success: true });
+    }
+
+    // ================= 3. 用户主页与信息更新 =================
+    if (url.pathname === '/api/users/profile' && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+      const { name, bio } = await request.json();
+      if (!name) return jsonResp({ error: "用户名不能为空" }, 400);
+
+      await env.DB.prepare("UPDATE users SET name = ?, bio = ? WHERE id = ?").bind(name, bio || '', currentUser.id).run();
+      return jsonResp({ success: true });
+    }
+
     if (url.pathname.match(/^\/api\/users\/[^/]+\/public$/) && method === 'GET') {
       const targetId = url.pathname.split('/')[3];
       const currentUser = await getCurrentUser(request, env);
 
       const user = await env.DB.prepare(`
-        SELECT id, name, role, created_at, is_banned 
+        SELECT id, name, role, created_at, is_banned, bio 
         FROM users WHERE id = ?
       `).bind(targetId).first();
       
       if (!user) return jsonResp({ error: "用户不存在" }, 404);
       if (user.is_banned === 1 && (!currentUser || currentUser.role === 'user')) return jsonResp({ error: "该账号已被封禁" }, 403);
 
-      // 统计数据
       const stats = await env.DB.prepare(`
         SELECT 
           (SELECT COUNT(*) FROM posts WHERE author_id = ? AND is_deleted = 0) as post_count,
+          (SELECT COUNT(*) FROM favorites WHERE user_id = ?) as favorite_count,
           (SELECT COALESCE(SUM(likes_count), 0) FROM posts WHERE author_id = ? AND is_deleted = 0) as total_likes,
           (SELECT COUNT(*) FROM follows WHERE following_id = ?) as follower_count,
-          (SELECT COUNT(*) FROM follows WHERE follower_id = ?) as following_count
-      `).bind(targetId, targetId, targetId, targetId).first();
+          (SELECT COUNT(*) FROM follows WHERE follower_id = ?) as following_count,
+          0 as contribution_count
+      `).bind(targetId, targetId, targetId, targetId, targetId).first();
 
       let isFollowing = false;
       if (currentUser && currentUser.id !== targetId) {
@@ -152,7 +208,7 @@ export default {
 
       return jsonResp({ 
         user: { 
-          id: user.id, name: user.name, role: user.role, created_at: user.created_at,
+          id: user.id, name: user.name, role: user.role, created_at: user.created_at, bio: user.bio || '',
           ...stats, isFollowing
         } 
       });
@@ -175,12 +231,16 @@ export default {
       }
     }
 
+    if (url.pathname.match(/^\/api\/users\/[^/]+\/contributions$/) && method === 'GET') {
+      return jsonResp({ contributions: [] });
+    }
+
     // ================= 4. 发现（Forum）核心 API =================
     if (url.pathname === '/api/forum/posts' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
       const tab = url.searchParams.get('tab') || 'discover';
       const cursor = url.searchParams.get('cursor'); 
-      const authorId = url.searchParams.get('author_id'); // 新增
+      const authorId = url.searchParams.get('author_id');
       const limit = parseInt(url.searchParams.get('limit')) || 20;
 
       try {
@@ -191,6 +251,12 @@ export default {
           sql += ` AND p.author_id IN (SELECT following_id FROM follows WHERE follower_id = ?)`;
           bindings.push(currentUser.id);
         }
+        
+        if (tab === 'favorites' && currentUser) {
+          sql = `SELECT p.*, u.name as author_name, u.role as author_role FROM posts p JOIN users u ON p.author_id = u.id JOIN favorites f ON p.id = f.post_id WHERE f.user_id = ? AND p.is_deleted = 0`;
+          bindings.push(currentUser.id);
+        }
+
         if (authorId) {
           sql += ` AND p.author_id = ?`;
           bindings.push(authorId);
@@ -228,7 +294,6 @@ export default {
     }
 
     if (url.pathname === '/api/forum/posts' && method === 'POST') {
-      // ...(原代码不变)...
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
       if (currentUser.is_banned === 1) return jsonResp({ error: "账号已被封禁" }, 403);
@@ -245,7 +310,6 @@ export default {
     }
 
     if (url.pathname.startsWith('/api/forum/posts/') && method === 'DELETE') {
-      // ...(原代码不变)...
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
       const postId = url.pathname.split('/')[4];
@@ -259,7 +323,6 @@ export default {
     }
 
     if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+\/like$/) && method === 'POST') {
-      // ...(原代码不变)...
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
       const postId = url.pathname.split('/')[4];
@@ -276,7 +339,6 @@ export default {
     }
 
     if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+\/favorite$/) && method === 'POST') {
-      // ...(原代码不变)...
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
       const postId = url.pathname.split('/')[4];
@@ -293,7 +355,6 @@ export default {
     }
 
     if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+$/) && method === 'GET') {
-      // ...(原代码不变)...
       const postId = url.pathname.split('/')[4];
       const currentUser = await getCurrentUser(request, env);
       const post = await env.DB.prepare(`SELECT p.*, u.name as author_name, u.role as author_role FROM posts p JOIN users u ON p.author_id = u.id WHERE p.id = ? AND p.is_deleted = 0`).bind(postId).first();
@@ -308,7 +369,6 @@ export default {
     }
 
     if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+\/comments$/) && method === 'POST') {
-      // ...(原代码不变)...
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
       if (currentUser.is_banned === 1) return jsonResp({ error: "账号已被封禁" }, 403);
@@ -322,7 +382,6 @@ export default {
     }
 
     if (url.pathname.match(/^\/api\/forum\/comments\/[^/]+$/) && method === 'DELETE') {
-      // ...(原代码不变)...
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
       const commentId = url.pathname.split('/')[4];
@@ -337,7 +396,6 @@ export default {
     }
 
     if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+\/report$/) && method === 'POST') {
-      // ...(原代码不变)...
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
       const postId = url.pathname.split('/')[4];
