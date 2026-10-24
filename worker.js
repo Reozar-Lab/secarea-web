@@ -21,24 +21,39 @@ export default {
     });
 
     // ================= 1. 认证模块 =================
+    
+    // 【重大修改】发送验证码接口
     if (url.pathname === '/api/auth/send-code' && method === 'POST') {
       try {
         const { email } = await request.json();
         if (!email) return jsonResp({ error: "邮箱不能为空" }, 400);
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // 直接写死 888888，彻底抛弃 EmailJS
+        const otp = '888888';
+        const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 有效期 24 小时
+        
+        // 存入数据库，方便后端校验
         await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
-        await env.DB.prepare("INSERT INTO otp_codes (email, code, expires_at) VALUES (?, ?, ?)").bind(email, otp, Date.now() + 10*60*1000).run();
-        return jsonResp({ success: true });
-      } catch (error) { return jsonResp({ error: error.message }, 500); }
+        await env.DB.prepare("INSERT INTO otp_codes (email, code, expires_at) VALUES (?, ?, ?)").bind(email, otp, expiresAt).run();
+        
+        return jsonResp({ success: true, message: "测试阶段，验证码已固定为 888888" });
+      } catch (error) { 
+        return jsonResp({ error: "生成验证码失败" }, 500); 
+      }
     }
 
     if (url.pathname === '/api/auth/register' && method === 'POST') {
       try {
         const { name, email, password, otp } = await request.json();
-        const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(email, otp).first();
-        if (!record || record.expires_at < Date.now()) return jsonResp({ error: "验证码错误" }, 400);
+        
+        // 允许直接绕过验证码（如果是 888888 直接通过）
+        if (otp !== '888888') {
+           const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(email, otp).first();
+           if (!record || record.expires_at < Date.now()) return jsonResp({ error: "验证码错误" }, 400);
+        }
+
         const existingUser = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
-        if (existingUser) return jsonResp({ error: "邮箱已注册" }, 400);
+        if (existingUser) return jsonResp({ error: "该邮箱已注册" }, 400);
 
         const msgBuffer = new TextEncoder().encode(password + env.BETTER_AUTH_SECRET);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -47,7 +62,7 @@ export default {
         await env.DB.prepare("INSERT INTO users (id, name, email, password, role, created_at) VALUES (?, ?, ?, ?, 'user', ?)").bind(crypto.randomUUID(), name, email, hashedPassword, Date.now()).run();
         await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
         return jsonResp({ success: true });
-      } catch (error) { return jsonResp({ error: "注册失败" }, 500); }
+      } catch (error) { return jsonResp({ error: "注册失败: " + error.message }, 500); }
     }
 
     if (url.pathname === '/api/auth/login' && method === 'POST') {
@@ -70,8 +85,13 @@ export default {
     if (url.pathname === '/api/auth/reset-password' && method === 'POST') {
       try {
         const { email, otp, newPassword } = await request.json();
-        const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(email, otp).first();
-        if (!record || record.expires_at < Date.now()) return jsonResp({ error: "验证码错误或已过期" }, 400);
+        
+        // 允许直接绕过验证码
+        if (otp !== '888888') {
+           const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(email, otp).first();
+           if (!record || record.expires_at < Date.now()) return jsonResp({ error: "验证码错误或已过期" }, 400);
+        }
+        
         const user = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
         if (!user) return jsonResp({ error: "该邮箱未注册" }, 404);
 
@@ -116,16 +136,14 @@ export default {
       return jsonResp({ success: true });
     }
 
-    // --- 举报管理模块 (新增) ---
+    // --- 举报管理模块 ---
     if (url.pathname === '/api/admin/reports' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
 
-      // 读取设置的阈值
       const settingRow = await env.DB.prepare("SELECT value FROM settings WHERE key = 'report_threshold'").first();
       const threshold = settingRow ? parseInt(settingRow.value) : 10;
 
-      // 获取超过阈值的帖子
       const { results: posts } = await env.DB.prepare(`
         SELECT p.id, p.content, p.preview, p.report_count, p.author_id, u.name as author_name
         FROM posts p JOIN users u ON p.author_id = u.id
@@ -141,7 +159,6 @@ export default {
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
       const { postId } = await request.json();
 
-      // 将 pending 标记为 dismissed，并把帖子的 report_count 归零
       await env.DB.prepare("UPDATE reports SET status = 'dismissed' WHERE post_id = ? AND status = 'pending'").bind(postId).run();
       await env.DB.prepare("UPDATE posts SET report_count = 0 WHERE id = ?").bind(postId).run();
       return jsonResp({ success: true });
@@ -152,7 +169,6 @@ export default {
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
       const { postId } = await request.json();
 
-      // 软删除帖子，并处理所有举报为已解决
       await env.DB.prepare("UPDATE posts SET is_deleted = 1, deleted_by = ? WHERE id = ?").bind(currentUser.id, postId).run();
       await env.DB.prepare("UPDATE reports SET status = 'resolved', resolved_by = ? WHERE post_id = ? AND status = 'pending'").bind(currentUser.id, postId).run();
       return jsonResp({ success: true });
