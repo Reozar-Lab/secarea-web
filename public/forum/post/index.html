@@ -31,22 +31,23 @@
         .comment-bubble { background-color: #f2f2f7 !important; }
         html.dark .comment-bubble { background-color: #2c2c2e !important; }
 
+        /* 顶栏不再固定，跟随滚动 */
         .forum-top-nav { background-color: #ffffff !important; border-bottom: 1px solid #e5e5ea !important; }
         html.dark .forum-top-nav { background-color: #1c1c1e !important; border-bottom: 1px solid #2c2c2e !important; }
     </style>
 </head>
 <body class="page-ios min-h-screen flex flex-col relative pb-10">
 
-    <!-- 顶部导航 -->
-    <div class="fixed top-14 left-0 right-0 z-30 forum-top-nav h-12 flex items-center px-4">
-        <button onclick="window.history.back()" class="flex items-center gap-1 text-[#c89f5d] text-sm font-bold">
+    <!-- 顶部导航 (随页面滚动) -->
+    <div class="w-full pt-14 forum-top-nav h-12 flex items-center px-4 relative">
+        <button onclick="window.history.back()" class="flex items-center gap-1 text-[#c89f5d] text-sm font-bold z-10">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             返回
         </button>
         <h1 class="absolute left-1/2 -translate-x-1/2 text-sm font-bold ios-text">帖子详情</h1>
     </div>
 
-    <main class="flex-grow w-full max-w-lg mx-auto pt-28">
+    <main class="flex-grow w-full max-w-lg mx-auto">
         <!-- 帖子主内容 -->
         <div id="post-container" class="border-b ios-border p-4">
             <div class="text-center py-10 text-gray-500">加载中...</div>
@@ -71,13 +72,14 @@
     <!-- 更多操作菜单 -->
     <div id="more-menu" class="fixed z-[90] hidden">
         <div class="w-36 rounded-xl overflow-hidden shadow-2xl ios-card py-1 border">
-            <button data-action="delete" class="more-item hidden w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/5 transition">删除</button>
-            <button data-action="report" class="more-item hidden w-full text-left px-4 py-2.5 text-sm ios-text hover:bg-black/5 dark:hover:bg-white/5 transition">举报</button>
+            <button data-action="edit" class="more-item hidden w-full text-left px-4 py-2.5 text-sm ios-text hover:bg-black/5 dark:hover:bg-white/5 transition">编辑帖子</button>
+            <button data-action="delete" class="more-item hidden w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-black/5 dark:hover:bg-white/5 transition">删除帖子</button>
+            <button data-action="report" class="more-item hidden w-full text-left px-4 py-2.5 text-sm ios-text hover:bg-black/5 dark:hover:bg-white/5 transition">举报帖子</button>
             <button data-action="cancel" class="more-item w-full text-left px-4 py-2.5 text-sm ios-text opacity-60 hover:bg-black/5 dark:hover:bg-white/5 transition">取消</button>
         </div>
     </div>
 
-    <!-- 底部评论弹窗 -->
+    <!-- 底部评论弹窗 (符合个人中心风格) -->
     <div id="comment-modal" class="sys-modal-overlay fixed inset-0 z-[9999] hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
         <div id="comment-panel" class="sys-modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 flex flex-col">
             <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
@@ -93,11 +95,29 @@
         </div>
     </div>
 
+    <!-- 编辑帖子弹窗 -->
+    <div id="edit-post-modal" class="sys-modal-overlay fixed inset-0 z-[80] hidden items-center justify-center">
+        <div class="w-[90%] max-w-md rounded-2xl overflow-hidden sys-modal-panel shadow-2xl">
+            <div class="px-5 py-3 sys-modal-header flex justify-between items-center">
+                <h3 class="font-serif font-bold tracking-widest cec-text-dark text-sm">编辑帖子</h3>
+                <button id="edit-post-close" class="ios-text opacity-50 hover:opacity-100 text-xl leading-none">&times;</button>
+            </div>
+            <div class="p-5 flex flex-col gap-3">
+                <textarea id="edit-post-content" rows="5" maxlength="5000" class="w-full px-3 py-2.5 rounded-xl sys-modal-input text-[13px] outline-none resize-none"></textarea>
+                <input type="text" id="edit-post-tags" placeholder="标签，用空格分隔" class="w-full px-3 py-2.5 rounded-xl sys-modal-input text-[13px] outline-none">
+                <input type="url" id="edit-post-image" placeholder="图片链接（可选）" class="w-full px-3 py-2.5 rounded-xl sys-modal-input text-[13px] outline-none">
+                <div class="flex justify-end items-center mt-1">
+                    <button id="edit-post-submit" class="px-5 py-2 bg-[#111111] text-[#f5d78d] font-bold rounded-xl hover:bg-[#252525] transition-colors text-[13px] tracking-widest">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 举报弹窗 -->
     <div id="report-modal" class="sys-modal-overlay fixed inset-0 z-[80] hidden items-center justify-center">
         <div class="w-[90%] max-w-sm rounded-2xl overflow-hidden sys-modal-panel shadow-2xl">
             <div class="px-5 py-3 sys-modal-header flex justify-between items-center">
-                <h3 class="font-serif font-bold tracking-widest text-red-500 text-sm">举报帖子</h3>
+                <h3 class="font-serif font-bold tracking-widest text-red-500 text-sm">举报内容</h3>
                 <button id="report-close" class="ios-text opacity-50 hover:opacity-100 text-xl leading-none">&times;</button>
             </div>
             <div class="p-5 flex flex-col gap-3">
@@ -126,6 +146,10 @@
         let postId = null;
         let currentUser = null;
         let postAuthorId = null;
+        
+        // 举报目标（帖子或评论）
+        let reportTargetId = null;
+        let reportType = null; 
 
         function getQueryParam(name) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -165,7 +189,6 @@
             postAuthorId = p.author_id;
             const initial = (p.author_name || '?').charAt(0).toUpperCase();
 
-            // 渲染详情页内容，右上角新增更多按钮
             container.innerHTML = `
                 <div class="flex items-start justify-between gap-3 mb-3">
                     <div class="flex items-start gap-3 flex-1">
@@ -190,12 +213,10 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                         <span>${p.comments_count || 0}</span>
                     </button>
-                    
                     <button id="btn-detail-favorite" class="flex items-center gap-1.5 transition ${p.favoritedByMe ? 'text-[#c89f5d] opacity-100' : 'hover:text-[#c89f5d] hover:opacity-100'}">
                         <svg class="w-4 h-4" fill="${p.favoritedByMe ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
                         <span id="detail-fav-count">${p.favorites_count || 0}</span>
                     </button>
-                    
                     <button id="btn-detail-like" class="flex items-center gap-1.5 transition ${p.likedByMe ? 'text-red-500 opacity-100' : 'hover:text-red-500 hover:opacity-100'}">
                         <svg class="w-4 h-4" fill="${p.likedByMe ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                         <span id="detail-like-count">${p.likes_count || 0}</span>
@@ -203,7 +224,7 @@
                 </div>
             `;
 
-            // 绑定详情页的交互事件
+            // 绑定帖子交互
             document.getElementById('btn-detail-comment').addEventListener('click', () => {
                 document.getElementById('open-comment-modal').click();
             });
@@ -214,15 +235,10 @@
                 const btn = document.getElementById('btn-detail-like');
                 const countEl = document.getElementById('detail-like-count');
                 const wasLiked = btn.classList.contains('text-red-500');
-                
                 if (wasLiked) {
-                    btn.classList.remove('text-red-500', 'opacity-100');
-                    btn.querySelector('svg').setAttribute('fill', 'none');
-                    countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
+                    btn.classList.remove('text-red-500', 'opacity-100'); btn.querySelector('svg').setAttribute('fill', 'none'); countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
                 } else {
-                    btn.classList.add('text-red-500', 'opacity-100');
-                    btn.querySelector('svg').setAttribute('fill', 'currentColor');
-                    countEl.textContent = parseInt(countEl.textContent) + 1;
+                    btn.classList.add('text-red-500', 'opacity-100'); btn.querySelector('svg').setAttribute('fill', 'currentColor'); countEl.textContent = parseInt(countEl.textContent) + 1;
                 }
                 await API.toggleLike(postId);
             });
@@ -233,24 +249,18 @@
                 const btn = document.getElementById('btn-detail-favorite');
                 const countEl = document.getElementById('detail-fav-count');
                 const wasFav = btn.classList.contains('text-[#c89f5d]');
-                
                 if (wasFav) {
-                    btn.classList.remove('text-[#c89f5d]', 'opacity-100');
-                    btn.querySelector('svg').setAttribute('fill', 'none');
-                    countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
+                    btn.classList.remove('text-[#c89f5d]', 'opacity-100'); btn.querySelector('svg').setAttribute('fill', 'none'); countEl.textContent = Math.max(0, parseInt(countEl.textContent) - 1);
                 } else {
-                    btn.classList.add('text-[#c89f5d]', 'opacity-100');
-                    btn.querySelector('svg').setAttribute('fill', 'currentColor');
-                    countEl.textContent = parseInt(countEl.textContent) + 1;
+                    btn.classList.add('text-[#c89f5d]', 'opacity-100'); btn.querySelector('svg').setAttribute('fill', 'currentColor'); countEl.textContent = parseInt(countEl.textContent) + 1;
                 }
                 await API.toggleFavorite(postId);
             });
 
-            // 绑定更多按钮
             document.getElementById('detail-more-btn').addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                openMoreMenu(e.currentTarget);
+                openMoreMenu(e.currentTarget, p);
             });
 
             // 渲染评论列表
@@ -258,10 +268,17 @@
             
             if (res.comments.length === 0) {
                 document.getElementById('no-comments').classList.remove('hidden');
+                document.getElementById('comment-list').innerHTML = '';
             } else {
+                document.getElementById('no-comments').classList.add('hidden');
                 document.getElementById('comment-list').innerHTML = res.comments.map(c => {
                     const cInit = (c.author_name || '?').charAt(0).toUpperCase();
-                    const canDelete = currentUser && (currentUser.id === c.author_id || currentUser.role === 'admin' || currentUser.role === 'root');
+                    const isCommentOwner = currentUser && currentUser.id === c.author_id;
+                    const isPostOwner = currentUser && currentUser.id === p.author_id;
+                    const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'root');
+                    
+                    const canDelete = isCommentOwner || isPostOwner || isAdmin;
+                    const canReport = !isCommentOwner; // 自己不能举报自己
                     
                     return `
                         <div class="flex items-start gap-3">
@@ -272,6 +289,7 @@
                                     <div class="flex items-center gap-2">
                                         <span class="text-[10px] text-gray-400">${timeAgo(c.created_at)}</span>
                                         ${canDelete ? `<button onclick="deleteComment('${c.id}')" class="text-[10px] text-red-400 hover:text-red-500 transition">删除</button>` : ''}
+                                        ${canReport ? `<button onclick="openReportModal('comment', '${c.id}')" class="text-[10px] text-gray-400 hover:text-gray-600 transition">举报</button>` : ''}
                                     </div>
                                 </div>
                                 <div class="text-[13px] ios-text whitespace-pre-wrap">${escapeHtml(c.content)}</div>
@@ -284,8 +302,10 @@
 
         // ========== 更多菜单逻辑 ==========
         const moreMenu = document.getElementById('more-menu');
+        let currentPostData = null;
         
-        function openMoreMenu(anchorBtn) {
+        function openMoreMenu(anchorBtn, post) {
+            currentPostData = post;
             const isOwner = currentUser && currentUser.id === postAuthorId;
             const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'root');
 
@@ -297,6 +317,7 @@
             moreMenu.querySelectorAll('.more-item').forEach(item => {
                 item.classList.add('hidden');
                 const action = item.dataset.action;
+                if (action === 'edit' && isOwner) item.classList.remove('hidden');
                 if (action === 'delete' && (isOwner || isAdmin)) item.classList.remove('hidden');
                 if (action === 'report' && !isOwner) item.classList.remove('hidden');
                 if (action === 'cancel') item.classList.remove('hidden');
@@ -309,7 +330,13 @@
             const action = item.dataset.action;
             moreMenu.classList.add('hidden');
             
-            if (action === 'delete') {
+            if (action === 'edit') {
+                document.getElementById('edit-post-content').value = currentPostData.content;
+                document.getElementById('edit-post-tags').value = currentPostData.tags || '';
+                document.getElementById('edit-post-image').value = currentPostData.image_url || '';
+                document.getElementById('edit-post-modal').classList.remove('hidden');
+                document.getElementById('edit-post-modal').classList.add('flex');
+            } else if (action === 'delete') {
                 if (confirm('确定要删除这条帖子吗？删除后将无法恢复。')) {
                     const res = await API.deletePost(postId);
                     if (res.success) {
@@ -319,8 +346,7 @@
                 }
             } else if (action === 'report') {
                 if (!currentUser) return showToast('请先登录', 'error');
-                document.getElementById('report-modal').classList.remove('hidden');
-                document.getElementById('report-modal').classList.add('flex');
+                openReportModal('post', postId);
             }
         });
 
@@ -329,6 +355,15 @@
         });
 
         // ========== 举报弹窗逻辑 ==========
+        function openReportModal(type, targetId) {
+            reportType = type;
+            reportTargetId = targetId;
+            document.getElementById('report-reason').value = "垃圾广告";
+            document.getElementById('report-detail').value = "";
+            document.getElementById('report-modal').classList.remove('hidden');
+            document.getElementById('report-modal').classList.add('flex');
+        }
+
         document.getElementById('report-close').addEventListener('click', () => {
             document.getElementById('report-modal').classList.add('hidden');
             document.getElementById('report-modal').classList.remove('flex');
@@ -338,30 +373,51 @@
             const reason = document.getElementById('report-reason').value;
             const detail = document.getElementById('report-detail').value.trim();
             const btn = e.target;
-            
             btn.disabled = true;
             btn.textContent = '提交中...';
 
-            const res = await API.reportPost(postId, reason, detail);
+            let res;
+            if (reportType === 'post') {
+                res = await API.reportPost(reportTargetId, reason, detail);
+            } else {
+                res = await API.reportComment(reportTargetId, reason, detail);
+            }
             
             if (!res.error) {
                 document.getElementById('report-modal').classList.add('hidden');
                 document.getElementById('report-modal').classList.remove('flex');
             }
-            
             btn.disabled = false;
             btn.textContent = '提交举报';
         });
 
-        // ========== 删评逻辑 ==========
-        window.deleteComment = async function(commentId) {
-            if (!confirm("确定删除这条评论吗？")) return;
-            const res = await API.deleteComment(commentId);
+        // ========== 编辑帖子弹窗逻辑 ==========
+        document.getElementById('edit-post-close').addEventListener('click', () => {
+            document.getElementById('edit-post-modal').classList.add('hidden');
+            document.getElementById('edit-post-modal').classList.remove('flex');
+        });
+
+        document.getElementById('edit-post-submit').addEventListener('click', async (e) => {
+            const content = document.getElementById('edit-post-content').value.trim();
+            const tagsStr = document.getElementById('edit-post-tags').value.trim();
+            const imageUrl = document.getElementById('edit-post-image').value.trim() || null;
+            const tags = tagsStr ? tagsStr.split(/\s+/) : [];
+
+            if (!content) return showToast('内容不能为空', 'error');
+
+            const btn = e.target;
+            btn.disabled = true;
+            btn.textContent = '保存中...';
+
+            const res = await API.editPost(postId, content, imageUrl, 'discussion', tags);
             if (res.success) {
-                showToast("评论已删除", "success");
-                loadPost();
+                document.getElementById('edit-post-modal').classList.add('hidden');
+                document.getElementById('edit-post-modal').classList.remove('flex');
+                loadPost(); // 重新加载
             }
-        };
+            btn.disabled = false;
+            btn.textContent = '保存修改';
+        });
 
         // ========== 评论弹窗逻辑 ==========
         const commentModal = document.getElementById('comment-modal');
@@ -406,6 +462,16 @@
             btn.disabled = false;
             btn.textContent = '发送';
         });
+
+        // ========== 删评逻辑 ==========
+        window.deleteComment = async function(commentId) {
+            if (!confirm("确定删除这条评论吗？")) return;
+            const res = await API.deleteComment(commentId);
+            if (res.success) {
+                showToast("评论已删除", "success");
+                loadPost();
+            }
+        };
 
         window.addEventListener('load', async () => {
             postId = getQueryParam('id');
