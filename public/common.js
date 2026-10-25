@@ -101,7 +101,6 @@ const API = {
     return await res.json();
   },
 
-  // 举报管理
   async getReports() {
     const res = await fetch(`/api/admin/reports`);
     return await res.json();
@@ -159,6 +158,14 @@ const API = {
     } catch (e) { return { error: '网络错误' }; }
   },
 
+  async getContributions(userId) {
+    try {
+      const res = await fetch(`/api/users/${userId}/contributions`);
+      if (!res.ok) return { contributions: [] };
+      return await res.json();
+    } catch (e) { return { contributions: [] }; }
+  },
+
   // ================= 发现（Forum）模块 =================
   async getPosts(cursor = null, tab = 'discover', limit = 20, authorId = null) {
     try {
@@ -181,6 +188,19 @@ const API = {
       if (data.error) showToast(data.error, 'error');
       return data;
     } catch (e) { showToast('网络错误', 'error'); return { error: '网络错误' }; }
+  },
+
+  async editPost(postId, content, imageUrl = null, category = 'discussion', tags = []) {
+    try {
+      const res = await fetch(`/api/forum/posts/${postId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, imageUrl, category, tags })
+      });
+      const data = await res.json();
+      if (data.error) showToast(data.error, 'error');
+      else showToast('修改成功', 'success');
+      return data;
+    } catch (e) { return { error: '网络错误' }; }
   },
 
   async toggleLike(postId) {
@@ -245,11 +265,16 @@ const API = {
     } catch (e) { return { error: '网络错误' }; }
   },
 
-  async getContributions(userId) {
+  async reportComment(commentId, reason, detail = '') {
     try {
-      const res = await fetch(`/api/users/${userId}/contributions`);
-      if (!res.ok) return { contributions: [] };
-      return await res.json();
-    } catch (e) { return { contributions: [] }; }
+      const res = await fetch(`/api/forum/comments/${commentId}/report`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason, detail })
+      });
+      const data = await res.json();
+      if (data.error) showToast(data.error, 'error');
+      else showToast('举报已提交，感谢您的反馈', 'success');
+      return data;
+    } catch (e) { return { error: '网络错误' }; }
   }
 };
