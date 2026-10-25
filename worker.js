@@ -2,7 +2,7 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     
-    // ================= 0. 强制 HTTPS 重定向 =================
+    // 强制 HTTPS
     if (url.protocol === 'http:') {
       url.protocol = 'https:';
       return Response.redirect(url.toString(), 301);
@@ -10,7 +10,6 @@ export default {
 
     const method = request.method;
 
-    // 辅助函数：获取当前请求的用户信息
     async function getCurrentUser(request, env) {
       const cookieHeader = request.headers.get('Cookie');
       if (!cookieHeader) return null;
@@ -24,7 +23,6 @@ export default {
       return session || null;
     }
     
-    // 统一 JSON 返回辅助
     const jsonResp = (obj, status = 200) => new Response(JSON.stringify(obj), {
       status, headers: { "Content-Type": "application/json" }
     });
@@ -39,29 +37,16 @@ export default {
         await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
         await env.DB.prepare("INSERT INTO otp_codes (email, code, expires_at) VALUES (?, ?, ?)").bind(email, otp, Date.now() + 10*60*1000).run();
         
-        // 防封延迟
         await new Promise(r => setTimeout(r, 1000)); 
-        
         const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-          method: 'POST', 
-          headers: { 
-            'Content-Type': 'application/json', 
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' 
-          },
-          body: JSON.stringify({ 
-            service_id: env.EMAILJS_SERVICE_ID, 
-            template_id: env.EMAILJS_TEMPLATE_ID, 
-            user_id: env.EMAILJS_PUBLIC_KEY, 
-            template_params: { to_email: email, otp: otp } 
-          })
+          method: 'POST', headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+          body: JSON.stringify({ service_id: env.EMAILJS_SERVICE_ID, template_id: env.EMAILJS_TEMPLATE_ID, user_id: env.EMAILJS_PUBLIC_KEY, template_params: { to_email: email, otp: otp } })
         });
 
-        // 暴露真实报错给前端
         if (!res.ok) {
           const errText = await res.text();
           return jsonResp({ error: `发信失败 (${res.status}): ${errText}` }, 500);
         }
-
         return jsonResp({ success: true });
       } catch (error) { return jsonResp({ error: "网络错误: " + error.message }, 500); }
     }
@@ -70,7 +55,7 @@ export default {
       try {
         const { name, email, password, otp } = await request.json();
         const record = await env.DB.prepare("SELECT * FROM otp_codes WHERE email = ? AND code = ?").bind(email, otp).first();
-        if (!record || record.expires_at < Date.now()) return jsonResp({ error: "验证码错误或已过期" }, 400);
+        if (!record || record.expires_at < Date.now()) return jsonResp({ error: "验证码错误" }, 400);
         const existingUser = await env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
         if (existingUser) return jsonResp({ error: "邮箱已注册" }, 400);
 
@@ -150,7 +135,6 @@ export default {
       return jsonResp({ success: true });
     }
 
-    // 举报管理模块
     if (url.pathname === '/api/admin/reports' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
@@ -172,7 +156,6 @@ export default {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
       const { postId } = await request.json();
-
       await env.DB.prepare("UPDATE reports SET status = 'dismissed' WHERE post_id = ? AND status = 'pending'").bind(postId).run();
       await env.DB.prepare("UPDATE posts SET report_count = 0 WHERE id = ?").bind(postId).run();
       return jsonResp({ success: true });
@@ -182,7 +165,6 @@ export default {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
       const { postId } = await request.json();
-
       await env.DB.prepare("UPDATE posts SET is_deleted = 1, deleted_by = ? WHERE id = ?").bind(currentUser.id, postId).run();
       await env.DB.prepare("UPDATE reports SET status = 'resolved', resolved_by = ? WHERE post_id = ? AND status = 'pending'").bind(currentUser.id, postId).run();
       return jsonResp({ success: true });
@@ -192,7 +174,6 @@ export default {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
       const { key, value } = await request.json();
-
       await env.DB.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").bind(key, String(value)).run();
       return jsonResp({ success: true });
     }
@@ -211,11 +192,7 @@ export default {
     if (url.pathname.match(/^\/api\/users\/[^/]+\/public$/) && method === 'GET') {
       const targetId = url.pathname.split('/')[3];
       const currentUser = await getCurrentUser(request, env);
-
-      const user = await env.DB.prepare(`
-        SELECT id, name, role, created_at, is_banned, bio 
-        FROM users WHERE id = ?
-      `).bind(targetId).first();
+      const user = await env.DB.prepare(`SELECT id, name, role, created_at, is_banned, bio FROM users WHERE id = ?`).bind(targetId).first();
       
       if (!user) return jsonResp({ error: "用户不存在" }, 404);
       if (user.is_banned === 1 && (!currentUser || currentUser.role === 'user')) return jsonResp({ error: "该账号已被封禁" }, 403);
@@ -235,13 +212,7 @@ export default {
         const follow = await env.DB.prepare("SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?").bind(currentUser.id, targetId).first();
         isFollowing = !!follow;
       }
-
-      return jsonResp({ 
-        user: { 
-          id: user.id, name: user.name, role: user.role, created_at: user.created_at, bio: user.bio || '',
-          ...stats, isFollowing
-        } 
-      });
+      return jsonResp({ user: { id: user.id, name: user.name, role: user.role, created_at: user.created_at, bio: user.bio || '', ...stats, isFollowing } });
     }
 
     if (url.pathname.match(/^\/api\/users\/[^/]+\/follow$/) && method === 'POST') {
@@ -249,9 +220,7 @@ export default {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
       if (currentUser.id === targetId) return jsonResp({ error: "不能关注自己" }, 400);
-
       const existing = await env.DB.prepare("SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?").bind(currentUser.id, targetId).first();
-      
       if (existing) {
         await env.DB.prepare("DELETE FROM follows WHERE follower_id = ? AND following_id = ?").bind(currentUser.id, targetId).run();
         return jsonResp({ success: true, following: false });
@@ -310,10 +279,8 @@ export default {
           const postIds = posts.map(p => `'${p.id}'`).join(',');
           const likes = await env.DB.prepare(`SELECT post_id FROM likes WHERE user_id = ? AND post_id IN (${postIds})`).bind(currentUser.id).all();
           const favs = await env.DB.prepare(`SELECT post_id FROM favorites WHERE user_id = ? AND post_id IN (${postIds})`).bind(currentUser.id).all();
-          
           const likedSet = new Set(likes.results.map(r => r.post_id));
           const favedSet = new Set(favs.results.map(r => r.post_id));
-          
           posts.forEach(p => {
             p.likedByMe = likedSet.has(p.id);
             p.favoritedByMe = favedSet.has(p.id);
@@ -336,6 +303,35 @@ export default {
         const preview = content.length > 200 ? content.substring(0, 200) : content;
         await env.DB.prepare(`INSERT INTO posts (id, author_id, content, preview, image_url, category, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(postId, currentUser.id, content, preview, imageUrl, category || 'discussion', tagsStr, now, now).run();
         return jsonResp({ success: true, postId });
+      } catch (e) { return jsonResp({ error: e.message }, 500); }
+    }
+
+    // 【新增】编辑帖子 PUT
+    if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+$/) && method === 'PUT') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+      
+      const postId = url.pathname.split('/')[4];
+      const post = await env.DB.prepare("SELECT author_id FROM posts WHERE id = ? AND is_deleted = 0").bind(postId).first();
+      if (!post) return jsonResp({ error: "帖子不存在" }, 404);
+      
+      const isOwner = post.author_id === currentUser.id;
+      const isAdmin = currentUser.role === 'admin' || currentUser.role === 'root';
+      if (!isOwner && !isAdmin) return jsonResp({ error: "无权编辑此帖子" }, 403);
+
+      try {
+        const { content, imageUrl, category, tags } = await request.json();
+        if (!content) return jsonResp({ error: "内容不能为空" }, 400);
+        
+        const tagsStr = tags && tags.length ? tags.join(',') : null;
+        const preview = content.length > 200 ? content.substring(0, 200) : content;
+        
+        await env.DB.prepare(`
+          UPDATE posts SET content = ?, preview = ?, image_url = ?, category = ?, tags = ?, updated_at = ? 
+          WHERE id = ?
+        `).bind(content, preview, imageUrl, category || 'discussion', tagsStr, Date.now(), postId).run();
+        
+        return jsonResp({ success: true });
       } catch (e) { return jsonResp({ error: e.message }, 500); }
     }
 
@@ -419,7 +415,13 @@ export default {
       if (!comment) return jsonResp({ error: "评论不存在或已删除" }, 404);
       const isOwner = comment.author_id === currentUser.id;
       const isAdmin = currentUser.role === 'admin' || currentUser.role === 'root';
-      if (!isOwner && !isAdmin) return jsonResp({ error: "无权删除此评论" }, 403);
+      
+      // 帖主也可以删帖下的评论
+      const post = await env.DB.prepare("SELECT author_id FROM posts WHERE id = ?").bind(comment.post_id).first();
+      const isPostOwner = post && post.author_id === currentUser.id;
+
+      if (!isOwner && !isAdmin && !isPostOwner) return jsonResp({ error: "无权删除此评论" }, 403);
+      
       await env.DB.prepare("UPDATE comments SET is_deleted = 1 WHERE id = ?").bind(commentId).run();
       await env.DB.prepare("UPDATE posts SET comments_count = comments_count - 1 WHERE id = ?").bind(comment.post_id).run();
       return jsonResp({ success: true });
@@ -436,6 +438,27 @@ export default {
         return jsonResp({ success: true });
       } catch (e) {
         if (e.message.includes("UNIQUE")) return jsonResp({ error: "您已经举报过该帖子了，请勿重复举报" }, 400);
+        return jsonResp({ error: "举报失败: " + e.message }, 500);
+      }
+    }
+
+    // 【新增】举报评论
+    if (url.pathname.match(/^\/api\/forum\/comments\/[^/]+\/report$/) && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+      const commentId = url.pathname.split('/')[4];
+      const { reason, detail } = await request.json();
+      
+      try {
+        await env.DB.prepare(`
+          INSERT INTO comment_reports (id, comment_id, reporter_id, reason, detail, created_at) 
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(crypto.randomUUID(), commentId, currentUser.id, reason, detail || null, Date.now()).run();
+        
+        await env.DB.prepare("UPDATE comments SET report_count = report_count + 1 WHERE id = ?").bind(commentId).run();
+        return jsonResp({ success: true });
+      } catch (e) {
+        if (e.message.includes("UNIQUE")) return jsonResp({ error: "您已经举报过该评论了，请勿重复举报" }, 400);
         return jsonResp({ error: "举报失败: " + e.message }, 500);
       }
     }
