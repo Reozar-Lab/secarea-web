@@ -8,36 +8,42 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
 
-    // ================= 0. Wiki 反向代理 =================
+    // ================= 0. Wiki 反向代理 (带边缘缓存加速) =================
     if (url.pathname === '/wiki' || url.pathname.startsWith('/wiki/')) {
-      // 你的 Quartz Pages 临时域名
       const WIKI_HOST = 'secarea-wiki.pages.dev';
       
-      // 剥离 /wiki 前缀
       let targetPath = url.pathname.replace(/^\/wiki/, '');
       if (targetPath === '') targetPath = '/';
       
       const targetUrl = new URL(targetPath + url.search, `https://${WIKI_HOST}`);
       
-      // 构造代理请求
-      const proxyRequest = new Request(targetUrl, {
-        method: request.method,
-        headers: request.headers,
-        body: request.body,
-        redirect: 'manual' // 拦截重定向，避免跳出 /wiki 路径
-      });
+      // 使用 Cloudflare 边缘缓存
+      const cache = caches.default;
+      let response = await cache.match(request);
       
-      // 设置正确的 Host 和 Header
-      proxyRequest.headers.set('Host', WIKI_HOST);
+      if (!response) {
+        const proxyRequest = new Request(targetUrl, {
+          method: request.method,
+          headers: request.headers,
+          body: request.body,
+        });
+        proxyRequest.headers.set('Host', WIKI_HOST);
+        
+        response = await fetch(proxyRequest);
+        
+        // 如果是 GET 请求，自动缓存 1 天
+        if (request.method === 'GET') {
+          response = new Response(response.body, response);
+          response.headers.set('Cache-Control', 'public, max-age=86400');
+          ctx.waitUntil(cache.put(request, response.clone()));
+        }
+      }
       
-      const response = await fetch(proxyRequest);
-      
-      // 如果 Quartz 内部发生重定向，将 location 头修改回 /wiki 开头
+      // 处理重定向
       let newHeaders = new Headers(response.headers);
       const location = newHeaders.get('location');
       if (location && location.startsWith(`https://${WIKI_HOST}`)) {
-        const newLocation = location.replace(`https://${WIKI_HOST}`, 'https://' + url.hostname + '/wiki');
-        newHeaders.set('location', newLocation);
+        newHeaders.set('location', location.replace(`https://${WIKI_HOST}`, 'https://' + url.hostname + '/wiki'));
       }
       
       return new Response(response.body, {
@@ -49,6 +55,7 @@ export default {
 
     const method = request.method;
 
+    // 辅助函数：获取当前请求的用户信息
     async function getCurrentUser(request, env) {
       const cookieHeader = request.headers.get('Cookie');
       if (!cookieHeader) return null;
@@ -62,11 +69,12 @@ export default {
       return session || null;
     }
     
+    // 统一 JSON 返回辅助
     const jsonResp = (obj, status = 200) => new Response(JSON.stringify(obj), {
       status, headers: { "Content-Type": "application/json" }
     });
 
-    // ================= 1. 文件上传 API (预留，暂未启用 HF/GitHub) =================
+    // ================= 1. 文件上传 API (预留，暂未启用) =================
     if (url.pathname === '/api/upload' && method === 'POST') {
       return jsonResp({ error: "图片上传功能正在维护中" }, 503);
     }
@@ -486,6 +494,7 @@ export default {
       return jsonResp({ error: "接口尚未实现" }, 404);
     }
 
+    // 兜底：返回静态资源
     return env.ASSETS.fetch(request);
   }
 };
