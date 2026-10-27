@@ -8,6 +8,45 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
 
+    // ================= 0. Wiki 反向代理 =================
+    if (url.pathname === '/wiki' || url.pathname.startsWith('/wiki/')) {
+      // 你的 Quartz Pages 临时域名
+      const WIKI_HOST = 'secarea-wiki.pages.dev';
+      
+      // 剥离 /wiki 前缀
+      let targetPath = url.pathname.replace(/^\/wiki/, '');
+      if (targetPath === '') targetPath = '/';
+      
+      const targetUrl = new URL(targetPath + url.search, `https://${WIKI_HOST}`);
+      
+      // 构造代理请求
+      const proxyRequest = new Request(targetUrl, {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+        redirect: 'manual' // 拦截重定向，避免跳出 /wiki 路径
+      });
+      
+      // 设置正确的 Host 和 Header
+      proxyRequest.headers.set('Host', WIKI_HOST);
+      
+      const response = await fetch(proxyRequest);
+      
+      // 如果 Quartz 内部发生重定向，将 location 头修改回 /wiki 开头
+      let newHeaders = new Headers(response.headers);
+      const location = newHeaders.get('location');
+      if (location && location.startsWith(`https://${WIKI_HOST}`)) {
+        const newLocation = location.replace(`https://${WIKI_HOST}`, 'https://' + url.hostname + '/wiki');
+        newHeaders.set('location', newLocation);
+      }
+      
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: newHeaders
+      });
+    }
+
     const method = request.method;
 
     async function getCurrentUser(request, env) {
@@ -27,12 +66,16 @@ export default {
       status, headers: { "Content-Type": "application/json" }
     });
 
-    // ================= 1. 认证模块 =================
+    // ================= 1. 文件上传 API (预留，暂未启用 HF/GitHub) =================
+    if (url.pathname === '/api/upload' && method === 'POST') {
+      return jsonResp({ error: "图片上传功能正在维护中" }, 503);
+    }
+
+    // ================= 2. 认证模块 =================
     if (url.pathname === '/api/auth/send-code' && method === 'POST') {
       try {
         const { email } = await request.json();
         if (!email) return jsonResp({ error: "邮箱不能为空" }, 400);
-        
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         await env.DB.prepare("DELETE FROM otp_codes WHERE email = ?").bind(email).run();
         await env.DB.prepare("INSERT INTO otp_codes (email, code, expires_at) VALUES (?, ?, ?)").bind(email, otp, Date.now() + 10*60*1000).run();
@@ -117,7 +160,7 @@ export default {
       return jsonResp({ user: await getCurrentUser(request, env) });
     }
 
-    // ================= 2. 管理模块 =================
+    // ================= 3. 管理模块 =================
     if (url.pathname === '/api/admin/users' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
@@ -138,17 +181,14 @@ export default {
     if (url.pathname === '/api/admin/reports' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
-
       const settingRow = await env.DB.prepare("SELECT value FROM settings WHERE key = 'report_threshold'").first();
       const threshold = settingRow ? parseInt(settingRow.value) : 10;
-
       const { results: posts } = await env.DB.prepare(`
         SELECT p.id, p.content, p.preview, p.report_count, p.author_id, u.name as author_name
         FROM posts p JOIN users u ON p.author_id = u.id
         WHERE p.is_deleted = 0 AND p.report_count >= ?
         ORDER BY p.report_count DESC
       `).bind(threshold).all();
-
       return jsonResp({ posts, threshold });
     }
 
@@ -178,13 +218,12 @@ export default {
       return jsonResp({ success: true });
     }
 
-    // ================= 3. 用户主页与信息更新 =================
+    // ================= 4. 用户主页与信息更新 =================
     if (url.pathname === '/api/users/profile' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
       const { name, bio } = await request.json();
       if (!name) return jsonResp({ error: "用户名不能为空" }, 400);
-
       await env.DB.prepare("UPDATE users SET name = ?, bio = ? WHERE id = ?").bind(name, bio || '', currentUser.id).run();
       return jsonResp({ success: true });
     }
@@ -234,7 +273,7 @@ export default {
       return jsonResp({ contributions: [] });
     }
 
-    // ================= 4. 发现（Forum）核心 API =================
+    // ================= 5. 发现（Forum）核心 API =================
     if (url.pathname === '/api/forum/posts' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
       const tab = url.searchParams.get('tab') || 'discover';
@@ -306,31 +345,21 @@ export default {
       } catch (e) { return jsonResp({ error: e.message }, 500); }
     }
 
-    // 【新增】编辑帖子 PUT
     if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+$/) && method === 'PUT') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
-      
       const postId = url.pathname.split('/')[4];
       const post = await env.DB.prepare("SELECT author_id FROM posts WHERE id = ? AND is_deleted = 0").bind(postId).first();
       if (!post) return jsonResp({ error: "帖子不存在" }, 404);
-      
       const isOwner = post.author_id === currentUser.id;
       const isAdmin = currentUser.role === 'admin' || currentUser.role === 'root';
       if (!isOwner && !isAdmin) return jsonResp({ error: "无权编辑此帖子" }, 403);
-
       try {
         const { content, imageUrl, category, tags } = await request.json();
         if (!content) return jsonResp({ error: "内容不能为空" }, 400);
-        
         const tagsStr = tags && tags.length ? tags.join(',') : null;
         const preview = content.length > 200 ? content.substring(0, 200) : content;
-        
-        await env.DB.prepare(`
-          UPDATE posts SET content = ?, preview = ?, image_url = ?, category = ?, tags = ?, updated_at = ? 
-          WHERE id = ?
-        `).bind(content, preview, imageUrl, category || 'discussion', tagsStr, Date.now(), postId).run();
-        
+        await env.DB.prepare(`UPDATE posts SET content = ?, preview = ?, image_url = ?, category = ?, tags = ?, updated_at = ? WHERE id = ?`).bind(content, preview, imageUrl, category || 'discussion', tagsStr, Date.now(), postId).run();
         return jsonResp({ success: true });
       } catch (e) { return jsonResp({ error: e.message }, 500); }
     }
@@ -415,13 +444,9 @@ export default {
       if (!comment) return jsonResp({ error: "评论不存在或已删除" }, 404);
       const isOwner = comment.author_id === currentUser.id;
       const isAdmin = currentUser.role === 'admin' || currentUser.role === 'root';
-      
-      // 帖主也可以删帖下的评论
       const post = await env.DB.prepare("SELECT author_id FROM posts WHERE id = ?").bind(comment.post_id).first();
       const isPostOwner = post && post.author_id === currentUser.id;
-
       if (!isOwner && !isAdmin && !isPostOwner) return jsonResp({ error: "无权删除此评论" }, 403);
-      
       await env.DB.prepare("UPDATE comments SET is_deleted = 1 WHERE id = ?").bind(commentId).run();
       await env.DB.prepare("UPDATE posts SET comments_count = comments_count - 1 WHERE id = ?").bind(comment.post_id).run();
       return jsonResp({ success: true });
@@ -442,19 +467,13 @@ export default {
       }
     }
 
-    // 【新增】举报评论
     if (url.pathname.match(/^\/api\/forum\/comments\/[^/]+\/report$/) && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
       const commentId = url.pathname.split('/')[4];
       const { reason, detail } = await request.json();
-      
       try {
-        await env.DB.prepare(`
-          INSERT INTO comment_reports (id, comment_id, reporter_id, reason, detail, created_at) 
-          VALUES (?, ?, ?, ?, ?, ?)
-        `).bind(crypto.randomUUID(), commentId, currentUser.id, reason, detail || null, Date.now()).run();
-        
+        await env.DB.prepare(`INSERT INTO comment_reports (id, comment_id, reporter_id, reason, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)`).bind(crypto.randomUUID(), commentId, currentUser.id, reason, detail || null, Date.now()).run();
         await env.DB.prepare("UPDATE comments SET report_count = report_count + 1 WHERE id = ?").bind(commentId).run();
         return jsonResp({ success: true });
       } catch (e) {
