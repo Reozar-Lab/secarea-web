@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wiki · 匿境 Secarea</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../style.css">
+    <script>
+        // 尽早应用暗黑模式，防止页面闪烁
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        /* 隐藏主站的底部页脚，防止和 Iframe 抢空间 */
+        footer { display: none !important; }
+        
+        /* 锁定页面高度，防止出现双重滚动条 */
+        html, body { height: 100%; overflow: hidden; background-color: #f2f2f7; }
+        html.dark body { background-color: #141414; }
+
+        /* 加载遮罩动画 */
+        #wiki-loading {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f2f2f7;
+            transition: opacity 0.5s ease;
+        }
+        html.dark #wiki-loading { background-color: #141414; }
+        
+        .dot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; background-color: #c89f5d; opacity: 0.3; animation: dot-pulse 1.2s infinite ease-in-out alternate; }
+        .dot:nth-child(1) { animation-delay: 0.0s; } .dot:nth-child(2) { animation-delay: 0.1s; } .dot:nth-child(3) { animation-delay: 0.2s; } .dot:nth-child(4) { animation-delay: 0.1s; } .dot:nth-child(5) { animation-delay: 0.2s; } .dot:nth-child(6) { animation-delay: 0.3s; } .dot:nth-child(7) { animation-delay: 0.2s; } .dot:nth-child(8) { animation-delay: 0.3s; } .dot:nth-child(9) { animation-delay: 0.4s; }
+        @keyframes dot-pulse { 0% { opacity: 0.2; transform: scale(0.8); background-color: #c89f5d; } 100% { opacity: 1; transform: scale(1.1); background-color: #f2d7a4; box-shadow: 0 0 10px rgba(242, 215, 164, 0.5); } }
+    </style>
+</head>
+<body class="page-ios min-h-screen flex flex-col relative">
+
+    <!-- 主站 layout.js 会在这里自动注入黑金顶栏，占位高度为 h-14 (56px) -->
+    
+    <!-- 承载 Wiki 的容器 -->
+    <div class="w-full flex-grow relative pt-14">
+        
+        <!-- 加载遮罩 -->
+        <div id="wiki-loading">
+            <div class="dot-grid mb-4">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            <p class="text-xs font-roman tracking-widest opacity-50" style="color: #c89f5d;">正在接入内界档案库...</p>
+        </div>
+
+        <!-- Iframe 本尊 -->
+        <iframe 
+            id="wiki-frame"
+            src="https://wiki.secarea.de5.net" 
+            class="absolute inset-0 w-full h-full border-none"
+            allow="clipboard-write"
+        ></iframe>
+    </div>
+
+    <script src="../common.js"></script>
+    <script src="../layout.js"></script>
+    
+    <script>
+        const iframe = document.getElementById('wiki-frame');
+        const loading = document.getElementById('wiki-loading');
+
+        // 1. Iframe 加载完毕后，隐藏主站的加载动画
+        iframe.addEventListener('load', () => {
+            loading.style.opacity = '0';
+            setTimeout(() => {
+                loading.style.display = 'none';
+            }, 500);
+        });
+
+        // 2. 暗黑模式同步逻辑
+        function syncThemeToIframe() {
+            const isDark = document.documentElement.classList.contains('dark');
+            // Quartz 支持通过 URL 参数或者直接读取系统偏好，我们这里强制刷新一下带上参数
+            // 注意：为了防止死循环刷新，我们只在特定条件下改 src
+            const currentSrc = iframe.src;
+            const baseUrl = "https://wiki.secarea.de5.net";
+            
+            if (isDark && !currentSrc.includes('theme=dark')) {
+                // 显示加载遮罩并刷新 iframe
+                loading.style.display = 'flex';
+                loading.style.opacity = '1';
+                iframe.src = baseUrl + '?theme=dark';
+            } else if (!isDark && currentSrc.includes('theme=dark')) {
+                loading.style.display = 'flex';
+                loading.style.opacity = '1';
+                iframe.src = baseUrl;
+            }
+        }
+
+        // 3. 监听主站的主题切换按钮
+        // layout.js 会生成一个 id 为 theme-toggle 的按钮
+        document.addEventListener('click', (e) => {
+            // 如果点击的是切换主题按钮或者其内部的 SVG
+            if (e.target.closest('#theme-toggle')) {
+                // 给一点延迟，等 layout.js 把 html 的 dark 类切换完
+                setTimeout(syncThemeToIframe, 100);
+            }
+        });
+        
+        // 页面初次加载时，同步一次
+        window.addEventListener('load', () => {
+            syncThemeToIframe();
+        });
+    </script>
+</body>
+</html>
