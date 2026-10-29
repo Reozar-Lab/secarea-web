@@ -8,51 +8,6 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
 
-    // ================= 0. Wiki 反向代理 (带边缘缓存加速) =================
-    if (url.pathname === '/wiki' || url.pathname.startsWith('/wiki/')) {
-      const WIKI_HOST = 'secarea-wiki.pages.dev';
-      
-      let targetPath = url.pathname.replace(/^\/wiki/, '');
-      if (targetPath === '') targetPath = '/';
-      
-      const targetUrl = new URL(targetPath + url.search, `https://${WIKI_HOST}`);
-      
-      // 使用 Cloudflare 边缘缓存
-      const cache = caches.default;
-      let response = await cache.match(request);
-      
-      if (!response) {
-        const proxyRequest = new Request(targetUrl, {
-          method: request.method,
-          headers: request.headers,
-          body: request.body,
-        });
-        proxyRequest.headers.set('Host', WIKI_HOST);
-        
-        response = await fetch(proxyRequest);
-        
-        // 如果是 GET 请求，自动缓存 1 天
-        if (request.method === 'GET') {
-          response = new Response(response.body, response);
-          response.headers.set('Cache-Control', 'public, max-age=86400');
-          ctx.waitUntil(cache.put(request, response.clone()));
-        }
-      }
-      
-      // 处理重定向
-      let newHeaders = new Headers(response.headers);
-      const location = newHeaders.get('location');
-      if (location && location.startsWith(`https://${WIKI_HOST}`)) {
-        newHeaders.set('location', location.replace(`https://${WIKI_HOST}`, 'https://' + url.hostname + '/wiki'));
-      }
-      
-      return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
-        headers: newHeaders
-      });
-    }
-
     const method = request.method;
 
     // 辅助函数：获取当前请求的用户信息
@@ -74,12 +29,12 @@ export default {
       status, headers: { "Content-Type": "application/json" }
     });
 
-    // ================= 1. 文件上传 API (预留，暂未启用) =================
+    // ================= 0. 文件上传 API (暂未启用) =================
     if (url.pathname === '/api/upload' && method === 'POST') {
       return jsonResp({ error: "图片上传功能正在维护中" }, 503);
     }
 
-    // ================= 2. 认证模块 =================
+    // ================= 1. 认证模块 =================
     if (url.pathname === '/api/auth/send-code' && method === 'POST') {
       try {
         const { email } = await request.json();
@@ -168,7 +123,7 @@ export default {
       return jsonResp({ user: await getCurrentUser(request, env) });
     }
 
-    // ================= 3. 管理模块 =================
+    // ================= 2. 管理模块 =================
     if (url.pathname === '/api/admin/users' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
@@ -226,7 +181,7 @@ export default {
       return jsonResp({ success: true });
     }
 
-    // ================= 4. 用户主页与信息更新 =================
+    // ================= 3. 用户主页与信息更新 =================
     if (url.pathname === '/api/users/profile' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
@@ -281,7 +236,7 @@ export default {
       return jsonResp({ contributions: [] });
     }
 
-    // ================= 5. 发现（Forum）核心 API =================
+    // ================= 4. 发现（Forum）核心 API =================
     if (url.pathname === '/api/forum/posts' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
       const tab = url.searchParams.get('tab') || 'discover';
@@ -490,11 +445,67 @@ export default {
       }
     }
 
+    // ================= 5. Wiki 在线编辑 API (预留) =================
+    if (url.pathname === '/api/wiki/save' && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+      
+      if (currentUser.role === 'user') {
+        return jsonResp({ error: "权限不足，仅编者及以上可编辑百科" }, 403);
+      }
+
+      try {
+        const { filename, content } = await request.json();
+        if (!filename || !content) return jsonResp({ error: "文件名或内容不能为空" }, 400);
+
+        const safeFilename = filename.endsWith('.md') ? filename : `${filename}.md`;
+        const encodedContent = btoa(unescape(encodeURIComponent(content)));
+
+        let sha = null;
+        const getRes = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/contents/content/${safeFilename}`, {
+          headers: { 'Authorization': `Bearer ${env.GITHUB_TOKEN}`, 'User-Agent': 'Cloudflare-Worker' }
+        });
+        
+        if (getRes.ok) {
+          const fileData = await getRes.json();
+          sha = fileData.sha;
+        }
+
+        const putRes = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/contents/content/${safeFilename}`, {
+          method: 'PUT',
+          headers: { 
+            'Authorization': `Bearer ${env.GITHUB_TOKEN}`, 
+            'Content-Type': 'application/json',
+            'User-Agent': 'Cloudflare-Worker'
+          },
+          body: JSON.stringify({
+            message: `Wiki Update: ${safeFilename}`,
+            content: encodedContent,
+            sha: sha || undefined 
+          })
+        });
+
+        if (!putRes.ok) {
+          const errText = await putRes.text();
+          return jsonResp({ error: "GitHub 推送失败: " + errText }, 500);
+        }
+
+        if (env.PAGES_DEPLOY_HOOK) {
+          ctx.waitUntil(fetch(env.PAGES_DEPLOY_HOOK, { method: 'POST' }));
+        }
+
+        return jsonResp({ success: true, message: "已提交至 GitHub，正在重新构建页面..." });
+
+      } catch (e) {
+        return jsonResp({ error: "保存失败: " + e.message }, 500);
+      }
+    }
+
     if (url.pathname.startsWith('/api/forum/')) {
       return jsonResp({ error: "接口尚未实现" }, 404);
     }
 
-    // 兜底：返回静态资源
+    // 兜底：返回主站的静态资源（包括 /wiki/index.html）
     return env.ASSETS.fetch(request);
   }
 };
