@@ -13,46 +13,54 @@
             border: none; z-index: 1; 
         }
 
-        /* 悬浮球样式 */
+        /* 升级版悬浮球样式 */
         #wiki-float-ball {
             position: fixed;
-            bottom: 30px;
+            top: 70px; /* 主站顶栏隐藏后，出现在右上角安全区 */
             right: 20px;
-            width: 44px;
-            height: 44px;
-            background-color: rgba(37, 37, 37, 0.4);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            width: 40px;
+            height: 40px;
+            background-color: rgba(37, 37, 37, 0.15); /* 背景更通透 */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             color: #f5d78d;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             z-index: 999;
             cursor: pointer;
             opacity: 0;
             pointer-events: none;
-            transform: translateY(10px) scale(0.9);
+            transform: translateY(-10px) scale(0.9); /* 从上方滑入 */
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         #wiki-float-ball.show {
-            opacity: 1;
+            opacity: 0.6; /* 出现时半透明，不喧宾夺主 */
             pointer-events: auto;
             transform: translateY(0) scale(1);
         }
         
+        #wiki-float-ball:hover, 
         #wiki-float-ball:active {
-            transform: scale(0.9);
+            opacity: 1; /* 交互时完全不透明 */
+            background-color: rgba(37, 37, 37, 0.4);
+            transform: scale(1.05);
         }
 
+        /* 浅色模式适配 */
         :root[saved-theme="light"] #wiki-float-ball {
-            background-color: rgba(255, 255, 255, 0.6);
+            background-color: rgba(255, 255, 255, 0.3);
             color: #c89f5d;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        :root[saved-theme="light"] #wiki-float-ball:hover, 
+        :root[saved-theme="light"] #wiki-float-ball:active {
+            background-color: rgba(255, 255, 255, 0.6);
         }
     </style>
 </head>
@@ -63,7 +71,7 @@
 
     <iframe id="wiki-frame" src="https://wiki.secarea.de5.net"></iframe>
 
-    <!-- 悬浮球：点击直接唤起主站的侧边栏 -->
+    <!-- 悬浮球 -->
     <div id="wiki-float-ball" onclick="if(window.toggleSideDrawer) window.toggleSideDrawer()">☰</div>
 
     <script>
@@ -72,6 +80,7 @@
             const data = event.data;
             if (data && data.type === 'wiki_scroll') {
                 const ball = document.getElementById('wiki-float-ball');
+                // 往下滚动 150px 后渐现
                 if (data.scrollY > 150) {
                     ball.classList.add('show');
                 } else {
