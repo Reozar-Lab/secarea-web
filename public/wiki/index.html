@@ -8,15 +8,25 @@
     <link rel="stylesheet" href="../style.css">
     <style>
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #141414; }
-        /* iframe 占满整个屏幕，顶栏会悬浮在它上面 */
-        #wiki-frame { width: 100vw; height: 100vh; border: none; }
+        /* 强制 iframe 在底层 */
+        #wiki-frame { 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw; 
+            height: 100vh; 
+            border: none; 
+            z-index: 1; /* 保持比 header 的 999 小 */
+        }
     </style>
 </head>
-<body class="page-ios min-h-screen relative">
-    <!-- 必须引入 layout.js，它会产生顶栏和接收消息的逻辑 -->
+<body class="page-ios relative">
+
     <script src="../common.js"></script>
     <script src="../layout.js"></script>
 
+    <!-- iframe 绝对定位在底层 -->
     <iframe id="wiki-frame" src="https://wiki.secarea.de5.net"></iframe>
+
 </body>
 </html>
