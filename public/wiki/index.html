@@ -4,29 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Wiki · 匿境 Secarea</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../style.css">
     <style>
-        /* 重置页面，取消所有默认边距和滚动条 */
-        html, body { 
-            height: 100%; 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            background-color: #141414; /* 默认深色背景，防止加载时白屏闪烁 */
-        }
-        
-        /* iframe 填满整个屏幕 */
-        iframe { 
-            width: 100vw; 
-            height: 100vh; 
-            border: none; 
-            display: block; 
-        }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #141414; }
+        /* iframe 占满整个屏幕，顶栏会悬浮在它上面 */
+        #wiki-frame { width: 100vw; height: 100vh; border: none; }
     </style>
 </head>
-<body>
-    <!-- 直接全屏加载 Quartz -->
-    <iframe src="https://wiki.secarea.de5.net"></iframe>
+<body class="page-ios min-h-screen relative">
+    <!-- 必须引入 layout.js，它会产生顶栏和接收消息的逻辑 -->
+    <script src="../common.js"></script>
+    <script src="../layout.js"></script>
 
-    <!-- 注意：这里不再引入主站的 layout.js 和 common.js，避免样式和脚本冲突 -->
+    <iframe id="wiki-frame" src="https://wiki.secarea.de5.net"></iframe>
 </body>
 </html>
