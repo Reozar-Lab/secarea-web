@@ -3,82 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Wiki · 匿境 Secarea</title>
+    <title>维基百科 | 匿境 Secarea</title>
+    <!-- 引入主站全局样式和 Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="../style.css">
-    <style>
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #141414; }
-        #wiki-frame { 
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; 
-            border: none; z-index: 1; 
-        }
-
-        /* 悬浮球样式 */
-        #wiki-float-ball {
-            position: fixed;
-            bottom: 30px;
-            right: 20px;
-            width: 44px;
-            height: 44px;
-            background-color: rgba(37, 37, 37, 0.4);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            color: #f5d78d;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 999;
-            cursor: pointer;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(10px) scale(0.9);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        #wiki-float-ball.show {
-            opacity: 1;
-            pointer-events: auto;
-            transform: translateY(0) scale(1);
-        }
-        
-        #wiki-float-ball:active {
-            transform: scale(0.9);
-        }
-
-        :root[saved-theme="light"] #wiki-float-ball {
-            background-color: rgba(255, 255, 255, 0.6);
-            color: #c89f5d;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-    </style>
+    <link rel="stylesheet" href="/style.css">
 </head>
-<body class="page-ios relative">
+<body class="bg-[#111] text-white overflow-hidden">
+    
+    <!-- pt-14 (56px) 完美避开主站固定导航栏，h-screen 占满屏幕 -->
+    <div class="w-full h-screen pt-14">
+        <!-- 如果你的主站域名叫 secarea.de5.net，这里的 src 就填 Wiki 的子域名 -->
+        <iframe 
+            id="wiki-frame" 
+            src="https://wiki.secarea.de5.net" 
+            class="w-full h-full border-none bg-[#111]"
+            allow="clipboard-read; clipboard-write"
+        ></iframe>
+    </div>
 
-    <script src="../common.js"></script>
-    <script src="../layout.js"></script>
-
-    <iframe id="wiki-frame" src="https://wiki.secarea.de5.net"></iframe>
-
-    <!-- 悬浮球：点击直接唤起主站的侧边栏 -->
-    <div id="wiki-float-ball" onclick="if(window.toggleSideDrawer) window.toggleSideDrawer()">☰</div>
-
-    <script>
-        // 监听来自 Wiki 内部的滚动距离
-        window.addEventListener('message', (event) => {
-            const data = event.data;
-            if (data && data.type === 'wiki_scroll') {
-                const ball = document.getElementById('wiki-float-ball');
-                if (data.scrollY > 150) {
-                    ball.classList.add('show');
-                } else {
-                    ball.classList.remove('show');
-                }
-            }
-        });
-    </script>
+    <!-- 引入主站全局逻辑（负责顶栏、侧边栏、加载动画） -->
+    <script src="/layout.js"></script>
 </body>
 </html>
