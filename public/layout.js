@@ -15,8 +15,9 @@ const loadingHTML = `
 </div>
 `;
 
+// 修改点：z-50 改为 z-[999]，去掉 transition-all，确保它永远盖在 iframe 上面
 const navHTML = `
-<header id="main-header" class="fixed top-0 z-50 w-full h-14 bg-[#252525] flex items-center transition-all duration-300">
+<header id="main-header" class="fixed top-0 z-[999] w-full h-14 bg-[#252525] flex items-center">
     <div class="px-5 w-full flex items-center justify-between h-full">
         <a href="/" id="nav-logo-btn" class="flex items-center">
             <span class="logo-text text-xl font-black tracking-tighter pt-1">CEC</span>
@@ -49,27 +50,9 @@ const navHTML = `
 </header>
 `;
 
-const footerHTML = `
-<footer class="bg-[#181818] py-8 border-t border-white/5 z-10 relative mt-auto">
-    <div class="px-5 flex flex-col items-center gap-5">
-        <div class="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-medium tracking-widest font-roman">
-            <a href="/join/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Join us</a>
-            <a href="/privacy/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Privacy</a>
-            <a href="/wiki/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Wiki</a>
-            <a href="/about/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">About</a>
-        </div>
-        <div class="text-[11px] text-[#c89f5d] tracking-wide mt-2 font-roman text-center">
-            © 2026 Reozar Lab. CC-BY-SA 4.0
-        </div>
-    </div>
-</footer>
-`;
-
-// 侧边栏
 const sideDrawerHTML = `
-<div id="side-drawer-overlay" class="fixed inset-0 bg-black/40 z-[60] backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
-<aside id="side-drawer" class="fixed top-0 bottom-0 right-0 w-64 ios-card z-[70] shadow-2xl flex flex-col border-l ios-border overflow-hidden translate-x-full transition-transform duration-300">
-
+<div id="side-drawer-overlay" class="fixed inset-0 bg-black/40 z-[1000] backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
+<aside id="side-drawer" class="fixed top-0 bottom-0 right-0 w-64 ios-card z-[1001] shadow-2xl flex flex-col border-l ios-border overflow-hidden translate-x-full transition-transform duration-300">
     <div class="p-4 border-b ios-border">
         <div class="flex items-center justify-between mb-3">
             <div class="cec-avatar w-12 h-12 text-xl shadow-sm" id="side-drawer-avatar">?</div>
@@ -79,27 +62,13 @@ const sideDrawerHTML = `
         </div>
         <h2 class="text-base font-bold cec-text-dark w-full truncate" id="side-drawer-name">加载中...</h2>
         <p class="text-xs ios-text opacity-50 mt-1 w-full truncate" id="side-drawer-email">---</p>
-        <div class="flex gap-4 mt-3 text-sm">
-            <div class="flex flex-col"><span class="font-bold cec-text-dark" id="side-drawer-following">0</span><span class="text-xs ios-text opacity-50">关注</span></div>
-            <div class="flex flex-col"><span class="font-bold cec-text-dark" id="side-drawer-followers">0</span><span class="text-xs ios-text opacity-50">追随者</span></div>
-        </div>
     </div>
-
     <div class="flex-1 overflow-y-auto p-3 space-y-1">
         <a href="/profile/index.html" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
             <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             <span class="ios-text font-medium text-sm truncate">个人中心</span>
         </a>
-        <a href="#" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
-            <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-            <span class="ios-text font-medium text-sm truncate">我的收藏</span>
-        </a>
-        <a href="#" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
-            <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            <span class="ios-text font-medium text-sm truncate">偏好设置</span>
-        </a>
         
-        <!-- 新增：Wiki 编辑入口 (默认隐藏，通过权限点亮) -->
         <a href="/wiki/edit/" id="side-drawer-edit-link" class="hidden items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
             <svg class="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
             <span class="ios-text font-medium text-sm truncate">编辑百科</span>
@@ -109,9 +78,7 @@ const sideDrawerHTML = `
             <svg class="w-5 h-5 text-[#c89f5d] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
             <span class="text-[#c89f5d] font-bold text-sm truncate">管理中枢</span>
         </a>
-
         <div class="h-px bg-black/5 dark:bg-white/10 my-2 mx-1"></div>
-
         <a href="/forum/index.html" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
             <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span class="ios-text font-medium text-sm truncate">发现</span>
@@ -120,21 +87,6 @@ const sideDrawerHTML = `
             <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             <span class="ios-text font-medium text-sm truncate">Wiki</span>
         </a>
-        <a href="#" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
-            <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-            <span class="ios-text font-medium text-sm truncate">通讯</span>
-        </a>
-        <a href="#" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
-            <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            <span class="ios-text font-medium text-sm truncate">检索</span>
-        </a>
-    </div>
-
-    <div id="side-drawer-footer" class="p-3 border-t ios-border hidden">
-        <button id="side-drawer-publish-btn" class="w-full py-2.5 bg-[#111111] text-[#f5d78d] rounded-xl font-bold hover:bg-black transition-colors shadow-md flex items-center justify-center gap-2 active:scale-95">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            <span class="text-sm">发布新内容</span>
-        </button>
     </div>
 </aside>
 `;
@@ -146,18 +98,10 @@ if (isDrawerPage) {
     document.body.insertAdjacentHTML('beforeend', sideDrawerHTML);
 }
 
-if (!hideFooterPages.some(path => currentPath.includes(path))) {
-    document.body.insertAdjacentHTML('beforeend', footerHTML);
-}
-
 function initLayout() {
     window.addEventListener('load', () => {
         const loader = document.getElementById('loading-screen');
         if (loader) { loader.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => loader.remove(), 500); }
-        setTimeout(() => {
-            const msg = sessionStorage.getItem('flash_message');
-            if (msg && typeof showToast !== 'undefined') { showToast(msg, 'success'); sessionStorage.removeItem('flash_message'); }
-        }, 600);
     });
 
     const header = document.getElementById('main-header');
@@ -169,32 +113,34 @@ function initLayout() {
     const loginBtn = document.getElementById('nav-login-btn');
     const logoutBtn = document.getElementById('nav-logout-btn');
 
-    // 普通页面的滚动逻辑
+    // 修复点 1：在 Wiki 页面隐藏主站的暗黑模式按钮，防止与 Wiki 内部按钮冲突
+    if (isWikiPage && themeToggleBtn) {
+        themeToggleBtn.style.display = 'none';
+    }
+
+    // 普通页面滚动逻辑
     window.addEventListener('scroll', () => {
-        if (isWikiPage) return; // Wiki 页面用跨域消息控制，不走这里
+        if (isWikiPage) return; 
         if (window.scrollY > 50) { header.classList.add('header-scrolled'); closeMenu(); }
         else header.classList.remove('header-scrolled');
     });
 
     // ==========================================
-    // 跨域消息监听：实现 Wiki 顶栏跟随滚动
+    // 修复点 2：接收 Wiki 的跨域通信
     // ==========================================
     window.addEventListener('message', (event) => {
-        // 只处理来自 Wiki 的消息
-        if (!isWikiPage) return;
-
         const data = event.data;
+        
         if (data && data.type === 'wiki_scroll') {
-            // 根据 Wiki 传过来的滚动距离，移动主站的顶栏
             const scrollY = data.scrollY;
-            // 顶栏高度是 56px。当滚动超过 56px 时，完全移出屏幕
+            // 直接设置 transform，不要任何延迟
             if (scrollY >= 56) {
                 header.style.transform = `translateY(-56px)`;
             } else {
                 header.style.transform = `translateY(-${scrollY}px)`;
             }
         } else if (data === 'open_main_menu') {
-            // 收到 Wiki 的请求，滑出主站侧边栏
+            // 收到指令，打开侧边栏
             toggleSideDrawer();
         }
     });
@@ -209,7 +155,6 @@ function initLayout() {
         dropdownMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
     }
 
-    // ========== 侧边栏逻辑 ==========
     const sideDrawer = document.getElementById('side-drawer');
     const sideDrawerOverlay = document.getElementById('side-drawer-overlay');
 
@@ -292,38 +237,21 @@ function initLayout() {
                 if (user.role === 'root' || user.role === 'admin') {
                     const adminBtn = document.getElementById('nav-admin-btn');
                     if (adminBtn) adminBtn.classList.remove('hidden');
+                    const sdAdmin = document.getElementById('side-drawer-admin-link');
+                    if (sdAdmin) { sdAdmin.classList.remove('hidden'); sdAdmin.classList.add('flex'); }
+                }
+                
+                if (user.role === 'editor' || user.role === 'admin' || user.role === 'root') {
+                    const editLink = document.getElementById('side-drawer-edit-link');
+                    if (editLink) { editLink.classList.remove('hidden'); editLink.classList.add('flex'); }
                 }
 
                 const sdName = document.getElementById('side-drawer-name');
                 const sdEmail = document.getElementById('side-drawer-email');
                 const sdAvatar = document.getElementById('side-drawer-avatar');
-                const sdAdmin = document.getElementById('side-drawer-admin-link');
-                const sdEdit = document.getElementById('side-drawer-edit-link'); // 获取编辑按钮
-                
                 if (sdName) sdName.textContent = user.name;
                 if (sdEmail) sdEmail.textContent = user.email;
                 if (sdAvatar) sdAvatar.textContent = user.name.charAt(0).toUpperCase();
-                
-                // 管理中枢权限
-                if (sdAdmin && (user.role === 'root' || user.role === 'admin')) {
-                    sdAdmin.classList.remove('hidden');
-                    sdAdmin.classList.add('flex');
-                }
-                
-                // Wiki 编辑权限 (editor, admin, root)
-                if (sdEdit && (user.role === 'editor' || user.role === 'admin' || user.role === 'root')) {
-                    sdEdit.classList.remove('hidden');
-                    sdEdit.classList.add('flex');
-                }
-
-                if (typeof API.getUserStats === 'function') {
-                    API.getUserStats().then(stats => {
-                        const f = document.getElementById('side-drawer-following');
-                        const fo = document.getElementById('side-drawer-followers');
-                        if (f) f.textContent = stats.following ?? 0;
-                        if (fo) fo.textContent = stats.followers ?? 0;
-                    }).catch(() => {});
-                }
             } else {
                 const sdName = document.getElementById('side-drawer-name');
                 const sdEmail = document.getElementById('side-drawer-email');
