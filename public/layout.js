@@ -1,8 +1,9 @@
 const currentPath = window.location.pathname;
-const hideFooterPages = ['/login/', '/register/', '/profile/', '/admin/', '/forum/'];
+const hideFooterPages = ['/login/', '/register/', '/profile/', '/admin/', '/forum/', '/wiki/'];
 const drawerPages = ['/forum/', '/wiki/'];
 const isDrawerPage = drawerPages.some(p => currentPath.includes(p));
 const isForumPage = currentPath.includes('/forum/');
+const isWikiPage = currentPath.includes('/wiki/');
 
 const loadingHTML = `
 <div id="loading-screen" class="fixed inset-0 z-[9999] bg-[#252525] flex items-center justify-center transition-opacity duration-500">
@@ -64,7 +65,7 @@ const footerHTML = `
 </footer>
 `;
 
-// 侧边栏（从右侧滑出）——仅在 forum / wiki 页面注入
+// 侧边栏
 const sideDrawerHTML = `
 <div id="side-drawer-overlay" class="fixed inset-0 bg-black/40 z-[60] backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
 <aside id="side-drawer" class="fixed top-0 bottom-0 right-0 w-64 ios-card z-[70] shadow-2xl flex flex-col border-l ios-border overflow-hidden translate-x-full transition-transform duration-300">
@@ -97,6 +98,13 @@ const sideDrawerHTML = `
             <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             <span class="ios-text font-medium text-sm truncate">偏好设置</span>
         </a>
+        
+        <!-- 新增：Wiki 编辑入口 (默认隐藏，通过权限点亮) -->
+        <a href="/wiki/edit/" id="side-drawer-edit-link" class="hidden items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
+            <svg class="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            <span class="ios-text font-medium text-sm truncate">编辑百科</span>
+        </a>
+
         <a href="/admin/" id="side-drawer-admin-link" class="hidden items-center gap-3 p-2.5 rounded-xl bg-[#f5d78d]/10 hover:bg-[#f5d78d]/20 transition">
             <svg class="w-5 h-5 text-[#c89f5d] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
             <span class="text-[#c89f5d] font-bold text-sm truncate">管理中枢</span>
@@ -161,9 +169,34 @@ function initLayout() {
     const loginBtn = document.getElementById('nav-login-btn');
     const logoutBtn = document.getElementById('nav-logout-btn');
 
+    // 普通页面的滚动逻辑
     window.addEventListener('scroll', () => {
+        if (isWikiPage) return; // Wiki 页面用跨域消息控制，不走这里
         if (window.scrollY > 50) { header.classList.add('header-scrolled'); closeMenu(); }
         else header.classList.remove('header-scrolled');
+    });
+
+    // ==========================================
+    // 跨域消息监听：实现 Wiki 顶栏跟随滚动
+    // ==========================================
+    window.addEventListener('message', (event) => {
+        // 只处理来自 Wiki 的消息
+        if (!isWikiPage) return;
+
+        const data = event.data;
+        if (data && data.type === 'wiki_scroll') {
+            // 根据 Wiki 传过来的滚动距离，移动主站的顶栏
+            const scrollY = data.scrollY;
+            // 顶栏高度是 56px。当滚动超过 56px 时，完全移出屏幕
+            if (scrollY >= 56) {
+                header.style.transform = `translateY(-56px)`;
+            } else {
+                header.style.transform = `translateY(-${scrollY}px)`;
+            }
+        } else if (data === 'open_main_menu') {
+            // 收到 Wiki 的请求，滑出主站侧边栏
+            toggleSideDrawer();
+        }
     });
 
     function closeMenu() {
@@ -210,7 +243,6 @@ function initLayout() {
         if (closeBtn) closeBtn.addEventListener('click', closeSideDrawer);
         sideDrawerOverlay.addEventListener('click', closeSideDrawer);
 
-        // 发布按钮：仅 forum（发现）页面显示
         if (isForumPage) {
             const footer = document.getElementById('side-drawer-footer');
             if (footer) footer.classList.remove('hidden');
@@ -224,7 +256,6 @@ function initLayout() {
         }
     }
 
-    // ========== 菜单按钮：按页面类型分流 ==========
     menuBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (isDrawerPage) {
@@ -263,17 +294,26 @@ function initLayout() {
                     if (adminBtn) adminBtn.classList.remove('hidden');
                 }
 
-                // 填充侧边栏
                 const sdName = document.getElementById('side-drawer-name');
                 const sdEmail = document.getElementById('side-drawer-email');
                 const sdAvatar = document.getElementById('side-drawer-avatar');
                 const sdAdmin = document.getElementById('side-drawer-admin-link');
+                const sdEdit = document.getElementById('side-drawer-edit-link'); // 获取编辑按钮
+                
                 if (sdName) sdName.textContent = user.name;
                 if (sdEmail) sdEmail.textContent = user.email;
                 if (sdAvatar) sdAvatar.textContent = user.name.charAt(0).toUpperCase();
+                
+                // 管理中枢权限
                 if (sdAdmin && (user.role === 'root' || user.role === 'admin')) {
                     sdAdmin.classList.remove('hidden');
                     sdAdmin.classList.add('flex');
+                }
+                
+                // Wiki 编辑权限 (editor, admin, root)
+                if (sdEdit && (user.role === 'editor' || user.role === 'admin' || user.role === 'root')) {
+                    sdEdit.classList.remove('hidden');
+                    sdEdit.classList.add('flex');
                 }
 
                 if (typeof API.getUserStats === 'function') {
