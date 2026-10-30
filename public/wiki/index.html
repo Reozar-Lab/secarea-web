@@ -10,9 +10,9 @@
 </head>
 <body class="bg-[#111] text-white overflow-hidden">
     
-    <!-- pt-14 (56px) 完美避开主站固定导航栏，h-screen 占满屏幕 -->
-    <div class="w-full h-screen pt-14">
-        <!-- 如果你的主站域名叫 secarea.de5.net，这里的 src 就填 Wiki 的子域名 -->
+    <!-- 移除 pt-14，让 iframe 真正全屏，由主站 layout.js 注入的 fixed 顶栏覆盖在它上面 -->
+    <div class="w-full h-screen">
+        <!-- 你的 Wiki 地址 -->
         <iframe 
             id="wiki-frame" 
             src="https://wiki.secarea.de5.net" 
@@ -21,7 +21,7 @@
         ></iframe>
     </div>
 
-    <!-- 引入主站全局逻辑（负责顶栏、侧边栏、加载动画） -->
+    <!-- 引入主站全局逻辑（负责顶栏、侧边栏、加载动画、跨域通信） -->
     <script src="/layout.js"></script>
 </body>
 </html>
