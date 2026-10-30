@@ -5,6 +5,7 @@ const isDrawerPage = drawerPages.some(p => currentPath.includes(p));
 const isForumPage = currentPath.includes('/forum/');
 const isWikiPage = currentPath.includes('/wiki/');
 
+// ... (loadingHTML 保持不变) ...
 const loadingHTML = `
 <div id="loading-screen" class="fixed inset-0 z-[9999] bg-[#252525] flex items-center justify-center transition-opacity duration-500">
     <div class="dot-grid">
@@ -15,7 +16,7 @@ const loadingHTML = `
 </div>
 `;
 
-// 修改点：z-50 改为 z-[999]，去掉 transition-all，确保它永远盖在 iframe 上面
+// ... (navHTML 保持不变，删掉了原先的强制隐藏暗黑按钮) ...
 const navHTML = `
 <header id="main-header" class="fixed top-0 z-[999] w-full h-14 bg-[#252525] flex items-center">
     <div class="px-5 w-full flex items-center justify-between h-full">
@@ -50,6 +51,7 @@ const navHTML = `
 </header>
 `;
 
+// ... (sideDrawerHTML 保持不变) ...
 const sideDrawerHTML = `
 <div id="side-drawer-overlay" class="fixed inset-0 bg-black/40 z-[1000] backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
 <aside id="side-drawer" class="fixed top-0 bottom-0 right-0 w-64 ios-card z-[1001] shadow-2xl flex flex-col border-l ios-border overflow-hidden translate-x-full transition-transform duration-300">
@@ -68,12 +70,10 @@ const sideDrawerHTML = `
             <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             <span class="ios-text font-medium text-sm truncate">个人中心</span>
         </a>
-        
         <a href="/wiki/edit/" id="side-drawer-edit-link" class="hidden items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
             <svg class="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
             <span class="ios-text font-medium text-sm truncate">编辑百科</span>
         </a>
-
         <a href="/admin/" id="side-drawer-admin-link" class="hidden items-center gap-3 p-2.5 rounded-xl bg-[#f5d78d]/10 hover:bg-[#f5d78d]/20 transition">
             <svg class="w-5 h-5 text-[#c89f5d] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
             <span class="text-[#c89f5d] font-bold text-sm truncate">管理中枢</span>
@@ -113,12 +113,6 @@ function initLayout() {
     const loginBtn = document.getElementById('nav-login-btn');
     const logoutBtn = document.getElementById('nav-logout-btn');
 
-    // 修复点 1：在 Wiki 页面隐藏主站的暗黑模式按钮，防止与 Wiki 内部按钮冲突
-    if (isWikiPage && themeToggleBtn) {
-        themeToggleBtn.style.display = 'none';
-    }
-
-    // 普通页面滚动逻辑
     window.addEventListener('scroll', () => {
         if (isWikiPage) return; 
         if (window.scrollY > 50) { header.classList.add('header-scrolled'); closeMenu(); }
@@ -126,68 +120,60 @@ function initLayout() {
     });
 
     // ==========================================
-    // 修复点 2：接收 Wiki 的跨域通信
+    // 接收 Wiki 消息 (双向同步)
     // ==========================================
     window.addEventListener('message', (event) => {
         const data = event.data;
         
         if (data && data.type === 'wiki_scroll') {
             const scrollY = data.scrollY;
-            // 直接设置 transform，不要任何延迟
-            if (scrollY >= 56) {
-                header.style.transform = `translateY(-56px)`;
-            } else {
-                header.style.transform = `translateY(-${scrollY}px)`;
-            }
+            if (scrollY >= 56) header.style.transform = `translateY(-56px)`;
+            else header.style.transform = `translateY(-${scrollY}px)`;
         } else if (data === 'open_main_menu') {
-            // 收到指令，打开侧边栏
             toggleSideDrawer();
+        } else if (data && data.type === 'wiki_darkmode') {
+            // Wiki 切换了暗黑模式，主站同步切换
+            const isDark = data.isDark;
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            }
+            updateThemeIcons();
         }
     });
 
-    function closeMenu() {
-        dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
-        dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
-    }
-
-    function openMenu() {
-        dropdownMenu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
-        dropdownMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
-    }
+    // ... (rest of side drawer functions: closeMenu, openMenu, openSideDrawer, closeSideDrawer, toggleSideDrawer 保持不变) ...
+    function closeMenu() { dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0'); dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]'); }
+    function openMenu() { dropdownMenu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0'); dropdownMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]'); }
 
     const sideDrawer = document.getElementById('side-drawer');
     const sideDrawerOverlay = document.getElementById('side-drawer-overlay');
 
     function openSideDrawer() {
         if (!sideDrawer) return;
-        sideDrawer.classList.remove('translate-x-full');
-        sideDrawer.classList.add('translate-x-0');
-        sideDrawerOverlay.classList.remove('opacity-0', 'pointer-events-none');
-        sideDrawerOverlay.classList.add('opacity-100', 'pointer-events-auto');
+        sideDrawer.classList.remove('translate-x-full'); sideDrawer.classList.add('translate-x-0');
+        sideDrawerOverlay.classList.remove('opacity-0', 'pointer-events-none'); sideDrawerOverlay.classList.add('opacity-100', 'pointer-events-auto');
         closeMenu();
     }
-
     function closeSideDrawer() {
         if (!sideDrawer) return;
-        sideDrawer.classList.add('translate-x-full');
-        sideDrawer.classList.remove('translate-x-0');
-        sideDrawerOverlay.classList.add('opacity-0', 'pointer-events-none');
-        sideDrawerOverlay.classList.remove('opacity-100', 'pointer-events-auto');
+        sideDrawer.classList.add('translate-x-full'); sideDrawer.classList.remove('translate-x-0');
+        sideDrawerOverlay.classList.add('opacity-0', 'pointer-events-none'); sideDrawerOverlay.classList.remove('opacity-100', 'pointer-events-auto');
     }
-
     function toggleSideDrawer() {
         if (!sideDrawer) return;
         if (sideDrawer.classList.contains('translate-x-full')) openSideDrawer();
         else closeSideDrawer();
     }
-
     window.toggleSideDrawer = toggleSideDrawer;
 
     if (sideDrawer) {
         const closeBtn = document.getElementById('side-drawer-close');
         if (closeBtn) closeBtn.addEventListener('click', closeSideDrawer);
         sideDrawerOverlay.addEventListener('click', closeSideDrawer);
-
         if (isForumPage) {
             const footer = document.getElementById('side-drawer-footer');
             if (footer) footer.classList.remove('hidden');
@@ -203,17 +189,13 @@ function initLayout() {
 
     menuBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (isDrawerPage) {
-            toggleSideDrawer();
-        } else {
+        if (isDrawerPage) toggleSideDrawer();
+        else {
             if (dropdownMenu.classList.contains('opacity-100')) closeMenu();
             else openMenu();
         }
     });
-
-    document.addEventListener('click', (e) => {
-        if (!dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) closeMenu();
-    });
+    document.addEventListener('click', (e) => { if (!dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) closeMenu(); });
 
     function updateThemeIcons() {
         if (document.documentElement.classList.contains('dark')) { iconSun.classList.remove('hidden'); iconMoon.classList.add('hidden'); }
@@ -222,41 +204,40 @@ function initLayout() {
     updateThemeIcons();
 
     themeToggleBtn.addEventListener('click', () => {
-        if (document.documentElement.classList.contains('dark')) { document.documentElement.classList.remove('dark'); localStorage.theme = 'light'; }
-        else { document.documentElement.classList.add('dark'); localStorage.theme = 'dark'; }
+        let isDark = false;
+        if (document.documentElement.classList.contains('dark')) { 
+            document.documentElement.classList.remove('dark'); localStorage.theme = 'light'; 
+        } else { 
+            document.documentElement.classList.add('dark'); localStorage.theme = 'dark'; isDark = true;
+        }
         updateThemeIcons();
+        
+        // 发送给 iframe 里的 Wiki
+        const iframe = document.getElementById('wiki-frame');
+        if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage({ type: 'main_darkmode', isDark: isDark }, '*');
+        }
     });
 
+    // ... (API getMe 和 logout 不变) ...
     if (typeof API !== 'undefined') {
         API.getMe().then(data => {
             if (data && data.user) {
                 const user = data.user;
                 if (loginBtn) { loginBtn.textContent = `欢迎, ${user.name}`; loginBtn.href = "/profile/"; }
                 if (logoutBtn) logoutBtn.classList.remove('hidden');
-
                 if (user.role === 'root' || user.role === 'admin') {
-                    const adminBtn = document.getElementById('nav-admin-btn');
-                    if (adminBtn) adminBtn.classList.remove('hidden');
-                    const sdAdmin = document.getElementById('side-drawer-admin-link');
-                    if (sdAdmin) { sdAdmin.classList.remove('hidden'); sdAdmin.classList.add('flex'); }
+                    const adminBtn = document.getElementById('nav-admin-btn'); if (adminBtn) adminBtn.classList.remove('hidden');
+                    const sdAdmin = document.getElementById('side-drawer-admin-link'); if (sdAdmin) { sdAdmin.classList.remove('hidden'); sdAdmin.classList.add('flex'); }
                 }
-                
                 if (user.role === 'editor' || user.role === 'admin' || user.role === 'root') {
-                    const editLink = document.getElementById('side-drawer-edit-link');
-                    if (editLink) { editLink.classList.remove('hidden'); editLink.classList.add('flex'); }
+                    const editLink = document.getElementById('side-drawer-edit-link'); if (editLink) { editLink.classList.remove('hidden'); editLink.classList.add('flex'); }
                 }
-
-                const sdName = document.getElementById('side-drawer-name');
-                const sdEmail = document.getElementById('side-drawer-email');
-                const sdAvatar = document.getElementById('side-drawer-avatar');
-                if (sdName) sdName.textContent = user.name;
-                if (sdEmail) sdEmail.textContent = user.email;
-                if (sdAvatar) sdAvatar.textContent = user.name.charAt(0).toUpperCase();
+                const sdName = document.getElementById('side-drawer-name'); const sdEmail = document.getElementById('side-drawer-email'); const sdAvatar = document.getElementById('side-drawer-avatar');
+                if (sdName) sdName.textContent = user.name; if (sdEmail) sdEmail.textContent = user.email; if (sdAvatar) sdAvatar.textContent = user.name.charAt(0).toUpperCase();
             } else {
-                const sdName = document.getElementById('side-drawer-name');
-                const sdEmail = document.getElementById('side-drawer-email');
-                if (sdName) sdName.textContent = '访客';
-                if (sdEmail) sdEmail.textContent = '未登录';
+                const sdName = document.getElementById('side-drawer-name'); const sdEmail = document.getElementById('side-drawer-email');
+                if (sdName) sdName.textContent = '访客'; if (sdEmail) sdEmail.textContent = '未登录';
             }
         }).catch(console.log);
     }
@@ -268,6 +249,5 @@ function initLayout() {
         });
     }
 }
-
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLayout);
 else initLayout();
