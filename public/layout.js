@@ -5,7 +5,6 @@ const isDrawerPage = drawerPages.some(p => currentPath.includes(p));
 const isForumPage = currentPath.includes('/forum/');
 const isWikiPage = currentPath.includes('/wiki/');
 
-// ... (loadingHTML 保持不变) ...
 const loadingHTML = `
 <div id="loading-screen" class="fixed inset-0 z-[9999] bg-[#252525] flex items-center justify-center transition-opacity duration-500">
     <div class="dot-grid">
@@ -16,7 +15,6 @@ const loadingHTML = `
 </div>
 `;
 
-// ... (navHTML 保持不变，删掉了原先的强制隐藏暗黑按钮) ...
 const navHTML = `
 <header id="main-header" class="fixed top-0 z-[999] w-full h-14 bg-[#252525] flex items-center">
     <div class="px-5 w-full flex items-center justify-between h-full">
@@ -51,7 +49,22 @@ const navHTML = `
 </header>
 `;
 
-// ... (sideDrawerHTML 保持不变) ...
+const footerHTML = `
+<footer class="bg-[#181818] py-8 border-t border-white/5 z-10 relative mt-auto">
+    <div class="px-5 flex flex-col items-center gap-5">
+        <div class="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-medium tracking-widest font-roman">
+            <a href="/join/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Join us</a>
+            <a href="/privacy/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Privacy</a>
+            <a href="/wiki/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Wiki</a>
+            <a href="/about/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">About</a>
+        </div>
+        <div class="text-[11px] text-[#c89f5d] tracking-wide mt-2 font-roman text-center">
+            © 2026 Reozar Lab. CC-BY-SA 4.0
+        </div>
+    </div>
+</footer>
+`;
+
 const sideDrawerHTML = `
 <div id="side-drawer-overlay" class="fixed inset-0 bg-black/40 z-[1000] backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
 <aside id="side-drawer" class="fixed top-0 bottom-0 right-0 w-64 ios-card z-[1001] shadow-2xl flex flex-col border-l ios-border overflow-hidden translate-x-full transition-transform duration-300">
@@ -64,21 +77,29 @@ const sideDrawerHTML = `
         </div>
         <h2 class="text-base font-bold cec-text-dark w-full truncate" id="side-drawer-name">加载中...</h2>
         <p class="text-xs ios-text opacity-50 mt-1 w-full truncate" id="side-drawer-email">---</p>
+        <div class="flex gap-4 mt-3 text-sm">
+            <div class="flex flex-col"><span class="font-bold cec-text-dark" id="side-drawer-following">0</span><span class="text-xs ios-text opacity-50">关注</span></div>
+            <div class="flex flex-col"><span class="font-bold cec-text-dark" id="side-drawer-followers">0</span><span class="text-xs ios-text opacity-50">追随者</span></div>
+        </div>
     </div>
     <div class="flex-1 overflow-y-auto p-3 space-y-1">
         <a href="/profile/index.html" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
             <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             <span class="ios-text font-medium text-sm truncate">个人中心</span>
         </a>
+        
         <a href="/wiki/edit/" id="side-drawer-edit-link" class="hidden items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
             <svg class="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
             <span class="ios-text font-medium text-sm truncate">编辑百科</span>
         </a>
+
         <a href="/admin/" id="side-drawer-admin-link" class="hidden items-center gap-3 p-2.5 rounded-xl bg-[#f5d78d]/10 hover:bg-[#f5d78d]/20 transition">
             <svg class="w-5 h-5 text-[#c89f5d] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
             <span class="text-[#c89f5d] font-bold text-sm truncate">管理中枢</span>
         </a>
+
         <div class="h-px bg-black/5 dark:bg-white/10 my-2 mx-1"></div>
+
         <a href="/forum/index.html" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
             <svg class="w-5 h-5 ios-text opacity-40 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             <span class="ios-text font-medium text-sm truncate">发现</span>
@@ -98,10 +119,18 @@ if (isDrawerPage) {
     document.body.insertAdjacentHTML('beforeend', sideDrawerHTML);
 }
 
+if (!hideFooterPages.some(path => currentPath.includes(path))) {
+    document.body.insertAdjacentHTML('beforeend', footerHTML);
+}
+
 function initLayout() {
     window.addEventListener('load', () => {
         const loader = document.getElementById('loading-screen');
         if (loader) { loader.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => loader.remove(), 500); }
+        setTimeout(() => {
+            const msg = sessionStorage.getItem('flash_message');
+            if (msg && typeof showToast !== 'undefined') { showToast(msg, 'success'); sessionStorage.removeItem('flash_message'); }
+        }, 600);
     });
 
     const header = document.getElementById('main-header');
@@ -119,9 +148,6 @@ function initLayout() {
         else header.classList.remove('header-scrolled');
     });
 
-    // ==========================================
-    // 接收 Wiki 消息 (双向同步)
-    // ==========================================
     window.addEventListener('message', (event) => {
         const data = event.data;
         
@@ -132,7 +158,6 @@ function initLayout() {
         } else if (data === 'open_main_menu') {
             toggleSideDrawer();
         } else if (data && data.type === 'wiki_darkmode') {
-            // Wiki 切换了暗黑模式，主站同步切换
             const isDark = data.isDark;
             if (isDark) {
                 document.documentElement.classList.add('dark');
@@ -145,35 +170,49 @@ function initLayout() {
         }
     });
 
-    // ... (rest of side drawer functions: closeMenu, openMenu, openSideDrawer, closeSideDrawer, toggleSideDrawer 保持不变) ...
-    function closeMenu() { dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0'); dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]'); }
-    function openMenu() { dropdownMenu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0'); dropdownMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]'); }
+    function closeMenu() {
+        dropdownMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
+        dropdownMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
+    }
+
+    function openMenu() {
+        dropdownMenu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100', 'translate-y-0');
+        dropdownMenu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95', 'translate-y-[-10px]');
+    }
 
     const sideDrawer = document.getElementById('side-drawer');
     const sideDrawerOverlay = document.getElementById('side-drawer-overlay');
 
     function openSideDrawer() {
         if (!sideDrawer) return;
-        sideDrawer.classList.remove('translate-x-full'); sideDrawer.classList.add('translate-x-0');
-        sideDrawerOverlay.classList.remove('opacity-0', 'pointer-events-none'); sideDrawerOverlay.classList.add('opacity-100', 'pointer-events-auto');
+        sideDrawer.classList.remove('translate-x-full');
+        sideDrawer.classList.add('translate-x-0');
+        sideDrawerOverlay.classList.remove('opacity-0', 'pointer-events-none');
+        sideDrawerOverlay.classList.add('opacity-100', 'pointer-events-auto');
         closeMenu();
     }
+
     function closeSideDrawer() {
         if (!sideDrawer) return;
-        sideDrawer.classList.add('translate-x-full'); sideDrawer.classList.remove('translate-x-0');
-        sideDrawerOverlay.classList.add('opacity-0', 'pointer-events-none'); sideDrawerOverlay.classList.remove('opacity-100', 'pointer-events-auto');
+        sideDrawer.classList.add('translate-x-full');
+        sideDrawer.classList.remove('translate-x-0');
+        sideDrawerOverlay.classList.add('opacity-0', 'pointer-events-none');
+        sideDrawerOverlay.classList.remove('opacity-100', 'pointer-events-auto');
     }
+
     function toggleSideDrawer() {
         if (!sideDrawer) return;
         if (sideDrawer.classList.contains('translate-x-full')) openSideDrawer();
         else closeSideDrawer();
     }
+
     window.toggleSideDrawer = toggleSideDrawer;
 
     if (sideDrawer) {
         const closeBtn = document.getElementById('side-drawer-close');
         if (closeBtn) closeBtn.addEventListener('click', closeSideDrawer);
         sideDrawerOverlay.addEventListener('click', closeSideDrawer);
+
         if (isForumPage) {
             const footer = document.getElementById('side-drawer-footer');
             if (footer) footer.classList.remove('hidden');
@@ -189,13 +228,17 @@ function initLayout() {
 
     menuBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (isDrawerPage) toggleSideDrawer();
-        else {
+        if (isDrawerPage) {
+            toggleSideDrawer();
+        } else {
             if (dropdownMenu.classList.contains('opacity-100')) closeMenu();
             else openMenu();
         }
     });
-    document.addEventListener('click', (e) => { if (!dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) closeMenu(); });
+
+    document.addEventListener('click', (e) => {
+        if (!dropdownMenu.contains(e.target) && !menuBtn.contains(e.target)) closeMenu();
+    });
 
     function updateThemeIcons() {
         if (document.documentElement.classList.contains('dark')) { iconSun.classList.remove('hidden'); iconMoon.classList.add('hidden'); }
@@ -212,14 +255,12 @@ function initLayout() {
         }
         updateThemeIcons();
         
-        // 发送给 iframe 里的 Wiki
         const iframe = document.getElementById('wiki-frame');
         if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage({ type: 'main_darkmode', isDark: isDark }, '*');
         }
     });
 
-    // ... (API getMe 和 logout 不变) ...
     if (typeof API !== 'undefined') {
         API.getMe().then(data => {
             if (data && data.user) {
@@ -249,5 +290,6 @@ function initLayout() {
         });
     }
 }
+
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLayout);
 else initLayout();
