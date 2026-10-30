@@ -13,14 +13,13 @@
             border: none; z-index: 1; 
         }
 
-        /* 浮窗调整：死磕右上角，不透明度提高 */
         #wiki-float-ball {
             position: fixed;
-            top: 16px; /* 靠上 */
-            right: 16px; /* 靠右 */
+            top: 16px;
+            right: 16px;
             width: 42px;
             height: 42px;
-            background-color: rgba(37, 37, 37, 0.3); /* 背景加深一点点 */
+            background-color: rgba(37, 37, 37, 0.3);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             color: #f5d78d;
@@ -40,19 +39,18 @@
         }
         
         #wiki-float-ball.show {
-            opacity: 0.85; /* 不透明度调高，更清晰 */
+            opacity: 0.85;
             pointer-events: auto;
             transform: translateY(0) scale(1);
         }
         
         #wiki-float-ball:hover, 
         #wiki-float-ball:active {
-            opacity: 1; /* 交互时完全不透明 */
+            opacity: 1;
             background-color: rgba(37, 37, 37, 0.6);
             transform: scale(1.05);
         }
 
-        /* 浅色模式适配 */
         :root[saved-theme="light"] #wiki-float-ball {
             background-color: rgba(255, 255, 255, 0.4);
             color: #c89f5d;
@@ -71,7 +69,6 @@
 
     <iframe id="wiki-frame" src="https://wiki.secarea.de5.net"></iframe>
 
-    <!-- 悬浮球 -->
     <div id="wiki-float-ball" onclick="if(window.toggleSideDrawer) window.toggleSideDrawer()">☰</div>
 
     <script>
@@ -80,7 +77,6 @@
             const data = event.data;
             if (data && data.type === 'wiki_scroll') {
                 const ball = document.getElementById('wiki-float-ball');
-                // 往下滚动 100px 渐现（提早一点出现）
                 if (data.scrollY > 100) {
                     ball.classList.add('show');
                 } else {
@@ -88,6 +84,18 @@
                 }
             }
         });
+
+        // 新增：监听 iframe 加载，一完成立刻发送主题状态
+        const wikiFrame = document.getElementById('wiki-frame');
+        if (wikiFrame) {
+            wikiFrame.addEventListener('load', () => {
+                // 获取主站当前的暗黑状态
+                const isDark = document.documentElement.classList.contains('dark');
+                if (wikiFrame.contentWindow) {
+                    wikiFrame.contentWindow.postMessage({ type: 'main_darkmode', isDark: isDark }, '*');
+                }
+            });
+        }
     </script>
 </body>
 </html>
