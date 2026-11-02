@@ -445,21 +445,13 @@ export default {
     
     // 5.1 获取 Wiki 文件内容
     if (url.pathname === '/api/wiki/get' && method === 'GET') {
-      console.log("--> 收到获取 Wiki 请求");
       const currentUser = await getCurrentUser(request, env);
-      if (!currentUser || currentUser.role === 'user') {
-        console.log("-- 权限校验失败: 用户未登录或角色不足");
-        return jsonResp({ error: "权限不足" }, 403);
-      }
+      if (!currentUser || currentUser.role === 'user') return jsonResp({ error: "权限不足" }, 403);
 
       let filePath = url.searchParams.get('path');
-      if (!filePath) {
-        console.log("-- 缺少路径参数");
-        return jsonResp({ error: "缺少路径参数" }, 400);
-      }
+      if (!filePath) return jsonResp({ error: "缺少路径参数" }, 400);
 
       if (!filePath.endsWith('.md')) filePath += '.md';
-      console.log(`-- 尝试拉取路径: content/${filePath}`);
 
       try {
         const fetchUrl = `https://api.github.com/repos/${env.GITHUB_REPO}/contents/content/${filePath}`;
@@ -468,28 +460,20 @@ export default {
         });
 
         if (!getRes.ok) {
-          if (getRes.status === 404) {
-            console.log("-- 文件不存在，返回 404");
-            return jsonResp({ error: "文件不存在（新建词条）" }, 404);
-          }
-          const errText = await getRes.text();
-          console.log(`-- GitHub 拉取失败: ${getRes.status} ${errText}`);
-          return jsonResp({ error: `GitHub 拉取失败 (${getRes.status}): 请检查路径或Token` }, 500);
+          if (getRes.status === 404) return jsonResp({ error: "文件不存在（新建词条）" }, 404);
+          return jsonResp({ error: "GitHub 拉取失败" }, 500);
         }
 
         const fileData = await getRes.json();
         const content = decodeURIComponent(escape(atob(fileData.content)));
-        console.log("-- 成功拉取文件内容");
         return jsonResp({ content, path: filePath });
       } catch (e) {
-        console.log(`-- 拉取异常: ${e.message}`);
         return jsonResp({ error: "拉取异常: " + e.message }, 500);
       }
     }
 
     // 5.2 保存 Wiki 文件
     if (url.pathname === '/api/wiki/save' && method === 'POST') {
-      console.log("--> 收到保存 Wiki 请求");
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
       if (currentUser.role === 'user') return jsonResp({ error: "权限不足，仅编者及以上可编辑" }, 403);
@@ -500,7 +484,6 @@ export default {
 
         let safePath = path.startsWith('content/') ? path : `content/${path}`;
         if (!safePath.endsWith('.md')) safePath += '.md';
-        console.log(`-- 尝试保存路径: ${safePath}`);
 
         const encodedContent = btoa(unescape(encodeURIComponent(content)));
 
@@ -512,9 +495,6 @@ export default {
         if (getRes.ok) {
           const fileData = await getRes.json();
           sha = fileData.sha;
-          console.log("-- 已获取旧文件 SHA，执行覆盖");
-        } else {
-          console.log("-- 未找到旧文件，执行新建");
         }
 
         const putRes = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/contents/${safePath}`, {
@@ -533,7 +513,6 @@ export default {
 
         if (!putRes.ok) {
           const errText = await putRes.text();
-          console.log(`-- GitHub 推送失败: ${putRes.status} ${errText}`);
           return jsonResp({ error: "GitHub 推送失败: " + errText }, 500);
         }
 
@@ -541,11 +520,69 @@ export default {
           ctx.waitUntil(fetch(env.PAGES_DEPLOY_HOOK, { method: 'POST' }));
         }
 
-        console.log("-- 保存成功，已触发构建");
         return jsonResp({ success: true, message: "已提交至 GitHub，正在重新构建页面..." });
       } catch (e) {
-        console.log(`-- 保存异常: ${e.message}`);
         return jsonResp({ error: "保存失败: " + e.message }, 500);
+      }
+    }
+
+    // 5.3 获取所有分类（文件夹列表）
+    if (url.pathname === '/api/wiki/categories' && method === 'GET') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser || currentUser.role === 'user') return jsonResp({ error: "权限不足" }, 403);
+
+      try {
+        const getRes = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/contents/content`, {
+          headers: { 'Authorization': `Bearer ${env.GITHUB_TOKEN}`, 'User-Agent': 'Cloudflare-Worker' }
+        });
+
+        if (!getRes.ok) return jsonResp({ categories: [] });
+        const files = await getRes.json();
+        
+        const categories = files.filter(f => f.type === 'dir').map(f => f.name);
+        return jsonResp({ categories });
+      } catch (e) {
+        return jsonResp({ categories: [] });
+      }
+    }
+
+    // 5.4 新建分类（仅限 admin / root）
+    if (url.pathname === '/api/wiki/new-category' && method === 'POST') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser || !['admin', 'root'].includes(currentUser.role)) {
+        return jsonResp({ error: "权限不足，仅管理员可新建分类" }, 403);
+      }
+
+      try {
+        const { categoryName } = await request.json();
+        if (!categoryName) return jsonResp({ error: "分类名不能为空" }, 400);
+
+        const safePath = `content/${categoryName}/index.md`;
+        const encodedContent = btoa(""); // 空内容
+
+        const putRes = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/contents/${safePath}`, {
+          method: 'PUT',
+          headers: { 
+            'Authorization': `Bearer ${env.GITHUB_TOKEN}`, 
+            'Content-Type': 'application/json',
+            'User-Agent': 'Cloudflare-Worker'
+          },
+          body: JSON.stringify({
+            message: `Create category: ${categoryName} by ${currentUser.name}`,
+            content: encodedContent
+          })
+        });
+
+        if (!putRes.ok) {
+          const errText = await putRes.text();
+          return jsonResp({ error: "GitHub 创建失败: " + errText }, 500);
+        }
+
+        if (env.PAGES_DEPLOY_HOOK) ctx.waitUntil(fetch(env.PAGES_DEPLOY_HOOK, { method: 'POST' }));
+
+        return jsonResp({ success: true });
+      } catch (e) {
+        return jsonResp({ error: "创建分类失败: " + e.message }, 500);
       }
     }
 
