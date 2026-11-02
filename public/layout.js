@@ -15,6 +15,7 @@ const loadingHTML = `
 </div>
 `;
 
+// 主站顶栏
 const navHTML = `
 <header id="main-header" class="fixed top-0 z-[999] w-full h-14 bg-[#252525] flex items-center">
     <div class="px-5 w-full flex items-center justify-between h-full">
@@ -49,22 +50,7 @@ const navHTML = `
 </header>
 `;
 
-const footerHTML = `
-<footer class="bg-[#181818] py-8 border-t border-white/5 z-10 relative mt-auto">
-    <div class="px-5 flex flex-col items-center gap-5">
-        <div class="flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs font-medium tracking-widest font-roman">
-            <a href="/join/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Join us</a>
-            <a href="/privacy/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Privacy</a>
-            <a href="/wiki/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">Wiki</a>
-            <a href="/about/" class="text-[#f5d78d] no-underline hover:opacity-70 transition-opacity">About</a>
-        </div>
-        <div class="text-[11px] text-[#c89f5d] tracking-wide mt-2 font-roman text-center">
-            © 2026 Reozar Lab. CC-BY-SA 4.0
-        </div>
-    </div>
-</footer>
-`;
-
+// 侧边栏
 const sideDrawerHTML = `
 <div id="side-drawer-overlay" class="fixed inset-0 bg-black/40 z-[1000] backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300"></div>
 <aside id="side-drawer" class="fixed top-0 bottom-0 right-0 w-64 ios-card z-[1001] shadow-2xl flex flex-col border-l ios-border overflow-hidden translate-x-full transition-transform duration-300">
@@ -77,10 +63,6 @@ const sideDrawerHTML = `
         </div>
         <h2 class="text-base font-bold cec-text-dark w-full truncate" id="side-drawer-name">加载中...</h2>
         <p class="text-xs ios-text opacity-50 mt-1 w-full truncate" id="side-drawer-email">---</p>
-        <div class="flex gap-4 mt-3 text-sm">
-            <div class="flex flex-col"><span class="font-bold cec-text-dark" id="side-drawer-following">0</span><span class="text-xs ios-text opacity-50">关注</span></div>
-            <div class="flex flex-col"><span class="font-bold cec-text-dark" id="side-drawer-followers">0</span><span class="text-xs ios-text opacity-50">追随者</span></div>
-        </div>
     </div>
     <div class="flex-1 overflow-y-auto p-3 space-y-1">
         <a href="/profile/index.html" class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition">
@@ -109,6 +91,14 @@ const sideDrawerHTML = `
             <span class="ios-text font-medium text-sm truncate">Wiki</span>
         </a>
     </div>
+    
+    <!-- 新增：侧边栏底部的发布按钮 -->
+    <div id="side-drawer-footer" class="p-4 border-t ios-border hidden">
+        <button id="side-drawer-publish-btn" class="w-full py-3 bg-gradient-to-r from-[#e8c88c] to-[#c89f5d] text-black font-bold rounded-xl shadow-lg active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            发布新内容
+        </button>
+    </div>
 </aside>
 `;
 
@@ -117,10 +107,6 @@ document.body.insertAdjacentHTML('afterbegin', navHTML);
 
 if (isDrawerPage) {
     document.body.insertAdjacentHTML('beforeend', sideDrawerHTML);
-}
-
-if (!hideFooterPages.some(path => currentPath.includes(path))) {
-    document.body.insertAdjacentHTML('beforeend', footerHTML);
 }
 
 function initLayout() {
