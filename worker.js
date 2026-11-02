@@ -2,7 +2,6 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     
-    // 强制 HTTPS
     if (url.protocol === 'http:') {
       url.protocol = 'https:';
       return Response.redirect(url.toString(), 301);
@@ -10,7 +9,6 @@ export default {
 
     const method = request.method;
 
-    // 辅助函数：获取当前请求的用户信息
     async function getCurrentUser(request, env) {
       const cookieHeader = request.headers.get('Cookie');
       if (!cookieHeader) return null;
@@ -24,17 +22,14 @@ export default {
       return session || null;
     }
     
-    // 统一 JSON 返回辅助
     const jsonResp = (obj, status = 200) => new Response(JSON.stringify(obj), {
       status, headers: { "Content-Type": "application/json" }
     });
 
-    // ================= 0. 文件上传 API (暂未启用) =================
     if (url.pathname === '/api/upload' && method === 'POST') {
       return jsonResp({ error: "图片上传功能正在维护中" }, 503);
     }
 
-    // ================= 1. 认证模块 =================
     if (url.pathname === '/api/auth/send-code' && method === 'POST') {
       try {
         const { email } = await request.json();
@@ -123,7 +118,6 @@ export default {
       return jsonResp({ user: await getCurrentUser(request, env) });
     }
 
-    // ================= 2. 管理模块 =================
     if (url.pathname === '/api/admin/users' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser || (currentUser.role !== 'root' && currentUser.role !== 'admin')) return jsonResp({ error: "权限不足" }, 403);
@@ -181,7 +175,6 @@ export default {
       return jsonResp({ success: true });
     }
 
-    // ================= 3. 用户主页与信息更新 =================
     if (url.pathname === '/api/users/profile' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
@@ -236,7 +229,6 @@ export default {
       return jsonResp({ contributions: [] });
     }
 
-    // ================= 4. 发现（Forum）核心 API =================
     if (url.pathname === '/api/forum/posts' && method === 'GET') {
       const currentUser = await getCurrentUser(request, env);
       const tab = url.searchParams.get('tab') || 'discover';
@@ -445,24 +437,53 @@ export default {
       }
     }
 
-    // ================= 5. Wiki 在线编辑 API (预留) =================
+    if (url.pathname === '/api/wiki/get' && method === 'GET') {
+      const currentUser = await getCurrentUser(request, env);
+      if (!currentUser || currentUser.role === 'user') return jsonResp({ error: "权限不足" }, 403);
+
+      const filePath = url.searchParams.get('path');
+      if (!filePath) return jsonResp({ error: "缺少路径参数" }, 400);
+
+      try {
+        let fetchUrl = `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${filePath}`;
+        let getRes = await fetch(fetchUrl, {
+          headers: { 'Authorization': `Bearer ${env.GITHUB_TOKEN}`, 'User-Agent': 'Cloudflare-Worker' }
+        });
+
+        if (!getRes.ok && !filePath.startsWith('content/')) {
+            fetchUrl = `https://api.github.com/repos/${env.GITHUB_REPO}/contents/content/${filePath}`;
+            getRes = await fetch(fetchUrl, {
+              headers: { 'Authorization': `Bearer ${env.GITHUB_TOKEN}`, 'User-Agent': 'Cloudflare-Worker' }
+            });
+        }
+
+        if (!getRes.ok) {
+          if (getRes.status === 404) return jsonResp({ error: "文件不存在（新建词条）" }, 404);
+          return jsonResp({ error: "GitHub 拉取失败" }, 500);
+        }
+
+        const fileData = await getRes.json();
+        const content = decodeURIComponent(escape(atob(fileData.content)));
+        return jsonResp({ content, path: fileData.path });
+      } catch (e) {
+        return jsonResp({ error: "拉取异常: " + e.message }, 500);
+      }
+    }
+
     if (url.pathname === '/api/wiki/save' && method === 'POST') {
       const currentUser = await getCurrentUser(request, env);
       if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
-      
-      if (currentUser.role === 'user') {
-        return jsonResp({ error: "权限不足，仅编者及以上可编辑百科" }, 403);
-      }
+      if (currentUser.role === 'user') return jsonResp({ error: "权限不足，仅编者及以上可编辑" }, 403);
 
       try {
-        const { filename, content } = await request.json();
-        if (!filename || !content) return jsonResp({ error: "文件名或内容不能为空" }, 400);
+        const { path, content } = await request.json();
+        if (!path || content === undefined) return jsonResp({ error: "路径或内容不能为空" }, 400);
 
-        const safeFilename = filename.endsWith('.md') ? filename : `${filename}.md`;
+        const safePath = path.startsWith('content/') ? path : `content/${path}`;
         const encodedContent = btoa(unescape(encodeURIComponent(content)));
 
         let sha = null;
-        const getRes = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/contents/content/${safeFilename}`, {
+        const getRes = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/contents/${safePath}`, {
           headers: { 'Authorization': `Bearer ${env.GITHUB_TOKEN}`, 'User-Agent': 'Cloudflare-Worker' }
         });
         
@@ -471,7 +492,7 @@ export default {
           sha = fileData.sha;
         }
 
-        const putRes = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/contents/content/${safeFilename}`, {
+        const putRes = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/contents/${safePath}`, {
           method: 'PUT',
           headers: { 
             'Authorization': `Bearer ${env.GITHUB_TOKEN}`, 
@@ -479,7 +500,7 @@ export default {
             'User-Agent': 'Cloudflare-Worker'
           },
           body: JSON.stringify({
-            message: `Wiki Update: ${safeFilename}`,
+            message: `Wiki Update: ${safePath} by ${currentUser.name}`,
             content: encodedContent,
             sha: sha || undefined 
           })
@@ -495,7 +516,6 @@ export default {
         }
 
         return jsonResp({ success: true, message: "已提交至 GitHub，正在重新构建页面..." });
-
       } catch (e) {
         return jsonResp({ error: "保存失败: " + e.message }, 500);
       }
@@ -505,7 +525,6 @@ export default {
       return jsonResp({ error: "接口尚未实现" }, 404);
     }
 
-    // 兜底：返回主站的静态资源（包括 /wiki/index.html）
     return env.ASSETS.fetch(request);
   }
 };
