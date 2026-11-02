@@ -461,11 +461,15 @@ export default {
 
         if (!getRes.ok) {
           if (getRes.status === 404) return jsonResp({ error: "文件不存在（新建词条）" }, 404);
-          return jsonResp({ error: "GitHub 拉取失败" }, 500);
+          
+          // 显微镜报错
+          const errText = await getRes.text();
+          console.log(`GitHub API Error (${getRes.status}):`, errText);
+          return jsonResp({ error: `GitHub 拒绝访问 (${getRes.status}): ${errText}` }, getRes.status);
         }
 
         const fileData = await getRes.json();
-        const content = decodeURIComponent(escape(atob(fileData.content)));
+        const content = decodeURIComponent(escape(atob(fileData.content.replace(/\s/g, ''))));
         return jsonResp({ content, path: filePath });
       } catch (e) {
         return jsonResp({ error: "拉取异常: " + e.message }, 500);
