@@ -8,35 +8,33 @@
     <link rel="stylesheet" href="../../style.css">
     <style>
         html, body { height: 100%; margin: 0; padding: 0; background-color: #141414; overflow: hidden; }
-        /* 计算剩余高度：100vh 减去主站顶栏 (56px)、顶部输入区 (约 64px) 和底部按钮区 (约 64px) */
-        .editor-container { height: calc(100vh - 56px - 64px - 64px); } 
+        .editor-container { height: calc(100vh - 56px - 72px - 72px); } 
         textarea { resize: none; }
     </style>
 </head>
 <body class="page-ios relative text-[#f5d78d]">
 
-    <!-- 引入全局脚本（包含导航栏注入、权限验证的依赖） -->
     <script src="../../common.js"></script>
     <script src="../../layout.js"></script>
 
+    <!-- 顶部操作区 -->
     <div class="w-full h-full flex flex-col pt-14">
-        <!-- 顶部信息区 -->
-        <div class="px-5 py-3 border-b border-white/5 shrink-0 bg-[#181818] z-10 flex items-center gap-3">
+        <div class="px-4 py-3 border-b border-white/5 shrink-0 bg-[#181818] z-10 flex items-center gap-3">
             <span class="text-sm opacity-60 whitespace-nowrap">词条路径：</span>
             <input type="text" id="file-path" placeholder="例如: 人物设定/法登.md" 
                    class="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#f5d78d] transition-colors font-mono text-white/90">
         </div>
 
-        <!-- 编辑器主体 -->
+        <!-- 编辑器 -->
         <div class="editor-container p-3 bg-[#141414] shrink-0">
             <textarea id="md-content" 
                       placeholder="正在拉取内容或输入 Markdown..." 
                       class="w-full h-full bg-black/20 border border-white/10 rounded-2xl p-4 text-[14px] font-mono leading-relaxed outline-none focus:border-[#f5d78d] text-white/90 transition-colors"></textarea>
         </div>
 
-        <!-- 底部保存按钮 -->
-        <div class="px-5 py-3 border-t border-white/5 shrink-0 bg-[#181818] z-10 h-[64px]">
-            <button id="save-btn" class="w-full py-2.5 rounded-xl font-bold text-black bg-gradient-to-r from-[#e8c88c] to-[#c89f5d] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+        <!-- 底部保存 -->
+        <div class="px-4 py-3 border-t border-white/5 shrink-0 bg-[#181818] z-10 h-[72px]">
+            <button id="save-btn" class="w-full py-3 rounded-xl font-bold text-black bg-gradient-to-r from-[#e8c88c] to-[#c89f5d] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                 <span id="btn-text">保存并同步至 Wiki</span>
                 <svg id="btn-loading" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
             </button>
@@ -50,24 +48,18 @@
         const btnText = document.getElementById('btn-text');
         const btnLoading = document.getElementById('btn-loading');
 
-        // 1. 初始化：检查权限、拉取当前页路径和内容
         window.addEventListener('DOMContentLoaded', async () => {
-            // 权限拦截
             if (typeof API !== 'undefined') {
                 try {
                     const data = await API.getMe();
                     if (!data || !data.user || !['editor', 'admin', 'root'].includes(data.user.role)) {
-                        alert('权限不足：仅编者及以上权限可以编辑百科。');
+                        alert('权限不足');
                         window.location.href = '/wiki/';
                         return;
                     }
-                } catch (e) {
-                    window.location.href = '/login/';
-                    return;
-                }
+                } catch (e) { window.location.href = '/login/'; return; }
             }
 
-            // 从 sessionStorage 读取在 Wiki 页面缓存的当前路径
             const currentPath = sessionStorage.getItem('current_wiki_path');
             if (currentPath) {
                 pathInput.value = currentPath;
@@ -75,7 +67,7 @@
             }
         });
 
-        // 2. 根据路径拉取 GitHub 内容
+        // 拉取内容并带提示
         async function loadContent(path) {
             if (!path) return;
             contentInput.placeholder = "正在从 GitHub 拉取内容...";
@@ -85,38 +77,33 @@
                     const data = await res.json();
                     contentInput.value = data.content || '';
                 } else if (res.status === 404) {
-                    contentInput.value = ''; // 文件不存在，留空供新建
+                    contentInput.value = ''; 
+                    showToast('文件不存在，已清空内容供新建', 'info');
+                } else {
+                    const errData = await res.json();
+                    // 把后端真实的报错弹出来
+                    alert(`拉取失败 (HTTP ${res.status}):\n${errData.error || '未知错误'}`);
                 }
             } catch (err) {
-                if (typeof showToast !== 'undefined') showToast('拉取内容失败，请检查网络', 'error');
+                alert(`网络错误: ${err.message}`);
             } finally {
                 contentInput.placeholder = "在这里输入 Markdown 内容...";
             }
         }
 
-        // 3. 当手动更改路径并失去焦点时，尝试重新拉取内容
         pathInput.addEventListener('change', () => {
-            const newPath = pathInput.value.trim();
-            if (newPath) {
-                loadContent(newPath);
+            if (pathInput.value.trim()) {
+                loadContent(pathInput.value.trim());
             }
         });
 
-        // 4. 点击保存
+        // 保存并带提示
         saveBtn.addEventListener('click', async () => {
             const path = pathInput.value.trim();
             const content = contentInput.value;
 
-            if (!path) {
-                if (typeof showToast !== 'undefined') showToast('请输入词条路径', 'error');
-                return;
-            }
-            if (!content) {
-                if (typeof showToast !== 'undefined') showToast('内容不能为空', 'error');
-                return;
-            }
+            if (!path) return showToast('请输入词条路径', 'error');
 
-            // UI 状态切换：加载中
             saveBtn.disabled = true;
             saveBtn.classList.add('opacity-70');
             btnText.textContent = '正在推送...';
@@ -131,16 +118,15 @@
                 const data = await res.json();
                 
                 if (res.ok) {
-                    if (typeof showToast !== 'undefined') showToast('保存成功，Cloudflare 正在构建中', 'success');
-                    // 更新缓存路径，避免刷新后丢失
+                    showToast('保存成功', 'success');
                     sessionStorage.setItem('current_wiki_path', path);
                 } else {
-                    throw new Error(data.error || '保存失败');
+                    // 把后端真实的报错弹出来
+                    alert(`保存失败 (HTTP ${res.status}):\n${data.error || '未知错误'}`);
                 }
             } catch (error) {
-                if (typeof showToast !== 'undefined') showToast(error.message, 'error');
+                alert(`网络错误: ${error.message}`);
             } finally {
-                // 恢复 UI
                 saveBtn.disabled = false;
                 saveBtn.classList.remove('opacity-70');
                 btnText.textContent = '保存并同步至 Wiki';
