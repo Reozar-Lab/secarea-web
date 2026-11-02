@@ -57,7 +57,7 @@
         </div>
     </div>
 
-    <main id="feed" class="flex-grow w-full max-w-lg mx-auto pb-12">
+    <main id="feed" class="flex-grow w-full max-w-lg mx-auto pb-24">
         <div id="feed-loading" class="p-8 text-center">
             <div class="inline-block w-6 h-6 border-2 border-[#c89f5d]/30 border-t-[#c89f5d] rounded-full animate-spin"></div>
             <p class="text-xs ios-text opacity-50 mt-3 tracking-widest">接入通讯网...</p>
@@ -91,6 +91,11 @@
             </div>
         </div>
     </div>
+
+    <!-- 悬浮发布按钮 FAB -->
+    <button id="fab-publish" class="fixed bottom-20 right-5 w-14 h-14 rounded-full bg-gradient-to-r from-[#e8c88c] to-[#c89f5d] shadow-[0_4px_20px_rgba(245,215,141,0.4)] flex items-center justify-center text-black z-[50] active:scale-90 transition-transform">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+    </button>
 
     <script src="../common.js"></script>
     <script src="../layout.js"></script>
@@ -164,7 +169,6 @@
                             ${renderTags(post.tags)}
                         </a>
                         <div class="flex items-center justify-end gap-6 mt-3 text-[12.5px] ios-text opacity-50">
-                            <!-- 评论按钮跳转到详情页 -->
                             <a href="/forum/post/index.html?id=${post.id}" class="flex items-center gap-1.5 hover:text-[#c89f5d] hover:opacity-100 transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                                 <span>${post.comments_count || 0}</span>
@@ -345,6 +349,13 @@
         const publishTags = document.getElementById('publish-tags');
         const publishImage = document.getElementById('publish-image');
         
+        // 悬浮按钮点击事件
+        document.getElementById('fab-publish').addEventListener('click', () => {
+            if (!currentUser) return showToast('请先登录', 'error');
+            document.dispatchEvent(new CustomEvent('open-publish'));
+        });
+
+        // 侧边栏按钮或自定义事件触发弹窗
         document.addEventListener('open-publish', () => {
             if (!currentUser) return showToast('请先登录', 'error');
             publishModal.classList.remove('hidden');
