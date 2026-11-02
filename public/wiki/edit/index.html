@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="../../style.css">
     <style>
         html, body { height: 100%; margin: 0; padding: 0; background-color: #141414; overflow: hidden; }
-        .editor-container { height: calc(100vh - 56px - 72px - 72px); } 
+        .editor-container { height: calc(100vh - 56px - 76px - 76px); } 
         textarea { resize: none; }
     </style>
 </head>
@@ -19,10 +19,25 @@
 
     <!-- 顶部操作区 -->
     <div class="w-full h-full flex flex-col pt-14">
-        <div class="px-4 py-3 border-b border-white/5 shrink-0 bg-[#181818] z-10 flex items-center gap-3">
-            <span class="text-sm opacity-60 whitespace-nowrap">词条路径：</span>
-            <input type="text" id="file-path" placeholder="例如: 人物设定/法登.md" 
-                   class="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#f5d78d] transition-colors font-mono text-white/90">
+        <div class="px-4 py-3 border-b border-white/5 shrink-0 bg-[#181818] z-10 flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+                <!-- 分类下拉框 -->
+                <div class="flex-1 flex bg-black/40 border border-white/10 rounded-xl overflow-hidden focus-within:border-[#f5d78d] transition-colors">
+                    <select id="category-select" class="bg-transparent text-sm text-white/90 outline-none px-2 py-2 max-w-[120px] appearance-none">
+                        <option value="" disabled selected>分类...</option>
+                        <option value="">(根目录)</option>
+                    </select>
+                    <div class="w-px bg-white/10 my-1"></div>
+                    <!-- 词条名输入 -->
+                    <input type="text" id="page-name" placeholder="词条名称" 
+                           class="flex-1 bg-transparent px-3 py-2 text-sm outline-none text-white/90">
+                </div>
+                <!-- 新建分类按钮（管理员可见） -->
+                <button id="new-category-btn" class="hidden bg-[#f5d78d]/10 text-[#f5d78d] border border-[#f5d78d]/20 rounded-xl px-3 py-2 text-sm font-bold whitespace-nowrap active:scale-95 transition-all">
+                    + 分类
+                </button>
+            </div>
+            <div class="text-[11px] text-[#f5d78d]/60 pl-1" id="full-path-preview">当前路径: 未选择分类</div>
         </div>
 
         <!-- 编辑器 -->
@@ -33,21 +48,76 @@
         </div>
 
         <!-- 底部保存 -->
-        <div class="px-4 py-3 border-t border-white/5 shrink-0 bg-[#181818] z-10 h-[72px]">
-            <button id="save-btn" class="w-full py-3 rounded-xl font-bold text-black bg-gradient-to-r from-[#e8c88c] to-[#c89f5d] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+        <div class="px-4 py-3 border-t border-white/5 shrink-0 bg-[#181818] z-10 h-[76px]">
+            <button id="save-btn" class="w-full py-3.5 rounded-xl font-bold text-black bg-gradient-to-r from-[#e8c88c] to-[#c89f5d] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                 <span id="btn-text">保存并同步至 Wiki</span>
                 <svg id="btn-loading" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
             </button>
         </div>
     </div>
 
+    <!-- 新建分类弹窗（复刻 iOS 上滑面板） -->
+    <div id="reset-modal" class="sys-modal-overlay fixed inset-0 z-[9999] hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
+        <div id="reset-panel" class="sys-modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto flex flex-col">
+            <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                <h2 class="text-lg font-bold ios-title">新建分类目录</h2>
+                <button onclick="closeResetModal()" class="ios-text opacity-50 hover:opacity-100 p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 space-y-4 pb-8">
+                <div>
+                    <label class="block text-xs ios-text opacity-60 mb-1 ml-1">分类名称</label>
+                    <input type="text" id="new-category-input" placeholder="例如: 人物设定、势力情报..." class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                </div>
+                <button id="modal-confirm" class="w-full py-3.5 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition mt-2">确认创建</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        const pathInput = document.getElementById('file-path');
+        let isSaved = true; // 状态标记：初始允许离开
+        let currentUserRole = 'user';
+
+        const categorySelect = document.getElementById('category-select');
+        const pageNameInput = document.getElementById('page-name');
+        const pathPreview = document.getElementById('full-path-preview');
         const contentInput = document.getElementById('md-content');
         const saveBtn = document.getElementById('save-btn');
         const btnText = document.getElementById('btn-text');
         const btnLoading = document.getElementById('btn-loading');
+        const newCategoryBtn = document.getElementById('new-category-btn');
+        
+        // 弹窗相关
+        const resetModal = document.getElementById('reset-modal');
+        const resetPanel = document.getElementById('reset-panel');
+        const newCategoryInput = document.getElementById('new-category-input');
+        const modalConfirm = document.getElementById('modal-confirm');
 
+        // ============ 离开页面拦截 ============
+        window.addEventListener('beforeunload', (e) => {
+            if (!isSaved) {
+                e.preventDefault();
+                e.returnValue = '您有未保存的修改，确定要离开吗？';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (link && !isSaved) {
+                if (link.href.includes('/wiki/edit/')) return;
+                if (!confirm('您有未保存的修改，确定要离开吗？')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }
+        }, true);
+
+        contentInput.addEventListener('input', () => { isSaved = false; });
+        pageNameInput.addEventListener('input', () => { isSaved = false; updatePreview(); });
+        categorySelect.addEventListener('change', () => { isSaved = false; updatePreview(); });
+
+        // ============ 初始化与数据拉取 ============
         window.addEventListener('DOMContentLoaded', async () => {
             if (typeof API !== 'undefined') {
                 try {
@@ -57,19 +127,64 @@
                         window.location.href = '/wiki/';
                         return;
                     }
+                    currentUserRole = data.user.role;
+                    if (currentUserRole === 'admin' || currentUserRole === 'root') {
+                        newCategoryBtn.classList.remove('hidden');
+                    }
                 } catch (e) { window.location.href = '/login/'; return; }
             }
 
+            await loadCategories();
+
             const currentPath = sessionStorage.getItem('current_wiki_path');
             if (currentPath) {
-                pathInput.value = currentPath;
+                const parts = currentPath.split('/');
+                if (parts.length > 1) {
+                    const category = parts[0];
+                    const name = parts[parts.length - 1].replace('.md', '');
+                    
+                    const option = Array.from(categorySelect.options).find(o => o.value === category);
+                    if (option) {
+                        categorySelect.value = category;
+                    } else {
+                        categorySelect.value = category;
+                        categorySelect.add(new Option(category, category, true, true));
+                    }
+                    pageNameInput.value = name;
+                } else {
+                    categorySelect.value = ""; // 根目录
+                    pageNameInput.value = currentPath.replace('.md', '');
+                }
+                updatePreview();
                 await loadContent(currentPath);
+                isSaved = true; // 初始化拉取完，设回已保存状态
             }
         });
 
-        // 拉取内容并带提示
+        async function loadCategories() {
+            try {
+                const res = await fetch('/api/wiki/categories');
+                const data = await res.json();
+                if (data.categories) {
+                    data.categories.sort().forEach(cat => {
+                        categorySelect.add(new Option(cat, cat));
+                    });
+                }
+            } catch (e) { console.error('拉取分类失败', e); }
+        }
+
+        function updatePreview() {
+            const cat = categorySelect.value;
+            const name = pageNameInput.value.trim();
+            if (!name) {
+                pathPreview.textContent = "当前路径: 请输入词条名";
+                return;
+            }
+            const fullPath = cat ? `${cat}/${name}.md` : `${name}.md`;
+            pathPreview.textContent = `当前路径: ${fullPath}`;
+        }
+
         async function loadContent(path) {
-            if (!path) return;
             contentInput.placeholder = "正在从 GitHub 拉取内容...";
             try {
                 const res = await fetch(`/api/wiki/get?path=${encodeURIComponent(path)}`);
@@ -77,32 +192,81 @@
                     const data = await res.json();
                     contentInput.value = data.content || '';
                 } else if (res.status === 404) {
-                    contentInput.value = ''; 
-                    showToast('文件不存在，已清空内容供新建', 'info');
-                } else {
-                    const errData = await res.json();
-                    // 把后端真实的报错弹出来
-                    alert(`拉取失败 (HTTP ${res.status}):\n${errData.error || '未知错误'}`);
+                    contentInput.value = ''; // 新建
                 }
             } catch (err) {
-                alert(`网络错误: ${err.message}`);
+                if (typeof showToast !== 'undefined') showToast('拉取失败', 'error');
             } finally {
                 contentInput.placeholder = "在这里输入 Markdown 内容...";
             }
         }
 
-        pathInput.addEventListener('change', () => {
-            if (pathInput.value.trim()) {
-                loadContent(pathInput.value.trim());
+        pageNameInput.addEventListener('change', () => {
+            const cat = categorySelect.value;
+            const name = pageNameInput.value.trim();
+            if (name) {
+                const path = cat ? `${cat}/${name}.md` : `${name}.md`;
+                loadContent(path);
             }
         });
 
-        // 保存并带提示
+        // ============ 弹窗逻辑 ============
+        newCategoryBtn.addEventListener('click', () => {
+            newCategoryInput.value = '';
+            resetModal.classList.remove('hidden');
+            setTimeout(() => {
+                resetModal.classList.remove('opacity-0');
+                resetPanel.classList.remove('translate-y-full', 'sm:scale-95');
+            }, 10);
+        });
+
+        function closeResetModal() {
+            resetModal.classList.add('opacity-0');
+            resetPanel.classList.add('translate-y-full', 'sm:scale-95');
+            setTimeout(() => resetModal.classList.add('hidden'), 300);
+        }
+        
+        resetModal.addEventListener('click', (e) => { if (e.target === resetModal) closeResetModal(); });
+
+        modalConfirm.addEventListener('click', async () => {
+            const newCat = newCategoryInput.value.trim();
+            if (!newCat) return showToast('分类名不能为空', 'error');
+            
+            modalConfirm.textContent = '创建中...';
+            modalConfirm.disabled = true;
+            
+            try {
+                const res = await fetch('/api/wiki/new-category', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categoryName: newCat })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    showToast('分类创建成功', 'success');
+                    categorySelect.add(new Option(newCat, newCat, true, true));
+                    closeResetModal();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (e) {
+                showToast('网络错误', 'error');
+            } finally {
+                modalConfirm.textContent = '确认创建';
+                modalConfirm.disabled = false;
+            }
+        });
+
+        // ============ 保存逻辑 ============
         saveBtn.addEventListener('click', async () => {
-            const path = pathInput.value.trim();
+            const cat = categorySelect.value;
+            const name = pageNameInput.value.trim();
             const content = contentInput.value;
 
-            if (!path) return showToast('请输入词条路径', 'error');
+            if (!name) return showToast('请输入词条名', 'error');
+            
+            const finalPath = cat ? `${cat}/${name}.md` : `${name}.md`;
 
             saveBtn.disabled = true;
             saveBtn.classList.add('opacity-70');
@@ -113,19 +277,19 @@
                 const res = await fetch('/api/wiki/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ path, content })
+                    body: JSON.stringify({ path: finalPath, content })
                 });
                 const data = await res.json();
                 
                 if (res.ok) {
-                    showToast('保存成功', 'success');
-                    sessionStorage.setItem('current_wiki_path', path);
+                    showToast('保存成功，正在构建', 'success');
+                    isSaved = true;
+                    sessionStorage.setItem('current_wiki_path', finalPath);
                 } else {
-                    // 把后端真实的报错弹出来
-                    alert(`保存失败 (HTTP ${res.status}):\n${data.error || '未知错误'}`);
+                    throw new Error(data.error || '保存失败');
                 }
             } catch (error) {
-                alert(`网络错误: ${error.message}`);
+                showToast(error.message, 'error');
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.classList.remove('opacity-70');
