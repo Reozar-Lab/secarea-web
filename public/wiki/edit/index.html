@@ -2,53 +2,79 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>编辑词条 · 匿境 Secarea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../../style.css">
+    <script>
+        // 解决明亮模式 Bug：初始化时立刻读取主题
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <style>
-        html, body { height: 100%; margin: 0; padding: 0; background-color: #141414; overflow: hidden; }
-        .editor-container { height: calc(100vh - 56px - 76px - 76px); } 
+        /* 取消 iframe 干扰，使用动态视口高度，防止手机浏览器底栏遮挡 */
+        html, body { 
+            height: 100%; 
+            height: 100dvh; /* 动态视口高度，完美解决 iOS 底部导航栏问题 */
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            background-color: #f4f4f5; 
+        }
+        .dark html, .dark body { 
+            background-color: #141414; 
+        }
+        
         textarea { resize: none; }
+        
+        /* 适配 iOS 底部安全区 (小黑条) */
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 16px);
+        }
     </style>
 </head>
-<body class="page-ios relative text-[#f5d78d]">
+<body class="page-ios relative ios-text">
 
     <script src="../../common.js"></script>
     <script src="../../layout.js"></script>
 
-    <!-- 顶部操作区 -->
-    <div class="w-full h-full flex flex-col pt-14">
-        <div class="px-4 py-3 border-b border-white/5 shrink-0 bg-[#181818] z-10 flex flex-col gap-2">
+    <!-- 采用 Flex 布局撑满屏幕，避免被遮挡 -->
+    <div class="w-full h-[100dvh] flex flex-col pt-14">
+        
+        <!-- 顶部操作区 -->
+        <div class="px-4 py-3 border-b ios-border shrink-0 bg-white/90 dark:bg-[#181818]/90 backdrop-blur z-10 flex flex-col gap-2">
             <div class="flex items-center gap-2">
                 <!-- 分类下拉框 -->
-                <div class="flex-1 flex bg-black/40 border border-white/10 rounded-xl overflow-hidden focus-within:border-[#f5d78d] transition-colors">
-                    <select id="category-select" class="bg-transparent text-sm text-white/90 outline-none px-2 py-2 max-w-[120px] appearance-none">
+                <div class="flex-1 flex bg-black/5 dark:bg-black/40 border ios-border rounded-xl overflow-hidden focus-within:border-[#f5d78d] transition-colors">
+                    <select id="category-select" class="bg-transparent text-sm ios-text outline-none px-2 py-2 max-w-[120px] appearance-none">
                         <option value="" disabled selected>分类...</option>
                         <option value="">(根目录)</option>
                     </select>
-                    <div class="w-px bg-white/10 my-1"></div>
+                    <div class="w-px bg-black/10 dark:bg-white/10 my-1"></div>
                     <!-- 词条名输入 -->
                     <input type="text" id="page-name" placeholder="词条名称" 
-                           class="flex-1 bg-transparent px-3 py-2 text-sm outline-none text-white/90">
+                           class="flex-1 bg-transparent px-3 py-2 text-sm outline-none ios-text">
                 </div>
                 <!-- 新建分类按钮（管理员可见） -->
-                <button id="new-category-btn" class="hidden bg-[#f5d78d]/10 text-[#f5d78d] border border-[#f5d78d]/20 rounded-xl px-3 py-2 text-sm font-bold whitespace-nowrap active:scale-95 transition-all">
+                <button id="new-category-btn" class="hidden bg-[#f5d78d]/10 text-[#c89f5d] dark:text-[#f5d78d] border border-[#f5d78d]/30 rounded-xl px-3 py-2 text-sm font-bold whitespace-nowrap active:scale-95 transition-all">
                     + 分类
                 </button>
             </div>
-            <div class="text-[11px] text-[#f5d78d]/60 pl-1" id="full-path-preview">当前路径: 未选择分类</div>
+            <div class="text-[11px] text-[#c89f5d] dark:text-[#f5d78d]/60 pl-1" id="full-path-preview">当前路径: 未选择分类</div>
         </div>
 
-        <!-- 编辑器 -->
-        <div class="editor-container p-3 bg-[#141414] shrink-0">
+        <!-- 编辑器主体 -->
+        <div class="flex-1 p-3 overflow-hidden">
             <textarea id="md-content" 
                       placeholder="正在拉取内容或输入 Markdown..." 
-                      class="w-full h-full bg-black/20 border border-white/10 rounded-2xl p-4 text-[14px] font-mono leading-relaxed outline-none focus:border-[#f5d78d] text-white/90 transition-colors"></textarea>
+                      class="w-full h-full bg-black/5 dark:bg-black/20 border ios-border rounded-2xl p-4 text-[14px] font-mono leading-relaxed outline-none focus:border-[#f5d78d] ios-text transition-colors"></textarea>
         </div>
 
-        <!-- 底部保存 -->
-        <div class="px-4 py-3 border-t border-white/5 shrink-0 bg-[#181818] z-10 h-[76px]">
+        <!-- 底部保存按钮 -->
+        <div class="px-4 py-3 border-t ios-border shrink-0 bg-white/90 dark:bg-[#181818]/90 backdrop-blur z-10 safe-bottom">
             <button id="save-btn" class="w-full py-3.5 rounded-xl font-bold text-black bg-gradient-to-r from-[#e8c88c] to-[#c89f5d] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2">
                 <span id="btn-text">保存并同步至 Wiki</span>
                 <svg id="btn-loading" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -58,9 +84,9 @@
 
     <!-- 新建分类弹窗（复刻 iOS 上滑面板） -->
     <div id="reset-modal" class="sys-modal-overlay fixed inset-0 z-[9999] hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
-        <div id="reset-panel" class="sys-modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto flex flex-col">
+        <div id="reset-panel" class="sys-modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto flex flex-col bg-white dark:bg-[#1a1a1a]">
             <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
-                <h2 class="text-lg font-bold ios-title">新建分类目录</h2>
+                <h2 class="text-lg font-bold ios-title ios-text">新建分类目录</h2>
                 <button onclick="closeResetModal()" class="ios-text opacity-50 hover:opacity-100 p-2">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
@@ -76,7 +102,7 @@
     </div>
 
     <script>
-        let isSaved = true; // 状态标记：初始允许离开
+        let isSaved = true;
         let currentUserRole = 'user';
 
         const categorySelect = document.getElementById('category-select');
@@ -88,13 +114,12 @@
         const btnLoading = document.getElementById('btn-loading');
         const newCategoryBtn = document.getElementById('new-category-btn');
         
-        // 弹窗相关
         const resetModal = document.getElementById('reset-modal');
         const resetPanel = document.getElementById('reset-panel');
         const newCategoryInput = document.getElementById('new-category-input');
         const modalConfirm = document.getElementById('modal-confirm');
 
-        // ============ 离开页面拦截 ============
+        // 离开页面拦截
         window.addEventListener('beforeunload', (e) => {
             if (!isSaved) {
                 e.preventDefault();
@@ -117,7 +142,7 @@
         pageNameInput.addEventListener('input', () => { isSaved = false; updatePreview(); });
         categorySelect.addEventListener('change', () => { isSaved = false; updatePreview(); });
 
-        // ============ 初始化与数据拉取 ============
+        // 初始化
         window.addEventListener('DOMContentLoaded', async () => {
             if (typeof API !== 'undefined') {
                 try {
@@ -152,12 +177,12 @@
                     }
                     pageNameInput.value = name;
                 } else {
-                    categorySelect.value = ""; // 根目录
+                    categorySelect.value = ""; 
                     pageNameInput.value = currentPath.replace('.md', '');
                 }
                 updatePreview();
                 await loadContent(currentPath);
-                isSaved = true; // 初始化拉取完，设回已保存状态
+                isSaved = true; 
             }
         });
 
@@ -192,10 +217,15 @@
                     const data = await res.json();
                     contentInput.value = data.content || '';
                 } else if (res.status === 404) {
-                    contentInput.value = ''; // 新建
+                    contentInput.value = ''; 
+                    showToast('新词条，已清空内容', 'info');
+                } else {
+                    const errData = await res.json();
+                    alert(`拉取失败 (${res.status}):\n${errData.error}`);
+                    contentInput.value = ''; 
                 }
             } catch (err) {
-                if (typeof showToast !== 'undefined') showToast('拉取失败', 'error');
+                alert(`网络错误: ${err.message}`);
             } finally {
                 contentInput.placeholder = "在这里输入 Markdown 内容...";
             }
@@ -210,7 +240,7 @@
             }
         });
 
-        // ============ 弹窗逻辑 ============
+        // 弹窗
         newCategoryBtn.addEventListener('click', () => {
             newCategoryInput.value = '';
             resetModal.classList.remove('hidden');
@@ -258,7 +288,7 @@
             }
         });
 
-        // ============ 保存逻辑 ============
+        // 保存
         saveBtn.addEventListener('click', async () => {
             const cat = categorySelect.value;
             const name = pageNameInput.value.trim();
