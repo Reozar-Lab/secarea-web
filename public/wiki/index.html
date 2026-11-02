@@ -14,52 +14,17 @@
         }
 
         #wiki-float-ball {
-            position: fixed;
-            top: 16px;
-            right: 16px;
-            width: 42px;
-            height: 42px;
-            background-color: rgba(37, 37, 37, 0.3);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: #f5d78d;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: bold;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 999;
-            cursor: pointer;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateY(-10px) scale(0.9); 
+            position: fixed; top: 16px; right: 16px; width: 42px; height: 42px;
+            background-color: rgba(37, 37, 37, 0.3); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            color: #f5d78d; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999;
+            cursor: pointer; opacity: 0; pointer-events: none; transform: translateY(-10px) scale(0.9); 
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        #wiki-float-ball.show {
-            opacity: 0.85;
-            pointer-events: auto;
-            transform: translateY(0) scale(1);
-        }
-        
-        #wiki-float-ball:hover, 
-        #wiki-float-ball:active {
-            opacity: 1;
-            background-color: rgba(37, 37, 37, 0.6);
-            transform: scale(1.05);
-        }
-
-        :root[saved-theme="light"] #wiki-float-ball {
-            background-color: rgba(255, 255, 255, 0.4);
-            color: #c89f5d;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        :root[saved-theme="light"] #wiki-float-ball:hover, 
-        :root[saved-theme="light"] #wiki-float-ball:active {
-            background-color: rgba(255, 255, 255, 0.8);
-        }
+        #wiki-float-ball.show { opacity: 0.85; pointer-events: auto; transform: translateY(0) scale(1); }
+        #wiki-float-ball:hover, #wiki-float-ball:active { opacity: 1; background-color: rgba(37, 37, 37, 0.6); transform: scale(1.05); }
+        :root[saved-theme="light"] #wiki-float-ball { background-color: rgba(255, 255, 255, 0.4); color: #c89f5d; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        :root[saved-theme="light"] #wiki-float-ball:hover, :root[saved-theme="light"] #wiki-float-ball:active { background-color: rgba(255, 255, 255, 0.8); }
     </style>
 </head>
 <body class="page-ios relative">
@@ -72,24 +37,27 @@
     <div id="wiki-float-ball" onclick="if(window.toggleSideDrawer) window.toggleSideDrawer()">☰</div>
 
     <script>
-        // 监听来自 Wiki 内部的滚动距离
         window.addEventListener('message', (event) => {
             const data = event.data;
+            
+            // 1. 处理滚动悬浮球
             if (data && data.type === 'wiki_scroll') {
                 const ball = document.getElementById('wiki-float-ball');
-                if (data.scrollY > 100) {
-                    ball.classList.add('show');
-                } else {
-                    ball.classList.remove('show');
-                }
+                if (data.scrollY > 100) ball.classList.add('show');
+                else ball.classList.remove('show');
+            }
+
+            // 2. 接收当前页面路径并存入 sessionStorage
+            if (data && data.type === 'wiki_path_change') {
+                sessionStorage.setItem('current_wiki_path', data.path);
+                // console.log("主站已同步当前词条路径:", data.path); 
             }
         });
 
-        // 新增：监听 iframe 加载，一完成立刻发送主题状态
+        // 初始化：iframe 加载完成时发送主题状态
         const wikiFrame = document.getElementById('wiki-frame');
         if (wikiFrame) {
             wikiFrame.addEventListener('load', () => {
-                // 获取主站当前的暗黑状态
                 const isDark = document.documentElement.classList.contains('dark');
                 if (wikiFrame.contentWindow) {
                     wikiFrame.contentWindow.postMessage({ type: 'main_darkmode', isDark: isDark }, '*');
