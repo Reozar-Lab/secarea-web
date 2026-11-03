@@ -21,7 +21,6 @@ export async function handleForum(request, env, url) {
     if (!user) return jsonResp({ error: "用户不存在" }, 404);
     if (user.is_banned === 1 && (!currentUser || currentUser.role === 'user')) return jsonResp({ error: "该账号已被封禁" }, 403);
 
-    // 统计信息中加入了 contribution_count 查询
     const stats = await env.DB.prepare(`
       SELECT 
         (SELECT COUNT(*) FROM posts WHERE author_id = ? AND is_deleted = 0) as post_count,
@@ -55,7 +54,6 @@ export async function handleForum(request, env, url) {
     }
   }
 
-  // 获取贡献记录接口
   if (url.pathname.match(/^\/api\/users\/[^/]+\/contributions$/) && method === 'GET') {
     const targetId = url.pathname.split('/')[3];
     try {
@@ -278,6 +276,27 @@ export async function handleForum(request, env, url) {
     } catch (e) {
       if (e.message.includes("UNIQUE")) return jsonResp({ error: "您已经举报过该评论了，请勿重复举报" }, 400);
       return jsonResp({ error: "举报失败: " + e.message }, 500);
+    }
+  }
+
+  // ================= 公共统计数据 (直接从 D1 查) =================
+  if (url.pathname === '/api/stats' && method === 'GET') {
+    try {
+      const userCountRes = await env.DB.prepare("SELECT COUNT(*) as count FROM users").first();
+      const postCountRes = await env.DB.prepare("SELECT COUNT(*) as count FROM posts WHERE is_deleted = 0").first();
+      // 直接查 wiki_files 索引表
+      const wikiCountRes = await env.DB.prepare("SELECT COUNT(*) as count FROM wiki_files").first();
+
+      return jsonResp({ 
+        success: true, 
+        stats: {
+          users: userCountRes.count || 0,
+          posts: postCountRes.count || 0,
+          wiki: wikiCountRes.count || 0
+        }
+      });
+    } catch (e) {
+      return jsonResp({ error: "统计失败: " + e.message }, 500);
     }
   }
 

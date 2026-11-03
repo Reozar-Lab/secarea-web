@@ -75,14 +75,18 @@ export async function handleWiki(request, env, url, ctx) {
         return jsonResp({ error: "GitHub 推送失败: " + errText }, 500);
       }
       
-      // 记录历史数据（直接使用 Date.now() 写入毫秒时间戳，方便前端统一处理）
+      // 同步写入 D1 数据库 (历史记录 + 文件索引)
       try {
         await env.DB.prepare(`
           INSERT INTO wiki_history (path, editor_id, editor_name, summary, created_at) 
           VALUES (?, ?, ?, ?, ?)
         `).bind(safePath, currentUser.id, currentUser.name, "更新词条", Date.now()).run();
+        
+        await env.DB.prepare(`
+          INSERT INTO wiki_files (path) VALUES (?) ON CONFLICT(path) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+        `).bind(safePath).run();
       } catch (dbErr) {
-        console.error("写入历史记录失败:", dbErr);
+        console.error("写入数据库失败:", dbErr);
       }
       
       if (env.PAGES_DEPLOY_HOOK) ctx.waitUntil(fetch(env.PAGES_DEPLOY_HOOK, { method: 'POST' }));
@@ -144,14 +148,18 @@ export async function handleWiki(request, env, url, ctx) {
         return jsonResp({ error: "GitHub 创建失败: " + errText }, 500);
       }
       
-      // 记录创建分类的历史
+      // 同步写入 D1
       try {
         await env.DB.prepare(`
           INSERT INTO wiki_history (path, editor_id, editor_name, summary, created_at) 
           VALUES (?, ?, ?, ?, ?)
         `).bind(safePath, currentUser.id, currentUser.name, "新建分类", Date.now()).run();
+        
+        await env.DB.prepare(`
+          INSERT INTO wiki_files (path) VALUES (?) ON CONFLICT(path) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+        `).bind(safePath).run();
       } catch (dbErr) {
-        console.error("写入历史记录失败:", dbErr);
+        console.error("写入数据库失败:", dbErr);
       }
       
       if (env.PAGES_DEPLOY_HOOK) ctx.waitUntil(fetch(env.PAGES_DEPLOY_HOOK, { method: 'POST' }));
