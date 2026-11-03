@@ -164,5 +164,18 @@ const API = {
       if (data.error) showToast(data.error, 'error'); else showToast('举报已提交，感谢您的反馈', 'success');
       return data;
     } catch (e) { return { error: '网络错误' }; }
+  },
+
+  // ================= 全局统计模块 =================
+  async getStats() {
+    try {
+      const res = await fetch('/api/stats');
+      if (!res.ok) return { users: 1, wiki: 12, posts: 3 };
+      const data = await res.json();
+      return data.success ? data.stats : { users: 1, wiki: 12, posts: 3 };
+    } catch (e) {
+      console.error('获取统计失败', e);
+      return { users: 1, wiki: 12, posts: 3 };
+    }
   }
 };
