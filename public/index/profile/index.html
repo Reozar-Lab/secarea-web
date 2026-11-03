@@ -78,7 +78,7 @@
                     <!-- 个性签名 -->
                     <p id="profile-bio" class="text-[13px] ios-text opacity-80 mb-3 min-h-[20px]">这个人很懒，什么都没写。</p>
                     
-                    <!-- 数据统计 (新增了 contribution_count 展示) -->
+                    <!-- 数据统计 (加入了贡献统计) -->
                     <div class="flex items-center gap-5 text-sm mb-4">
                         <div class="flex flex-col"><span id="stat-following" class="font-bold ios-text">0</span><span class="text-[11px] text-gray-500">关注</span></div>
                         <div class="flex flex-col"><span id="stat-followers" class="font-bold ios-text">0</span><span class="text-[11px] text-gray-500">粉丝</span></div>
@@ -415,7 +415,7 @@
                 else if (u.role === 'editor') roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30';
             }
 
-            // 统计数据（加入贡献统计）
+            // 统计数据
             document.getElementById('stat-following').textContent = u.following_count || 0;
             document.getElementById('stat-followers').textContent = u.follower_count || 0;
             document.getElementById('stat-posts').textContent = u.post_count || 0;
@@ -425,7 +425,6 @@
             // 渲染操作按钮
             const btnContainer = document.getElementById('action-buttons');
             if (isSelf) {
-                // 自己：显示编辑资料与设置
                 btnContainer.innerHTML = `
                     <button onclick="openEditProfile()" class="px-4 py-1.5 border ios-border rounded-full text-sm font-bold ios-text hover:bg-black/5 dark:hover:bg-white/5 transition">编辑资料</button>
                     <button onclick="openSettings()" class="px-4 py-1.5 border ios-border rounded-full text-sm font-bold ios-text hover:bg-black/5 dark:hover:bg-white/5 transition flex items-center gap-1">
@@ -433,14 +432,11 @@
                         设置
                     </button>
                 `;
-                // 管理员入口显示
                 if (u.role === 'root' || u.role === 'admin') {
                     document.getElementById('admin-panel').classList.remove('hidden');
                 }
-                // 如果是自己，显示收藏 Tab
                 document.getElementById('tab-favorites').classList.remove('hidden');
             } else {
-                // 别人：显示关注
                 btnContainer.innerHTML = `
                     <button id="follow-btn" class="px-6 py-1.5 rounded-full text-sm font-bold transition ${u.isFollowing ? 'border ios-border ios-text hover:bg-red-500/10 hover:text-red-500' : 'bg-[#111111] text-[#f5d78d] hover:bg-black'}">
                         ${u.isFollowing ? '已关注' : '关注'}
@@ -474,7 +470,6 @@
                 if (!res.contributions || res.contributions.length === 0) {
                     feed.innerHTML = '<div class="p-10 text-center text-xs text-gray-400">暂无参与贡献记录</div>';
                 } else {
-                    // 顶部总数展示
                     let html = `
                         <div class="px-4 py-3 border-b ios-border flex justify-between items-center bg-black/5 dark:bg-white/5">
                             <span class="text-sm font-bold ios-text">共计贡献编辑</span>
@@ -482,11 +477,12 @@
                         </div>
                     `;
 
-                    // 列表渲染
                     html += res.contributions.map(c => {
                         const isCategory = c.path.endsWith('/index.md');
                         const actionText = isCategory ? '更新分类' : '编辑词条';
-                        let displayName = c.path.replace('content/', '').replace('.md', '');
+                        let rawName = c.path.replace('content/', '').replace('.md', '');
+                        // 核心修复：解码中文
+                        let displayName = decodeURIComponent(rawName); 
                         const wikiUrl = `https://wiki.secarea.de5.net/${displayName}`;
 
                         return `
@@ -552,7 +548,6 @@
             }).join('');
         }
 
-        // Tab 切换逻辑
         function switchTab(tabName) {
             currentTab = tabName;
             ['posts', 'favorites', 'contributions'].forEach(t => {

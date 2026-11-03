@@ -160,20 +160,22 @@
                     const data = await API.getMe();
                     if (!data || !data.user || !['editor', 'admin', 'root'].includes(data.user.role)) {
                         alert('权限不足');
-                        window.location.href = '/index/wiki/';
+                        window.location.href = '/wiki/';
                         return;
                     }
                     currentUserRole = data.user.role;
                     if (currentUserRole === 'admin' || currentUserRole === 'root') {
                         newCategoryBtn.classList.remove('hidden');
                     }
-                } catch (e) { window.location.href = '/index/login/'; return; }
+                } catch (e) { window.location.href = '/login/'; return; }
             }
 
             await loadCategories();
 
-            const currentPath = sessionStorage.getItem('current_wiki_path');
+            let currentPath = sessionStorage.getItem('current_wiki_path');
             if (currentPath) {
+                // 核心修复：先解码路径，防止显示成 %E5...
+                currentPath = decodeURIComponent(currentPath);
                 const parts = currentPath.split('/');
                 if (parts.length > 1) {
                     const category = parts[0];
