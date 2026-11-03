@@ -1,25 +1,28 @@
-/* 首页 Logo 缩放等专属特效 */
-.bleed-card { width: 110%; margin-left: -5%; }
-.text-gold-bright { color: #f5d78d; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+body.page-ios { background-color: var(--page-bg) !important; }
+html.dark body.page-ios { background-color: #000000 !important; }
 .bg-grid { background-size: 30px 30px; background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px); }
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* 导航栏收缩特效 */
-#main-header { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); }
-.header-scrolled { height: 35px !important; background-color: rgba(85, 85, 85, 0.6) !important; backdrop-filter: blur(10px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25); }
-.header-scrolled .logo-text { color: #ffffff; transform: scale(0.9); }
-
-/* 九宫格加载动画 */
-#loading-screen { transition: opacity 0.6s ease, visibility 0.6s ease; }
-#loading-screen.hidden-loader { opacity: 0; visibility: hidden; }
-.dot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.dot { width: 12px; height: 12px; border-radius: 50%; background-color: #c89f5d; opacity: 0.3; animation: dot-pulse 1.2s infinite ease-in-out alternate; }
-.dot:nth-child(1) { animation-delay: 0.0s; } .dot:nth-child(2) { animation-delay: 0.1s; } .dot:nth-child(3) { animation-delay: 0.2s; } .dot:nth-child(4) { animation-delay: 0.1s; } .dot:nth-child(5) { animation-delay: 0.2s; } .dot:nth-child(6) { animation-delay: 0.3s; } .dot:nth-child(7) { animation-delay: 0.2s; } .dot:nth-child(8) { animation-delay: 0.3s; } .dot:nth-child(9) { animation-delay: 0.4s; }
-@keyframes dot-pulse { 0% { opacity: 0.2; transform: scale(0.8); background-color: #c89f5d; } 100% { opacity: 1; transform: scale(1.1); background-color: #f2d7a4; box-shadow: 0 0 10px rgba(242, 215, 164, 0.5); } }
+/* 首页与全局暗黑暴力覆盖 */
+html.dark body:not(.page-ios) { background-color: #0f0f0f !important; }
+html.dark .bg-neutral-400 { background-color: #1a1a1a !important; }
+html.dark .bg-\[\#f4f4f5\] { background-color: #151515 !important; }
+html.dark .bg-white { background-color: #1f1f1f !important; }
+html.dark .text-black, html.dark .text-gray-900, html.dark .text-gray-700 { color: #f3f4f6 !important; }
+html.dark .text-gray-600, html.dark .text-gray-500 { color: #9ca3af !important; }
+html.dark .border-gray-200, html.dark .border-gray-100, html.dark .border-gray-300 { border-color: #333333 !important; }
+html.dark .border-gray-50 { border-color: #2a2a2a !important; }
+html.dark input, html.dark textarea { background-color: #111111 !important; color: #ffffff !important; border-color: #333333 !important; }
+html.dark .hover\:bg-gray-100:hover { background-color: #2a2a2a !important; }
+html.dark .bg-\[\#111111\], html.dark .bg-\[\#252525\], html.dark .bg-\[\#141414\] { background-color: #111111 !important; }
+html.dark .text-white { color: #ffffff !important; }
+html.dark .bg-gradient-to-br.from-\[\#e8c88c\].to-\[\#c89f5d\] .text-black { color: #000 !important; }
+html.dark .bg-gradient-to-br.from-\[\#e8c88c\].to-\[\#c89f5d\] .text-black\/80 { color: rgba(0, 0, 0, 0.8) !important; }
 
 /* 发现流局部样式 */
-.forum-tab-bar { background-color: var(--bg-card) !important; border-bottom: 1px solid var(--border-color) !important; }
-.forum-tab-btn { color: var(--text-muted) !important; font-size: 13px !important; font-weight: bold !important; letter-spacing: 0.1em !important; }
-.forum-tab-btn.active { color: var(--brand-color) !important; }
-.forum-divider { border-bottom: 2px solid var(--border-color) !important; }
+.forum-tab-bar { background-color: #ffffff !important; border-bottom: 1px solid #e5e5ea !important; }
+html.dark .forum-tab-bar { background-color: #1c1c1e !important; border-bottom: 1px solid #2c2c2e !important; }
+.forum-tab-btn { color: #888888 !important; font-size: 13px !important; font-weight: bold !important; letter-spacing: 0.1em !important; }
+html.dark .forum-tab-btn { color: #666666 !important; }
+.forum-tab-btn.active { color: #c89f5d !important; }
+.forum-divider { border-bottom: 2px solid #e5e7eb !important; }
+html.dark .forum-divider { border-bottom: 2px solid #3f3f46 !important; }
