@@ -1,15 +1,16 @@
-import { getCurrentUser, jsonResp } from './utils.js';
+import { getCurrentUser, verifyAuth, jsonResp } from './utils.js';
 
 export async function handleForum(request, env, url) {
   const method = request.method;
 
   // ================= 用户主页与信息更新 =================
   if (url.pathname === '/api/users/profile' && method === 'POST') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+    const auth = await verifyAuth(request, env);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    
     const { name, bio } = await request.json();
     if (!name) return jsonResp({ error: "用户名不能为空" }, 400);
-    await env.DB.prepare("UPDATE users SET name = ?, bio = ? WHERE id = ?").bind(name, bio || '', currentUser.id).run();
+    await env.DB.prepare("UPDATE users SET name = ?, bio = ? WHERE id = ?").bind(name, bio || '', auth.user.id).run();
     return jsonResp({ success: true });
   }
 
@@ -40,9 +41,11 @@ export async function handleForum(request, env, url) {
   }
 
   if (url.pathname.match(/^\/api\/users\/[^/]+\/follow$/) && method === 'POST') {
+    const auth = await verifyAuth(request, env);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    const currentUser = auth.user;
     const targetId = url.pathname.split('/')[3];
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+
     if (currentUser.id === targetId) return jsonResp({ error: "不能关注自己" }, 400);
     const existing = await env.DB.prepare("SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?").bind(currentUser.id, targetId).first();
     if (existing) {
@@ -127,9 +130,9 @@ export async function handleForum(request, env, url) {
   }
 
   if (url.pathname === '/api/forum/posts' && method === 'POST') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
-    if (currentUser.is_banned === 1) return jsonResp({ error: "账号已被封禁" }, 403);
+    const auth = await verifyAuth(request, env);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    
     try {
       const { content, imageUrl, category, tags } = await request.json();
       if (!content) return jsonResp({ error: "内容不能为空" }, 400);
@@ -137,20 +140,23 @@ export async function handleForum(request, env, url) {
       const now = Date.now();
       const tagsStr = tags && tags.length ? tags.join(',') : null;
       const preview = content.length > 200 ? content.substring(0, 200) : content;
-      await env.DB.prepare(`INSERT INTO posts (id, author_id, content, preview, image_url, category, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(postId, currentUser.id, content, preview, imageUrl, category || 'discussion', tagsStr, now, now).run();
+      await env.DB.prepare(`INSERT INTO posts (id, author_id, content, preview, image_url, category, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(postId, auth.user.id, content, preview, imageUrl, category || 'discussion', tagsStr, now, now).run();
       return jsonResp({ success: true, postId });
     } catch (e) { return jsonResp({ error: e.message }, 500); }
   }
 
   if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+$/) && method === 'PUT') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+    const auth = await verifyAuth(request, env);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    
     const postId = url.pathname.split('/')[4];
     const post = await env.DB.prepare("SELECT author_id FROM posts WHERE id = ? AND is_deleted = 0").bind(postId).first();
     if (!post) return jsonResp({ error: "帖子不存在" }, 404);
-    const isOwner = post.author_id === currentUser.id;
-    const isAdmin = currentUser.role === 'admin' || currentUser.role === 'root';
+    
+    const isOwner = post.author_id === auth.user.id;
+    const isAdmin = auth.user.role === 'admin' || auth.user.role === 'root';
     if (!isOwner && !isAdmin) return jsonResp({ error: "无权编辑此帖子" }, 403);
+    
     try {
       const { content, imageUrl, category, tags } = await request.json();
       if (!content) return jsonResp({ error: "内容不能为空" }, 400);
@@ -162,45 +168,52 @@ export async function handleForum(request, env, url) {
   }
 
   if (url.pathname.startsWith('/api/forum/posts/') && method === 'DELETE') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+    const auth = await verifyAuth(request, env);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    
     const postId = url.pathname.split('/')[4];
     const post = await env.DB.prepare("SELECT author_id FROM posts WHERE id = ?").bind(postId).first();
     if (!post) return jsonResp({ error: "帖子不存在" }, 404);
-    const isOwner = post.author_id === currentUser.id;
-    const isAdmin = currentUser.role === 'admin' || currentUser.role === 'root';
+    
+    const isOwner = post.author_id === auth.user.id;
+    const isAdmin = auth.user.role === 'admin' || auth.user.role === 'root';
     if (!isOwner && !isAdmin) return jsonResp({ error: "无权删除" }, 403);
-    await env.DB.prepare("UPDATE posts SET is_deleted = 1, deleted_by = ? WHERE id = ?").bind(currentUser.id, postId).run();
+    
+    await env.DB.prepare("UPDATE posts SET is_deleted = 1, deleted_by = ? WHERE id = ?").bind(auth.user.id, postId).run();
     return jsonResp({ success: true });
   }
 
   if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+\/like$/) && method === 'POST') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+    const auth = await verifyAuth(request, env);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    
     const postId = url.pathname.split('/')[4];
-    const existing = await env.DB.prepare("SELECT 1 FROM likes WHERE user_id = ? AND post_id = ?").bind(currentUser.id, postId).first();
+    const existing = await env.DB.prepare("SELECT 1 FROM likes WHERE user_id = ? AND post_id = ?").bind(auth.user.id, postId).first();
+    
     if (existing) {
-      await env.DB.prepare("DELETE FROM likes WHERE user_id = ? AND post_id = ?").bind(currentUser.id, postId).run();
+      await env.DB.prepare("DELETE FROM likes WHERE user_id = ? AND post_id = ?").bind(auth.user.id, postId).run();
       await env.DB.prepare("UPDATE posts SET likes_count = likes_count - 1 WHERE id = ?").bind(postId).run();
       return jsonResp({ success: true, liked: false });
     } else {
-      await env.DB.prepare("INSERT INTO likes (user_id, post_id, created_at) VALUES (?, ?, ?)").bind(currentUser.id, postId, Date.now()).run();
+      await env.DB.prepare("INSERT INTO likes (user_id, post_id, created_at) VALUES (?, ?, ?)").bind(auth.user.id, postId, Date.now()).run();
       await env.DB.prepare("UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?").bind(postId).run();
       return jsonResp({ success: true, liked: true });
     }
   }
 
   if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+\/favorite$/) && method === 'POST') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+    const auth = await verifyAuth(request, env);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    
     const postId = url.pathname.split('/')[4];
-    const existing = await env.DB.prepare("SELECT 1 FROM favorites WHERE user_id = ? AND post_id = ?").bind(currentUser.id, postId).first();
+    const existing = await env.DB.prepare("SELECT 1 FROM favorites WHERE user_id = ? AND post_id = ?").bind(auth.user.id, postId).first();
+    
     if (existing) {
-      await env.DB.prepare("DELETE FROM favorites WHERE user_id = ? AND post_id = ?").bind(currentUser.id, postId).run();
+      await env.DB.prepare("DELETE FROM favorites WHERE user_id = ? AND post_id = ?").bind(auth.user.id, postId).run();
       await env.DB.prepare("UPDATE posts SET favorites_count = favorites_count - 1 WHERE id = ?").bind(postId).run();
       return jsonResp({ success: true, favorited: false });
     } else {
-      await env.DB.prepare("INSERT INTO favorites (user_id, post_id, created_at) VALUES (?, ?, ?)").bind(currentUser.id, postId, Date.now()).run();
+      await env.DB.prepare("INSERT INTO favorites (user_id, post_id, created_at) VALUES (?, ?, ?)").bind(auth.user.id, postId, Date.now()).run();
       await env.DB.prepare("UPDATE posts SET favorites_count = favorites_count + 1 WHERE id = ?").bind(postId).run();
       return jsonResp({ success: true, favorited: true });
     }
@@ -221,28 +234,31 @@ export async function handleForum(request, env, url) {
   }
 
   if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+\/comments$/) && method === 'POST') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
-    if (currentUser.is_banned === 1) return jsonResp({ error: "账号已被封禁" }, 403);
+    const auth = await verifyAuth(request, env);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    
     const postId = url.pathname.split('/')[4];
     const { content } = await request.json();
     if (!content) return jsonResp({ error: "评论不能为空" }, 400);
     const commentId = crypto.randomUUID();
-    await env.DB.prepare(`INSERT INTO comments (id, post_id, author_id, content, created_at) VALUES (?, ?, ?, ?, ?)`).bind(commentId, postId, currentUser.id, content, Date.now()).run();
+    await env.DB.prepare(`INSERT INTO comments (id, post_id, author_id, content, created_at) VALUES (?, ?, ?, ?, ?)`).bind(commentId, postId, auth.user.id, content, Date.now()).run();
     await env.DB.prepare("UPDATE posts SET comments_count = comments_count + 1 WHERE id = ?").bind(postId).run();
     return jsonResp({ success: true, commentId });
   }
 
   if (url.pathname.match(/^\/api\/forum\/comments\/[^/]+$/) && method === 'DELETE') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+    const auth = await verifyAuth(request, env);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    
     const commentId = url.pathname.split('/')[4];
     const comment = await env.DB.prepare("SELECT post_id, author_id FROM comments WHERE id = ? AND is_deleted = 0").bind(commentId).first();
     if (!comment) return jsonResp({ error: "评论不存在或已删除" }, 404);
-    const isOwner = comment.author_id === currentUser.id;
-    const isAdmin = currentUser.role === 'admin' || currentUser.role === 'root';
+    
+    const isOwner = comment.author_id === auth.user.id;
+    const isAdmin = auth.user.role === 'admin' || auth.user.role === 'root';
     const post = await env.DB.prepare("SELECT author_id FROM posts WHERE id = ?").bind(comment.post_id).first();
-    const isPostOwner = post && post.author_id === currentUser.id;
+    const isPostOwner = post && post.author_id === auth.user.id;
+    
     if (!isOwner && !isAdmin && !isPostOwner) return jsonResp({ error: "无权删除此评论" }, 403);
     await env.DB.prepare("UPDATE comments SET is_deleted = 1 WHERE id = ?").bind(commentId).run();
     await env.DB.prepare("UPDATE posts SET comments_count = comments_count - 1 WHERE id = ?").bind(comment.post_id).run();
@@ -250,12 +266,13 @@ export async function handleForum(request, env, url) {
   }
 
   if (url.pathname.match(/^\/api\/forum\/posts\/[^/]+\/report$/) && method === 'POST') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+    const auth = await verifyAuth(request, env);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    
     const postId = url.pathname.split('/')[4];
     const { reason, detail } = await request.json();
     try {
-      await env.DB.prepare(`INSERT INTO reports (id, post_id, reporter_id, reason, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)`).bind(crypto.randomUUID(), postId, currentUser.id, reason, detail || null, Date.now()).run();
+      await env.DB.prepare(`INSERT INTO reports (id, post_id, reporter_id, reason, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)`).bind(crypto.randomUUID(), postId, auth.user.id, reason, detail || null, Date.now()).run();
       await env.DB.prepare("UPDATE posts SET report_count = report_count + 1 WHERE id = ?").bind(postId).run();
       return jsonResp({ success: true });
     } catch (e) {
@@ -265,12 +282,13 @@ export async function handleForum(request, env, url) {
   }
 
   if (url.pathname.match(/^\/api\/forum\/comments\/[^/]+\/report$/) && method === 'POST') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
+    const auth = await verifyAuth(request, env);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    
     const commentId = url.pathname.split('/')[4];
     const { reason, detail } = await request.json();
     try {
-      await env.DB.prepare(`INSERT INTO comment_reports (id, comment_id, reporter_id, reason, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)`).bind(crypto.randomUUID(), commentId, currentUser.id, reason, detail || null, Date.now()).run();
+      await env.DB.prepare(`INSERT INTO comment_reports (id, comment_id, reporter_id, reason, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)`).bind(crypto.randomUUID(), commentId, auth.user.id, reason, detail || null, Date.now()).run();
       await env.DB.prepare("UPDATE comments SET report_count = report_count + 1 WHERE id = ?").bind(commentId).run();
       return jsonResp({ success: true });
     } catch (e) {
@@ -279,12 +297,11 @@ export async function handleForum(request, env, url) {
     }
   }
 
-  // ================= 公共统计数据 (直接从 D1 查) =================
+  // ================= 公共统计数据 =================
   if (url.pathname === '/api/stats' && method === 'GET') {
     try {
       const userCountRes = await env.DB.prepare("SELECT COUNT(*) as count FROM users").first();
       const postCountRes = await env.DB.prepare("SELECT COUNT(*) as count FROM posts WHERE is_deleted = 0").first();
-      // 直接查 wiki_files 索引表
       const wikiCountRes = await env.DB.prepare("SELECT COUNT(*) as count FROM wiki_files").first();
 
       return jsonResp({ 

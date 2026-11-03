@@ -1,12 +1,12 @@
-import { getCurrentUser, jsonResp } from './utils.js';
+import { getCurrentUser, verifyAuth, jsonResp } from './utils.js';
 
 export async function handleWiki(request, env, url, ctx) {
   const method = request.method;
   
   // 1. 获取文件
   if (url.pathname === '/api/wiki/get' && method === 'GET') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser || currentUser.role === 'user') return jsonResp({ error: "权限不足" }, 403);
+    const auth = await verifyAuth(request, env, ['editor', 'admin', 'root']);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
     
     let filePath = url.searchParams.get('path');
     if (!filePath) return jsonResp({ error: "缺少路径参数" }, 400);
@@ -34,9 +34,9 @@ export async function handleWiki(request, env, url, ctx) {
   
   // 2. 保存文件
   if (url.pathname === '/api/wiki/save' && method === 'POST') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser) return jsonResp({ error: "请先登录" }, 401);
-    if (currentUser.role === 'user') return jsonResp({ error: "权限不足，仅编者及以上可编辑" }, 403);
+    const auth = await verifyAuth(request, env, ['editor', 'admin', 'root']);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    const currentUser = auth.user;
     
     try {
       const { path, content } = await request.json();
@@ -75,7 +75,6 @@ export async function handleWiki(request, env, url, ctx) {
         return jsonResp({ error: "GitHub 推送失败: " + errText }, 500);
       }
       
-      // 同步写入 D1 数据库 (历史记录 + 文件索引)
       try {
         await env.DB.prepare(`
           INSERT INTO wiki_history (path, editor_id, editor_name, summary, created_at) 
@@ -99,8 +98,8 @@ export async function handleWiki(request, env, url, ctx) {
   
   // 3. 获取分类列表
   if (url.pathname === '/api/wiki/categories' && method === 'GET') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser || currentUser.role === 'user') return jsonResp({ error: "权限不足" }, 403);
+    const auth = await verifyAuth(request, env, ['editor', 'admin', 'root']);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
     
     try {
       const getRes = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}/contents/content`, {
@@ -118,10 +117,9 @@ export async function handleWiki(request, env, url, ctx) {
   
   // 4. 新建分类
   if (url.pathname === '/api/wiki/new-category' && method === 'POST') {
-    const currentUser = await getCurrentUser(request, env);
-    if (!currentUser || !['admin', 'root'].includes(currentUser.role)) {
-      return jsonResp({ error: "权限不足，仅管理员可新建分类" }, 403);
-    }
+    const auth = await verifyAuth(request, env, ['admin', 'root']);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    const currentUser = auth.user;
     
     try {
       const { categoryName } = await request.json();
@@ -148,7 +146,6 @@ export async function handleWiki(request, env, url, ctx) {
         return jsonResp({ error: "GitHub 创建失败: " + errText }, 500);
       }
       
-      // 同步写入 D1
       try {
         await env.DB.prepare(`
           INSERT INTO wiki_history (path, editor_id, editor_name, summary, created_at) 
