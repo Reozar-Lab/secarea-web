@@ -78,16 +78,17 @@
                     <!-- 个性签名 -->
                     <p id="profile-bio" class="text-[13px] ios-text opacity-80 mb-3 min-h-[20px]">这个人很懒，什么都没写。</p>
                     
-                    <!-- 数据统计 -->
+                    <!-- 数据统计 (新增了 contribution_count 展示) -->
                     <div class="flex items-center gap-5 text-sm mb-4">
                         <div class="flex flex-col"><span id="stat-following" class="font-bold ios-text">0</span><span class="text-[11px] text-gray-500">关注</span></div>
                         <div class="flex flex-col"><span id="stat-followers" class="font-bold ios-text">0</span><span class="text-[11px] text-gray-500">粉丝</span></div>
                         <div class="flex flex-col"><span id="stat-posts" class="font-bold ios-text">0</span><span class="text-[11px] text-gray-500">发表</span></div>
                         <div class="flex flex-col"><span id="stat-likes" class="font-bold ios-text">0</span><span class="text-[11px] text-gray-500">获赞</span></div>
+                        <div class="flex flex-col"><span id="stat-contributions" class="font-bold ios-text">0</span><span class="text-[11px] text-gray-500">贡献</span></div>
                     </div>
                 </div>
 
-                <!-- 管理员专属入口（只保留这个） -->
+                <!-- 管理员专属入口 -->
                 <div id="admin-panel" class="hidden mb-4">
                     <a href="/admin/" class="w-full ios-card rounded-xl overflow-hidden shadow-sm flex items-center justify-between px-4 py-3 border border-[#f5d78d]/30">
                         <div class="flex items-center gap-3">
@@ -101,7 +102,7 @@
                 </div>
             </div>
 
-            <!-- Tab 切换（新增“贡献”栏） -->
+            <!-- Tab 切换 -->
             <div class="w-full mt-2 forum-tab-bar">
                 <div class="flex">
                     <button id="tab-posts" class="forum-tab-btn active flex-1 py-3 relative">
@@ -414,11 +415,12 @@
                 else if (u.role === 'editor') roleEl.className = 'px-2 py-0.5 rounded text-[10px] font-sans font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30';
             }
 
-            // 统计数据
+            // 统计数据（加入贡献统计）
             document.getElementById('stat-following').textContent = u.following_count || 0;
             document.getElementById('stat-followers').textContent = u.follower_count || 0;
             document.getElementById('stat-posts').textContent = u.post_count || 0;
             document.getElementById('stat-likes').textContent = u.total_likes || 0;
+            document.getElementById('stat-contributions').textContent = u.contribution_count || 0;
 
             // 渲染操作按钮
             const btnContainer = document.getElementById('action-buttons');
@@ -466,14 +468,44 @@
                 return;
             }
 
+            // ====== 贡献列表渲染 ======
             if (currentTab === 'contributions') {
-                // 预留的贡献接口
                 const res = await API.getContributions(targetUserId);
                 if (!res.contributions || res.contributions.length === 0) {
                     feed.innerHTML = '<div class="p-10 text-center text-xs text-gray-400">暂无参与贡献记录</div>';
                 } else {
-                    // 以后有了真实数据再渲染
-                    feed.innerHTML = '<div class="p-10 text-center text-xs text-gray-400">数据渲染中...</div>';
+                    // 顶部总数展示
+                    let html = `
+                        <div class="px-4 py-3 border-b ios-border flex justify-between items-center bg-black/5 dark:bg-white/5">
+                            <span class="text-sm font-bold ios-text">共计贡献编辑</span>
+                            <span class="text-sm font-bold text-[#c89f5d]">${res.contributions.length} 次</span>
+                        </div>
+                    `;
+
+                    // 列表渲染
+                    html += res.contributions.map(c => {
+                        const isCategory = c.path.endsWith('/index.md');
+                        const actionText = isCategory ? '更新分类' : '编辑词条';
+                        let displayName = c.path.replace('content/', '').replace('.md', '');
+                        const wikiUrl = `https://wiki.secarea.de5.net/${displayName}`;
+
+                        return `
+                            <div class="forum-divider p-4 flex justify-between items-center">
+                                <div class="flex flex-col gap-1">
+                                    <div class="text-sm ios-text">
+                                        <span class="text-[10px] text-[#c89f5d] border border-[#c89f5d]/30 px-1.5 py-0.5 rounded mr-2">${actionText}</span>
+                                        <span class="font-bold">${displayName}</span>
+                                    </div>
+                                    <span class="text-[11px] text-gray-400">${timeAgo(c.created_at)}</span>
+                                </div>
+                                <a href="${wikiUrl}" target="_blank" class="text-xs text-[#c89f5d] border border-[#c89f5d]/30 px-3 py-1.5 rounded-lg hover:bg-[#c89f5d]/10 transition-colors">
+                                    查看最新
+                                </a>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    feed.innerHTML = html;
                 }
                 return;
             }
@@ -497,7 +529,6 @@
                     <article class="forum-divider" data-post-id="${post.id}">
                         <div class="p-4">
                             <div class="flex items-start gap-3 mb-2.5">
-                                <!-- 跳转个人主页和帖子详情，加上 /index -->
                                 <a href="/index/profile/index.html?id=${post.author_id}" class="forum-avatar">${escapeHtml(initial)}</a>
                                 <div class="flex-1 min-w-0 pt-0.5">
                                     <div class="flex items-center gap-2">
@@ -549,7 +580,7 @@
             targetUserId = getQueryParam('id');
             if (!targetUserId) {
                 if (currentUser) targetUserId = currentUser.id;
-                else { window.location.href = '/login/'; return; }
+                else { window.location.href = '/index/login/'; return; }
             }
             
             loadProfile();

@@ -21,6 +21,7 @@ export async function handleForum(request, env, url) {
     if (!user) return jsonResp({ error: "用户不存在" }, 404);
     if (user.is_banned === 1 && (!currentUser || currentUser.role === 'user')) return jsonResp({ error: "该账号已被封禁" }, 403);
 
+    // 统计信息中加入了 contribution_count 查询
     const stats = await env.DB.prepare(`
       SELECT 
         (SELECT COUNT(*) FROM posts WHERE author_id = ? AND is_deleted = 0) as post_count,
@@ -28,8 +29,8 @@ export async function handleForum(request, env, url) {
         (SELECT COALESCE(SUM(likes_count), 0) FROM posts WHERE author_id = ? AND is_deleted = 0) as total_likes,
         (SELECT COUNT(*) FROM follows WHERE following_id = ?) as follower_count,
         (SELECT COUNT(*) FROM follows WHERE follower_id = ?) as following_count,
-        0 as contribution_count
-    `).bind(targetId, targetId, targetId, targetId, targetId).first();
+        (SELECT COUNT(*) FROM wiki_history WHERE editor_id = ?) as contribution_count
+    `).bind(targetId, targetId, targetId, targetId, targetId, targetId).first();
 
     let isFollowing = false;
     if (currentUser && currentUser.id !== targetId) {
@@ -54,8 +55,21 @@ export async function handleForum(request, env, url) {
     }
   }
 
+  // 获取贡献记录接口
   if (url.pathname.match(/^\/api\/users\/[^/]+\/contributions$/) && method === 'GET') {
-    return jsonResp({ contributions: [] });
+    const targetId = url.pathname.split('/')[3];
+    try {
+      const { results } = await env.DB.prepare(`
+        SELECT path, created_at FROM wiki_history 
+        WHERE editor_id = ? 
+        ORDER BY created_at DESC 
+        LIMIT 100
+      `).bind(targetId).all();
+
+      return jsonResp({ contributions: results });
+    } catch (e) {
+      return jsonResp({ error: "查询失败" }, 500);
+    }
   }
 
   // ================= 发现（Forum）核心 API =================
