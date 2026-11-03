@@ -5,32 +5,46 @@
 }
 
 :root {
-    --page-bg: #f2f2f7;
-    --card-bg: #ffffff;
+    /* 背景层级 */
+    --bg-page: #f2f2f7;
+    --bg-card: #ffffff;
+    --bg-input: #f2f2f7;
+    --bg-hover: rgba(0, 0, 0, 0.05);
+
+    /* 文字层级 */
     --text-title: #000000;
     --text-main: #111111;
     --text-muted: #6b7280;
+
+    /* 边框与分割线 */
     --border-color: #e5e5ea;
-    --avatar-color: #000000;
-    --modal-bg: #ffffff;
-    --input-bg: #f2f2f7;
+
+    /* 品牌色 */
+    --brand-color: #c89f5d;
+    --brand-gradient: linear-gradient(to right, #e8c88c, #c89f5d);
 }
 
 .dark {
-    --page-bg: #000000;
-    --card-bg: #1c1c1e;
+    --bg-page: #000000;
+    --bg-card: #1c1c1e;
+    --bg-input: #000000;
+    --bg-hover: rgba(255, 255, 255, 0.05);
+
     --text-title: #ffffff;
-    --text-main: #ffffff;
+    --text-main: #eeeeee;
     --text-muted: #9ca3af;
+
     --border-color: #2c2c2e;
-    --avatar-color: #f5d78d;
-    --modal-bg: #1c1c1e;
-    --input-bg: #000000;
+
+    /* 暗黑下金色更亮 */
+    --brand-color: #f5d78d; 
+    --brand-gradient: linear-gradient(to right, #e8c88c, #c89f5d);
 }
 
 html { scroll-behavior: smooth; }
 body { 
-    background: #e5e7eb; 
+    background-color: var(--bg-page); 
+    color: var(--text-main);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
     -webkit-font-smoothing: antialiased; 
     overflow-x: hidden; 

@@ -1,30 +1,53 @@
-.ios-card { background-color: var(--card-bg) !important; border-color: var(--border-color) !important; }
-.ios-border { border-color: var(--border-color) !important; }
-.ios-title { color: var(--text-title) !important; }
-.ios-text { color: var(--text-main) !important; }
-.ios-avatar-letter { color: var(--avatar-color) !important; }
-.ios-list-item:active { background-color: rgba(128, 128, 128, 0.1); }
+/* 基础卡片 */
+.cec-card {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-main) !important;
+}
 
+/* 文字颜色 */
+.cec-text-title { color: var(--text-title) !important; }
+.cec-text-main { color: var(--text-main) !important; }
+.cec-text-muted { color: var(--text-muted) !important; }
+.cec-text-brand { color: var(--brand-color) !important; }
+
+/* 边框 */
+.cec-border { border-color: var(--border-color) !important; }
+
+/* 输入框 */
+.cec-input, .sys-modal-input, .admin-input {
+    background-color: var(--bg-input) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+.cec-input::placeholder, .sys-modal-input::placeholder { color: var(--text-muted) !important; }
+
+/* 品牌按钮（黑金渐变） */
+.cec-btn-brand {
+    background: var(--brand-gradient) !important;
+    color: #000000 !important;
+}
+
+/* 通用头像 */
+.cec-avatar {
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    border-radius: 9999px !important; font-family: 'Times New Roman', serif !important;
+    background-color: var(--border-color) !important; /* 明亮模式灰色，暗黑模式深灰 */
+    color: var(--text-title) !important;
+    border: 1px solid var(--border-color) !important;
+}
+html.dark .cec-avatar { color: var(--brand-color) !important; }
+
+/* 弹窗系统 */
 .sys-modal-overlay { background-color: rgba(0, 0, 0, 0.5) !important; backdrop-filter: blur(4px); }
-.sys-modal-panel { background-color: var(--modal-bg) !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important; }
-.sys-modal-header { background-color: var(--modal-bg) !important; border-bottom: 1px solid var(--border-color) !important; }
-.sys-modal-group { background-color: var(--input-bg) !important; border-radius: 12px; overflow: hidden; }
-.sys-modal-btn { background-color: transparent !important; color: var(--text-main) !important; border-bottom: 1px solid var(--border-color) !important; transition: background-color 0.2s; }
-.sys-modal-btn:last-child { border-bottom: none !important; }
-.sys-modal-btn:active { background-color: rgba(128, 128, 128, 0.1) !important; }
-.sys-modal-input, .admin-input { background-color: var(--input-bg) !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important; border-radius: 12px; }
-.sys-modal-input::placeholder, .admin-input::placeholder { color: var(--text-muted) !important; }
-.accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, opacity 0.3s ease-out; opacity: 0; background-color: var(--input-bg) !important; }
-.accordion-content.open { max-height: 300px; opacity: 1; }
+.sys-modal-panel { background-color: var(--bg-card) !important; color: var(--text-main) !important; border: 1px solid var(--border-color) !important; }
+.sys-modal-header { background-color: var(--bg-card) !important; border-bottom: 1px solid var(--border-color) !important; }
+.sys-modal-group { background-color: var(--bg-input) !important; border-radius: 12px; overflow: hidden; }
+.sys-modal-btn { background-color: transparent !important; color: var(--text-main) !important; border-bottom: 1px solid var(--border-color) !important; }
+.sys-modal-btn:active { background-color: var(--bg-hover) !important; }
 
-.cec-text-dark { color: #000000 !important; }
-html.dark .cec-text-dark { color: #ffffff !important; }
-.cec-avatar { display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 9999px !important; font-family: 'Times New Roman', serif !important; background-color: #e5e5ea !important; color: #000000 !important; border: 1px solid #e5e5ea !important; }
-html.dark .cec-avatar { background-color: #1c1c1e !important; color: #f5d78d !important; border: 1px solid #2c2c2e !important; }
-
-.bleed-card { width: 110%; margin-left: -5%; }
-.shadow-heavy { box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -4px rgba(0, 0, 0, 0.05); }
+/* 动效与手势 */
 .interactive-btn { transition: all 0.2s ease; }
 .interactive-btn:active { transform: scale(0.96); }
-.interactive-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-.interactive-card:hover { transform: translateY(-4px); box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.1); }
+.reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); will-change: opacity, transform; }
+.reveal.active { opacity: 1; transform: translateY(0); }
