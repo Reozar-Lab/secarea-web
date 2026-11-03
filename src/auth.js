@@ -54,7 +54,8 @@ export async function handleAuth(request, env, url) {
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
       const hashedPassword = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
       if (hashedPassword !== user.password) return jsonResp({ error: "邮箱或密码错误" }, 401);
-      if (user.is_banned === 1) return jsonResp({ error: "该账号已被封禁" }, 403);
+      
+      // 核心修改：删除了此处拦截 is_banned 的代码，允许被封禁用户登录。
 
       const sessionToken = crypto.randomUUID();
       await env.DB.prepare("INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)").bind(sessionToken, user.id, Date.now() + 30*24*60*60*1000).run();
@@ -93,7 +94,7 @@ export async function handleAuth(request, env, url) {
     return jsonResp({ user: await getCurrentUser(request, env) });
   }
 
-  // ================= 账号安全 (补全之前漏掉的接口) =================
+  // ================= 账号安全 =================
   if (url.pathname === '/api/auth/change-password' && method === 'POST') {
     const auth = await verifyAuth(request, env);
     if (auth.error) return jsonResp({ error: auth.error }, auth.status);
@@ -139,7 +140,7 @@ export async function handleAuth(request, env, url) {
     return new Response(JSON.stringify({ success: true }), { headers: { "Content-Type": "application/json", "Set-Cookie": "session=; Path=/; Max-Age=0" } });
   }
 
-  // ================= 管理模块 (用 verifyAuth 拦截被封禁的 Admin) =================
+  // ================= 管理模块 =================
   if (url.pathname === '/api/admin/users' && method === 'GET') {
     const auth = await verifyAuth(request, env, ['root', 'admin']);
     if (auth.error) return jsonResp({ error: auth.error }, auth.status);
