@@ -118,7 +118,7 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4 text-center">
                             <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
-                                <div class="text-2xl font-roman text-black mb-1">1.5</div>
+                                <div id="stat-years" class="text-2xl font-roman text-black mb-1">1.5</div>
                                 <div class="text-xs text-gray-500">项目年数</div>
                             </div>
                             <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
@@ -258,6 +258,14 @@
 
         // 获取动态统计数据
         async function fetchStats() {
+            // 1. 动态计算项目年数 (从 2025-04-14 算起)
+            const startDate = new Date('2025-04-14T00:00:00');
+            const now = new Date();
+            let yearsDiff = (now - startDate) / (1000 * 60 * 60 * 24 * 365.25);
+            if (yearsDiff < 0) yearsDiff = 0; 
+            document.getElementById('stat-years').textContent = yearsDiff.toFixed(1);
+
+            // 2. 从后端拉取真实数据
             const stats = await API.getStats();
             document.getElementById('stat-users').textContent = stats.users;
             document.getElementById('stat-wiki').textContent = stats.wiki;
