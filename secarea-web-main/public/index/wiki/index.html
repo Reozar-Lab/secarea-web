@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wiki · 匿境 Secarea</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 引入重构后的全局 CSS -->
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/pages.css">
+    
+    <!-- 网站图标 -->
+    <link rel="icon" href="/assets/cec.png">
+    
+    <style>
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #141414; }
+        #wiki-frame { 
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; 
+            border: none; z-index: 1; 
+        }
+
+        #wiki-float-ball {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            width: 42px;
+            height: 42px;
+            background-color: rgba(37, 37, 37, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #f5d78d;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 999;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px) scale(0.9); 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        #wiki-float-ball.show {
+            opacity: 0.85;
+            pointer-events: auto;
+            transform: translateY(0) scale(1);
+        }
+        
+        #wiki-float-ball:hover, 
+        #wiki-float-ball:active {
+            opacity: 1;
+            background-color: rgba(37, 37, 37, 0.6);
+            transform: scale(1.05);
+        }
+
+        :root[saved-theme="light"] #wiki-float-ball {
+            background-color: rgba(255, 255, 255, 0.4);
+            color: #c89f5d;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        :root[saved-theme="light"] #wiki-float-ball:hover, 
+        :root[saved-theme="light"] #wiki-float-ball:active {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body class="page-ios relative">
+
+    <!-- 引入重构后的全局 JS -->
+    <script src="/js/ui.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/layout.js"></script>
+
+    <iframe id="wiki-frame" src="https://wiki.secarea.de5.net"></iframe>
+
+    <div id="wiki-float-ball" onclick="if(window.toggleSideDrawer) window.toggleSideDrawer()">☰</div>
+
+    <script>
+        // 监听来自 Wiki 内部的滚动距离与路径
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            
+            if (data && data.type === 'wiki_scroll') {
+                const ball = document.getElementById('wiki-float-ball');
+                if (data.scrollY > 100) {
+                    ball.classList.add('show');
+                } else {
+                    ball.classList.remove('show');
+                }
+            }
+
+            if (data && data.type === 'wiki_path_change') {
+                sessionStorage.setItem('current_wiki_path', data.path);
+            }
+        });
+
+        const wikiFrame = document.getElementById('wiki-frame');
+        if (wikiFrame) {
+            wikiFrame.addEventListener('load', () => {
+                const isDark = document.documentElement.classList.contains('dark');
+                if (wikiFrame.contentWindow) {
+                    wikiFrame.contentWindow.postMessage({ type: 'main_darkmode', isDark: isDark }, '*');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

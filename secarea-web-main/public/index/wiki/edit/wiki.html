@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>编辑词条 · 匿境 Secarea</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 引入重构后的全局 CSS -->
+    <link rel="stylesheet" href="/css/theme.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/pages.css">
+    
+    <!-- 网站图标 -->
+    <link rel="icon" href="/assets/cec.png">
+    
+    <script>
+        // 解决明亮模式 Bug：初始化时立刻读取主题
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <style>
+        /* 使用 100dvh 适配手机浏览器动态导航栏 */
+        html, body { 
+            height: 100%; 
+            height: 100dvh; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            background-color: #f4f4f5; 
+        }
+        .dark html, .dark body { 
+            background-color: #141414; 
+        }
+        
+        textarea { resize: none; }
+        
+        /* 适配 iOS 底部安全区 */
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 16px);
+        }
+    </style>
+</head>
+<body class="page-ios relative ios-text">
+
+    <!-- 引入重构后的全局 JS -->
+    <script src="/js/ui.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/layout.js"></script>
+
+    <!-- 采用 Flex 布局撑满屏幕，防止被底部导航栏遮挡 -->
+    <div class="w-full h-[100dvh] flex flex-col pt-14">
+        
+        <!-- 顶部操作区 -->
+        <div class="px-4 py-3 border-b ios-border shrink-0 bg-white/90 dark:bg-[#181818]/90 backdrop-blur z-10 flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+                <!-- 分类下拉框 -->
+                <div class="flex-1 flex bg-black/5 dark:bg-black/40 border ios-border rounded-xl overflow-hidden focus-within:border-[#f5d78d] transition-colors">
+                    <select id="category-select" class="bg-transparent text-sm ios-text outline-none px-2 py-2 max-w-[120px] appearance-none">
+                        <option value="" disabled selected>分类...</option>
+                        <option value="">(根目录)</option>
+                    </select>
+                    <div class="w-px bg-black/10 dark:bg-white/10 my-1"></div>
+                    <!-- 词条名输入 -->
+                    <input type="text" id="page-name" placeholder="词条名称" 
+                           class="flex-1 bg-transparent px-3 py-2 text-sm outline-none ios-text">
+                </div>
+                <!-- 新建分类按钮（管理员可见） -->
+                <button id="new-category-btn" class="hidden bg-[#f5d78d]/10 text-[#c89f5d] dark:text-[#f5d78d] border border-[#f5d78d]/30 rounded-xl px-3 py-2 text-sm font-bold whitespace-nowrap active:scale-95 transition-all">
+                    + 分类
+                </button>
+            </div>
+            <div class="text-[11px] text-[#c89f5d] dark:text-[#f5d78d]/60 pl-1" id="full-path-preview">当前路径: 未选择分类</div>
+        </div>
+
+        <!-- 编辑器主体 -->
+        <div class="flex-1 p-3 overflow-hidden">
+            <textarea id="md-content" 
+                      placeholder="正在拉取内容或输入 Markdown..." 
+                      class="w-full h-full bg-black/5 dark:bg-black/20 border ios-border rounded-2xl p-4 text-[14px] font-mono leading-relaxed outline-none focus:border-[#f5d78d] ios-text transition-colors"></textarea>
+        </div>
+
+        <!-- 底部保存按钮 -->
+        <div class="px-4 py-3 border-t ios-border shrink-0 bg-white/90 dark:bg-[#181818]/90 backdrop-blur z-10 safe-bottom">
+            <button id="save-btn" class="w-full py-3.5 rounded-xl font-bold text-black bg-gradient-to-r from-[#e8c88c] to-[#c89f5d] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                <span id="btn-text">保存并同步至 Wiki</span>
+                <svg id="btn-loading" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- 新建分类弹窗（复刻 iOS 上滑面板） -->
+    <div id="reset-modal" class="sys-modal-overlay fixed inset-0 z-[9999] hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
+        <div id="reset-panel" class="sys-modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto flex flex-col bg-white dark:bg-[#1a1a1a]">
+            <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
+                <h2 class="text-lg font-bold ios-title ios-text">新建分类目录</h2>
+                <button onclick="closeResetModal()" class="ios-text opacity-50 hover:opacity-100 p-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 space-y-4 pb-8">
+                <div>
+                    <label class="block text-xs ios-text opacity-60 mb-1 ml-1">分类名称</label>
+                    <input type="text" id="new-category-input" placeholder="例如: 人物设定、势力情报..." class="sys-modal-input w-full px-4 py-3 text-sm focus:outline-none focus:border-[#c89f5d]">
+                </div>
+                <button id="modal-confirm" class="w-full py-3.5 bg-[#111111] text-[#f5d78d] rounded-xl text-sm font-bold hover:bg-black transition mt-2">确认创建</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isSaved = true;
+        let currentUserRole = 'user';
+
+        const categorySelect = document.getElementById('category-select');
+        const pageNameInput = document.getElementById('page-name');
+        const pathPreview = document.getElementById('full-path-preview');
+        const contentInput = document.getElementById('md-content');
+        const saveBtn = document.getElementById('save-btn');
+        const btnText = document.getElementById('btn-text');
+        const btnLoading = document.getElementById('btn-loading');
+        const newCategoryBtn = document.getElementById('new-category-btn');
+        
+        const resetModal = document.getElementById('reset-modal');
+        const resetPanel = document.getElementById('reset-panel');
+        const newCategoryInput = document.getElementById('new-category-input');
+        const modalConfirm = document.getElementById('modal-confirm');
+
+        // 离开页面拦截
+        window.addEventListener('beforeunload', (e) => {
+            if (!isSaved) {
+                e.preventDefault();
+                e.returnValue = '您有未保存的修改，确定要离开吗？';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (link && !isSaved) {
+                if (link.href.includes('/wiki/edit/')) return;
+                if (!confirm('您有未保存的修改，确定要离开吗？')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }
+        }, true);
+
+        contentInput.addEventListener('input', () => { isSaved = false; });
+        pageNameInput.addEventListener('input', () => { isSaved = false; updatePreview(); });
+        categorySelect.addEventListener('change', () => { isSaved = false; updatePreview(); });
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (typeof API !== 'undefined') {
+                try {
+                    const data = await API.getMe();
+                    if (!data || !data.user || !['editor', 'admin', 'root'].includes(data.user.role)) {
+                        alert('权限不足');
+                        window.location.href = '/index/wiki/';
+                        return;
+                    }
+                    currentUserRole = data.user.role;
+                    if (currentUserRole === 'admin' || currentUserRole === 'root') {
+                        newCategoryBtn.classList.remove('hidden');
+                    }
+                } catch (e) { window.location.href = '/index/login/'; return; }
+            }
+
+            await loadCategories();
+
+            const currentPath = sessionStorage.getItem('current_wiki_path');
+            if (currentPath) {
+                const parts = currentPath.split('/');
+                if (parts.length > 1) {
+                    const category = parts[0];
+                    const name = parts[parts.length - 1].replace('.md', '');
+                    
+                    const option = Array.from(categorySelect.options).find(o => o.value === category);
+                    if (option) {
+                        categorySelect.value = category;
+                    } else {
+                        categorySelect.value = category;
+                        categorySelect.add(new Option(category, category, true, true));
+                    }
+                    pageNameInput.value = name;
+                } else {
+                    categorySelect.value = ""; 
+                    pageNameInput.value = currentPath.replace('.md', '');
+                }
+                updatePreview();
+                await loadContent(currentPath);
+                isSaved = true; 
+            }
+        });
+
+        async function loadCategories() {
+            try {
+                const res = await fetch('/api/wiki/categories');
+                const data = await res.json();
+                if (data.categories) {
+                    data.categories.sort().forEach(cat => {
+                        categorySelect.add(new Option(cat, cat));
+                    });
+                }
+            } catch (e) { console.error('拉取分类失败', e); }
+        }
+
+        function updatePreview() {
+            const cat = categorySelect.value;
+            const name = pageNameInput.value.trim();
+            if (!name) {
+                pathPreview.textContent = "当前路径: 请输入词条名";
+                return;
+            }
+            const fullPath = cat ? `${cat}/${name}.md` : `${name}.md`;
+            pathPreview.textContent = `当前路径: ${fullPath}`;
+        }
+
+        async function loadContent(path) {
+            contentInput.placeholder = "正在从 GitHub 拉取内容...";
+            try {
+                const res = await fetch(`/api/wiki/get?path=${encodeURIComponent(path)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    contentInput.value = data.content || '';
+                } else if (res.status === 404) {
+                    contentInput.value = ''; 
+                    showToast('新词条，已清空内容', 'info');
+                } else {
+                    const errData = await res.json();
+                    alert(`拉取失败 (${res.status}):\n${errData.error}`);
+                    contentInput.value = ''; 
+                }
+            } catch (err) {
+                alert(`网络错误: ${err.message}`);
+            } finally {
+                contentInput.placeholder = "在这里输入 Markdown 内容...";
+            }
+        }
+
+        pageNameInput.addEventListener('change', () => {
+            const cat = categorySelect.value;
+            const name = pageNameInput.value.trim();
+            if (name) {
+                const path = cat ? `${cat}/${name}.md` : `${name}.md`;
+                loadContent(path);
+            }
+        });
+
+        // 弹窗
+        newCategoryBtn.addEventListener('click', () => {
+            newCategoryInput.value = '';
+            resetModal.classList.remove('hidden');
+            setTimeout(() => {
+                resetModal.classList.remove('opacity-0');
+                resetPanel.classList.remove('translate-y-full', 'sm:scale-95');
+            }, 10);
+        });
+
+        function closeResetModal() {
+            resetModal.classList.add('opacity-0');
+            resetPanel.classList.add('translate-y-full', 'sm:scale-95');
+            setTimeout(() => resetModal.classList.add('hidden'), 300);
+        }
+        
+        resetModal.addEventListener('click', (e) => { if (e.target === resetModal) closeResetModal(); });
+
+        modalConfirm.addEventListener('click', async () => {
+            const newCat = newCategoryInput.value.trim();
+            if (!newCat) return showToast('分类名不能为空', 'error');
+            
+            modalConfirm.textContent = '创建中...';
+            modalConfirm.disabled = true;
+            
+            try {
+                const res = await fetch('/api/wiki/new-category', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categoryName: newCat })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    showToast('分类创建成功', 'success');
+                    categorySelect.add(new Option(newCat, newCat, true, true));
+                    closeResetModal();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (e) {
+                showToast('网络错误', 'error');
+            } finally {
+                modalConfirm.textContent = '确认创建';
+                modalConfirm.disabled = false;
+            }
+        });
+
+        // 保存
+        saveBtn.addEventListener('click', async () => {
+            const cat = categorySelect.value;
+            const name = pageNameInput.value.trim();
+            const content = contentInput.value;
+
+            if (!name) return showToast('请输入词条名', 'error');
+            
+            const finalPath = cat ? `${cat}/${name}.md` : `${name}.md`;
+
+            saveBtn.disabled = true;
+            saveBtn.classList.add('opacity-70');
+            btnText.textContent = '正在推送...';
+            btnLoading.classList.remove('hidden');
+
+            try {
+                const res = await fetch('/api/wiki/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: finalPath, content })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    showToast('保存成功，正在构建', 'success');
+                    isSaved = true;
+                    sessionStorage.setItem('current_wiki_path', finalPath);
+                } else {
+                    throw new Error(data.error || '保存失败');
+                }
+            } catch (error) {
+                showToast(error.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('opacity-70');
+                btnText.textContent = '保存并同步至 Wiki';
+                btnLoading.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

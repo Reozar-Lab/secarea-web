@@ -1,0 +1,41 @@
+@font-face {
+    font-family: 'Gegor';
+    src: url('/assets/fonts/gegor.otf') format('opentype');
+    font-display: swap;
+}
+
+:root {
+    --page-bg: #f2f2f7;
+    --card-bg: #ffffff;
+    --text-title: #000000;
+    --text-main: #111111;
+    --text-muted: #6b7280;
+    --border-color: #e5e5ea;
+    --avatar-color: #000000;
+    --modal-bg: #ffffff;
+    --input-bg: #f2f2f7;
+}
+
+.dark {
+    --page-bg: #000000;
+    --card-bg: #1c1c1e;
+    --text-title: #ffffff;
+    --text-main: #ffffff;
+    --text-muted: #9ca3af;
+    --border-color: #2c2c2e;
+    --avatar-color: #f5d78d;
+    --modal-bg: #1c1c1e;
+    --input-bg: #000000;
+}
+
+html { scroll-behavior: smooth; }
+body { 
+    background: #e5e7eb; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+    -webkit-font-smoothing: antialiased; 
+    overflow-x: hidden; 
+    transition: background-color 0.4s ease, color 0.4s ease;
+}
+.font-roman { font-family: 'Gegor', serif; }
+* { transition-property: background-color, border-color, color, fill, stroke; transition-duration: 0.4s; transition-timing-function: ease; }
+svg, .shadow-heavy, .shadow-sm, .shadow-md, .shadow-xl, .shadow-2xl { transition: none; }
