@@ -61,8 +61,8 @@
                 <!-- 分类下拉框 -->
                 <div class="flex-1 flex bg-black/5 dark:bg-black/40 border ios-border rounded-xl overflow-hidden focus-within:border-[#f5d78d] transition-colors">
                     <select id="category-select" class="bg-transparent text-sm ios-text outline-none px-2 py-2 max-w-[120px] appearance-none">
-                        <option value="" disabled selected>分类...</option>
-                        <option value="">(根目录)</option>
+                        <option value="" selected>(根目录)</option>
+                        <!-- 动态加载分类 -->
                     </select>
                     <div class="w-px bg-black/10 dark:bg-white/10 my-1"></div>
                     <!-- 词条名输入 -->
@@ -74,7 +74,7 @@
                     + 分类
                 </button>
             </div>
-            <div class="text-[11px] text-[#c89f5d] dark:text-[#f5d78d]/60 pl-1" id="full-path-preview">当前路径: 未选择分类</div>
+            <div class="text-[11px] text-[#c89f5d] dark:text-[#f5d78d]/60 pl-1" id="full-path-preview">当前路径: 未选择</div>
         </div>
 
         <!-- 编辑器主体 -->
@@ -93,7 +93,7 @@
         </div>
     </div>
 
-    <!-- 新建分类弹窗（复刻 iOS 上滑面板） -->
+    <!-- 新建分类弹窗 -->
     <div id="reset-modal" class="sys-modal-overlay fixed inset-0 z-[9999] hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
         <div id="reset-panel" class="sys-modal-panel w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto flex flex-col bg-white dark:bg-[#1a1a1a]">
             <div class="sys-modal-header sticky top-0 px-4 py-4 flex justify-between items-center z-10 backdrop-blur">
@@ -150,10 +150,48 @@
         }, true);
 
         contentInput.addEventListener('input', () => { isSaved = false; });
-        pageNameInput.addEventListener('input', () => { isSaved = false; updatePreview(); });
-        categorySelect.addEventListener('change', () => { isSaved = false; updatePreview(); });
 
-        // 初始化
+        // ==========================================
+        // 核心逻辑：智能提取路径
+        // ==========================================
+        function getFinalPath() {
+            const cat = categorySelect.value;
+            let name = pageNameInput.value.trim();
+            
+            // 清理输入框的首尾空格和斜杠
+            name = name.replace(/^\/+|\/+$/g, '');
+            if (!name) return '';
+
+            // 如果用户在下拉框选了分类，且输入框里没有带这个分类前缀
+            if (cat && !name.startsWith(cat + '/')) {
+                const fullPath = `${cat}/${name}.md`;
+                console.log("【前端拼接】选了分类:", cat, "，最终路径:", fullPath);
+                return fullPath;
+            }
+            
+            // 如果选的是根目录（cat为空），或者名字里自带了分类
+            const fullPath = name.endsWith('.md') ? name : `${name}.md`;
+            console.log("【前端拼接】根目录或自带分类，最终路径:", fullPath);
+            return fullPath;
+        }
+
+        function updatePreview() {
+            const fullPath = getFinalPath();
+            pathPreview.textContent = fullPath ? `当前路径: content/${fullPath}` : "当前路径: 请输入词条名";
+        }
+
+        pageNameInput.addEventListener('input', () => { 
+            isSaved = false; 
+            updatePreview(); 
+        });
+        categorySelect.addEventListener('change', () => { 
+            isSaved = false; 
+            updatePreview(); 
+        });
+
+        // ==========================================
+        // 初始化与拉取内容
+        // ==========================================
         window.addEventListener('DOMContentLoaded', async () => {
             if (typeof API !== 'undefined') {
                 try {
@@ -174,9 +212,10 @@
 
             let currentPath = sessionStorage.getItem('current_wiki_path');
             if (currentPath) {
-                // 核心修复：先解码路径，防止显示成 %E5...
+                // 核心修复：先解码路径，防止中文乱码
                 currentPath = decodeURIComponent(currentPath);
                 const parts = currentPath.split('/');
+                
                 if (parts.length > 1) {
                     const category = parts[0];
                     const name = parts[parts.length - 1].replace('.md', '');
@@ -194,7 +233,7 @@
                     pageNameInput.value = currentPath.replace('.md', '');
                 }
                 updatePreview();
-                await loadContent(currentPath);
+                await loadContent();
                 isSaved = true; 
             }
         });
@@ -211,18 +250,10 @@
             } catch (e) { console.error('拉取分类失败', e); }
         }
 
-        function updatePreview() {
-            const cat = categorySelect.value;
-            const name = pageNameInput.value.trim();
-            if (!name) {
-                pathPreview.textContent = "当前路径: 请输入词条名";
-                return;
-            }
-            const fullPath = cat ? `${cat}/${name}.md` : `${name}.md`;
-            pathPreview.textContent = `当前路径: ${fullPath}`;
-        }
+        async function loadContent() {
+            const path = getFinalPath();
+            if (!path) return;
 
-        async function loadContent(path) {
             contentInput.placeholder = "正在从 GitHub 拉取内容...";
             try {
                 const res = await fetch(`/api/wiki/get?path=${encodeURIComponent(path)}`);
@@ -244,16 +275,23 @@
             }
         }
 
+        // 输入变化时，如果失焦，自动去拉取
         pageNameInput.addEventListener('change', () => {
-            const cat = categorySelect.value;
-            const name = pageNameInput.value.trim();
-            if (name) {
-                const path = cat ? `${cat}/${name}.md` : `${name}.md`;
-                loadContent(path);
+            if (pageNameInput.value.trim()) {
+                loadContent();
             }
         });
 
-        // 弹窗
+        // 分类下拉框切换时，如果已有词条名，重新拉取
+        categorySelect.addEventListener('change', () => {
+            if (pageNameInput.value.trim()) {
+                loadContent();
+            }
+        });
+
+        // ==========================================
+        // 新建分类弹窗逻辑
+        // ==========================================
         newCategoryBtn.addEventListener('click', () => {
             newCategoryInput.value = '';
             resetModal.classList.remove('hidden');
@@ -289,6 +327,8 @@
                 if (res.ok) {
                     showToast('分类创建成功', 'success');
                     categorySelect.add(new Option(newCat, newCat, true, true));
+                    categorySelect.value = newCat;
+                    updatePreview();
                     closeResetModal();
                 } else {
                     showToast(data.error, 'error');
@@ -301,15 +341,14 @@
             }
         });
 
-        // 保存
+        // ==========================================
+        // 保存逻辑
+        // ==========================================
         saveBtn.addEventListener('click', async () => {
-            const cat = categorySelect.value;
-            const name = pageNameInput.value.trim();
-            const content = contentInput.value;
-
-            if (!name) return showToast('请输入词条名', 'error');
+            const finalPath = getFinalPath();
+            if (!finalPath) return showToast('请输入词条名', 'error');
             
-            const finalPath = cat ? `${cat}/${name}.md` : `${name}.md`;
+            const content = contentInput.value;
 
             saveBtn.disabled = true;
             saveBtn.classList.add('opacity-70');
