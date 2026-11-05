@@ -4,7 +4,7 @@ export async function handleWiki(request, env, url, ctx) {
   const method = request.method;
   
   // ==========================================
-  // 1. 获取文件接口
+  // 1. 获取单个文件内容
   // ==========================================
   if (url.pathname === '/api/wiki/get' && method === 'GET') {
     const auth = await verifyAuth(request, env, ['editor', 'admin', 'root']);
@@ -39,7 +39,7 @@ export async function handleWiki(request, env, url, ctx) {
   }
   
   // ==========================================
-  // 2. 保存文件接口
+  // 2. 保存/更新文件
   // ==========================================
   if (url.pathname === '/api/wiki/save' && method === 'POST') {
     const auth = await verifyAuth(request, env, ['editor', 'admin', 'root']);
@@ -184,7 +184,7 @@ export async function handleWiki(request, env, url, ctx) {
   }
   
   // ==========================================
-  // 5. 获取全量词条列表 (用于全局搜索)
+  // 5. 获取全量词条列表 (用于前端全局搜索和 datalist)
   // ==========================================
   if (url.pathname === '/api/wiki/all-files' && method === 'GET') {
     const auth = await verifyAuth(request, env, ['editor', 'admin', 'root']);
@@ -192,10 +192,81 @@ export async function handleWiki(request, env, url, ctx) {
     
     try {
       const { results } = await env.DB.prepare("SELECT path FROM wiki_files").all();
+      // 清理路径：去掉 content/ 前缀和 .md 后缀，返回如 "人物设定/法登"
       const files = results.map(r => r.path.replace(/^content\//, '').replace(/\.md$/, ''));
       return jsonResp({ files });
     } catch (e) {
       return jsonResp({ error: "获取列表失败" }, 500);
+    }
+  }
+  
+  // ==========================================
+  // 6. 删除词条
+  // ==========================================
+  if (url.pathname === '/api/wiki/delete' && method === 'POST') {
+    const auth = await verifyAuth(request, env, ['editor', 'admin', 'root']);
+    if (auth.error) return jsonResp({ error: auth.error }, auth.status);
+    const currentUser = auth.user;
+    
+    try {
+      const { path } = await request.json();
+      if (!path) return jsonResp({ error: "缺少路径参数" }, 400);
+      
+      let cleanPath = path.trim().replace(/^\/+|\/+$/g, '');
+      let safePath = cleanPath.startsWith('content/') ? cleanPath : `content/${cleanPath}`;
+      if (!safePath.endsWith('.md')) safePath += '.md';
+      
+      const encodedPath = safePath.split('/').map(encodeURIComponent).join('/');
+      const getUrl = `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${encodedPath}`;
+      
+      // 获取文件 SHA (删除必须用)
+      const getRes = await fetch(getUrl, {
+        headers: { 'Authorization': `Bearer ${env.GITHUB_TOKEN}`, 'User-Agent': 'Cloudflare-Worker' }
+      });
+      
+      if (!getRes.ok) {
+        if (getRes.status === 404) return jsonResp({ error: "文件不存在，无法删除" }, 404);
+        return jsonResp({ error: `获取文件信息失败 (${getRes.status})` }, 500);
+      }
+      
+      const fileData = await getRes.json();
+      const sha = fileData.sha;
+      
+      // 发送删除请求
+      const deleteRes = await fetch(getUrl, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${env.GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'Cloudflare-Worker'
+        },
+        body: JSON.stringify({
+          message: `Delete Wiki: ${safePath} by ${currentUser.name}`,
+          sha: sha
+        })
+      });
+      
+      if (!deleteRes.ok) {
+        const errText = await deleteRes.text();
+        return jsonResp({ error: "GitHub 删除失败: " + errText }, 500);
+      }
+      
+      // 清理 D1 数据库
+      try {
+        await env.DB.prepare("DELETE FROM wiki_files WHERE path = ?").bind(safePath).run();
+        await env.DB.prepare(`
+          INSERT INTO wiki_history (path, editor_id, editor_name, summary, created_at) 
+          VALUES (?, ?, ?, ?, ?)
+        `).bind(safePath, currentUser.id, currentUser.name, "删除词条", Date.now()).run();
+      } catch (dbErr) {
+        console.error("写入数据库失败:", dbErr);
+      }
+      
+      if (env.PAGES_DEPLOY_HOOK) ctx.waitUntil(fetch(env.PAGES_DEPLOY_HOOK, { method: 'POST' }));
+      
+      return jsonResp({ success: true, message: "删除成功，正在重新构建..." });
+    } catch (e) {
+      return jsonResp({ error: "删除失败: " + e.message }, 500);
     }
   }
   

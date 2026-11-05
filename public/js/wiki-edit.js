@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pathPreview = document.getElementById('full-path-preview');
     const contentInput = document.getElementById('md-content');
     const saveBtn = document.getElementById('save-btn');
+    const deleteBtn = document.getElementById('delete-btn'); // 新增
     const btnText = document.getElementById('btn-text');
     const btnLoading = document.getElementById('btn-loading');
     const newCategoryBtn = document.getElementById('new-category-btn');
@@ -200,7 +201,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ==========================================
     // 新建分类弹窗
+    // ==========================================
     newCategoryBtn.addEventListener('click', () => {
         newCategoryInput.value = '';
         resetModal.classList.remove('hidden');
@@ -250,6 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ==========================================
+    // 保存
+    // ==========================================
     saveBtn.addEventListener('click', async () => {
         parseAndSyncInput(); 
         
@@ -293,6 +299,63 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.classList.remove('opacity-70');
             btnText.textContent = '保存并同步至 Wiki';
             btnLoading.classList.add('hidden');
+        }
+    });
+
+    // ==========================================
+    // 删除词条
+    // ==========================================
+    deleteBtn.addEventListener('click', async () => {
+        parseAndSyncInput();
+        const finalPath = getFinalPath();
+        
+        if (!finalPath) return showToast('当前没有可删除的文档', 'error');
+
+        // 第一重确认
+        const firstCheck = confirm(`⚠️ 高危操作确认\n\n您确定要永久删除「${finalPath}」吗？\n该操作将同步删除 GitHub 上的文件，且不可恢复！`);
+        if (!firstCheck) return;
+
+        // 第二重确认 (如果是删除 index.md，说明可能是在删整个分类的入口)
+        if (finalPath.endsWith('index.md')) {
+            const secondCheck = confirm(`⚠️ 极度危险\n\n您正在删除名为 index.md 的文件。如果您删除了分类的根文件，该分类可能会失效。\n\n请再次确认是否继续？`);
+            if (!secondCheck) return;
+        }
+
+        deleteBtn.disabled = true;
+        deleteBtn.classList.add('opacity-50');
+
+        try {
+            const res = await fetch('/api/wiki/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: finalPath })
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                showToast('删除成功，正在构建', 'success');
+                isSaved = true;
+                
+                // 从本地内存和 datalist 移除
+                const displayPath = finalPath.replace('.md', '');
+                allWikiFiles = allWikiFiles.filter(p => p !== displayPath);
+                const options = Array.from(datalist.options);
+                const targetOption = options.find(o => o.value === displayPath);
+                if (targetOption) targetOption.remove();
+
+                // 清空编辑器，或者跳回首页
+                contentInput.value = '';
+                pageNameInput.value = '';
+                updatePreview();
+                sessionStorage.removeItem('current_wiki_path');
+            } else {
+                throw new Error(data.error || '删除失败');
+            }
+        } catch (error) {
+            showToast(error.message, 'error');
+        } finally {
+            deleteBtn.disabled = false;
+            deleteBtn.classList.remove('opacity-50');
         }
     });
 
