@@ -6,13 +6,17 @@
     <title>编辑词条 · 匿境 Secarea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- 引入重构后的全局 CSS -->
     <link rel="stylesheet" href="/css/theme.css">
     <link rel="stylesheet" href="/css/components.css">
     <link rel="stylesheet" href="/css/layout.css">
     <link rel="stylesheet" href="/css/pages.css">
+    
+    <!-- 网站图标 -->
     <link rel="icon" href="/assets/cec.png">
     
     <script>
+        // 解决明亮模式 Bug：初始化时立刻读取主题
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
         } else {
@@ -20,33 +24,50 @@
         }
     </script>
     <style>
-        html, body { height: 100%; height: 100dvh; margin: 0; padding: 0; overflow: hidden; background-color: #f4f4f5; }
-        .dark html, .dark body { background-color: #141414; }
+        /* 使用 100dvh 适配手机浏览器动态导航栏 */
+        html, body { 
+            height: 100%; 
+            height: 100dvh; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            background-color: #f4f4f5; 
+        }
+        .dark html, .dark body { 
+            background-color: #141414; 
+        }
+        
         textarea { resize: none; }
-        .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 16px); }
+        
+        /* 适配 iOS 底部安全区 */
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom, 16px);
+        }
     </style>
 </head>
 <body class="page-ios relative ios-text">
 
-    <script src="/js/ui.js"></script>
-    <script src="/js/api.js"></script>
-    <script src="/js/layout.js"></script>
-    <script src="/js/wiki-edit.js"></script>
-
+    <!-- 采用 Flex 布局撑满屏幕，防止被底部导航栏遮挡 -->
     <div class="w-full h-[100dvh] flex flex-col pt-14">
         
         <!-- 顶部操作区 -->
         <div class="px-4 py-3 border-b ios-border shrink-0 bg-white/90 dark:bg-[#181818]/90 backdrop-blur z-10 flex flex-col gap-2">
             <div class="flex items-center gap-2">
+                <!-- 分类下拉框 -->
                 <div class="flex-1 flex bg-black/5 dark:bg-black/40 border ios-border rounded-xl overflow-hidden focus-within:border-[#f5d78d] transition-colors">
                     <select id="category-select" class="bg-transparent text-sm ios-text outline-none px-2 py-2 max-w-[120px] appearance-none">
                         <option value="" selected>(根目录)</option>
+                        <!-- 动态加载分类 -->
                     </select>
                     <div class="w-px bg-black/10 dark:bg-white/10 my-1"></div>
-                    <!-- 输入框 + datalist -->
-                    <input type="text" id="page-name" list="all-wiki-files" placeholder="词条名称 (支持全局搜索)" class="flex-1 bg-transparent px-3 py-2 text-sm outline-none ios-text">
+                    
+                    <!-- 词条名输入 + 全局搜索 datalist -->
+                    <input type="text" id="page-name" list="all-wiki-files" placeholder="词条名称 (支持全局搜索)" 
+                           class="flex-1 bg-transparent px-3 py-2 text-sm outline-none ios-text">
                     <datalist id="all-wiki-files"></datalist>
                 </div>
+                
+                <!-- 新建分类按钮（管理员可见） -->
                 <button id="new-category-btn" class="hidden bg-[#f5d78d]/10 text-[#c89f5d] dark:text-[#f5d78d] border border-[#f5d78d]/30 rounded-xl px-3 py-2 text-sm font-bold whitespace-nowrap active:scale-95 transition-all">
                     + 分类
                 </button>
@@ -56,7 +77,9 @@
 
         <!-- 编辑器主体 -->
         <div class="flex-1 p-3 overflow-hidden">
-            <textarea id="md-content" placeholder="正在拉取内容或输入 Markdown..." class="w-full h-full bg-black/5 dark:bg-black/20 border ios-border rounded-2xl p-4 text-[14px] font-mono leading-relaxed outline-none focus:border-[#f5d78d] ios-text transition-colors"></textarea>
+            <textarea id="md-content" 
+                      placeholder="正在拉取内容或输入 Markdown..." 
+                      class="w-full h-full bg-black/5 dark:bg-black/20 border ios-border rounded-2xl p-4 text-[14px] font-mono leading-relaxed outline-none focus:border-[#f5d78d] ios-text transition-colors"></textarea>
         </div>
 
         <!-- 底部保存按钮 -->
@@ -86,5 +109,13 @@
             </div>
         </div>
     </div>
+
+    <!-- ========================================== -->
+    <!-- 核心修复：所有脚本必须放在最底部 -->
+    <!-- ========================================== -->
+    <script src="/js/ui.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/layout.js"></script>
+    <script src="/js/wiki-edit.js"></script>
 </body>
 </html>
